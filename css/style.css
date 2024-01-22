@@ -1,0 +1,36 @@
+body{
+margin: 0;
+padding-top: 50px;
+}
+#canvas{
+    border: thin inset cornflowerblue;
+    width: 90%; 
+}
+
+#box{
+    width: 90%;
+}
+ /* #contenedor{
+     display: flex;
+     align-items: center;
+     width: 100%;
+     margin: 3vh auto;
+     background-color: red;
+ } */
+ /* #vertical{
+     display: none;
+ }
+ @media all and (orientation:portrait){
+     #vertical{
+     display: block;
+     position: fixed;
+     z-index: 1;
+     background: url(../img/vertical.jpg);
+     width: 100%;
+     height: 100vh;
+     background-repeat: no-repeat;
+     background-size: cover;
+     background-position: center;
+     }
+ } */
+ 
