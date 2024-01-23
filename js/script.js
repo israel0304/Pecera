@@ -6,6 +6,7 @@ let boton2 = document.getElementById("sick");
 let boton3 = document.getElementById("point");
 let boton4 = document.getElementById("npeces");
 let cajaPeces = document.getElementById("peces");
+let cajaTemperatura = document.getElementById("temp");
 let image = new Image();
 let imgPecera = new Image();
 
@@ -18,6 +19,7 @@ boton2.addEventListener('click', enfermar);
 boton3.addEventListener('click', crearPunto);
 boton4.addEventListener('click', pecesDinamicos);
 cajaPeces.addEventListener('change',pecesDinamicos);
+cajaTemperatura.addEventListener('change', tempDinamica)
 
 
 // clases
@@ -261,9 +263,24 @@ class Pecera {
 
 ///  Funciones
 cajaPeces.value=10;
+cajaTemperatura.value=10;
 let pecera = new Pecera(4);
 let peces = generar(Pez,cajaPeces.value);
-let burbujas = generar (Burbuja,5);
+let burbujas = generar (Burbuja,20);
+
+
+function pecesDinamicos(e){
+    e.preventDefault();
+    let nuevop = generar(Pez,cajaPeces.value);
+        peces = nuevop;
+}
+
+function tempDinamica(e){
+    e.preventDefault();
+    let nuevaTemp = cajaTemperatura.value;
+    pecera = new Pecera (nuevaTemp);
+    console.log(pecera.temperatura);
+}
 
 function generar(obj,n){
     let p = [];
@@ -271,12 +288,6 @@ function generar(obj,n){
         p[i] = new obj();
     }
     return p;
-}
-
-function pecesDinamicos(e){
-    e.preventDefault();
-    let nuevop = generar(Pez,cajaPeces.value);
-        peces = nuevop;
 }
 
 function aleatorio(min,max){
