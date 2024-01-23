@@ -79,17 +79,17 @@ class Vector {
 
 class Pez { 
     constructor(){
+        this.canvas = canvas;
+        this.ctx = ctx;
         this.image = image;
         this.image.src = './img/pez_neon_todos.png';
-        this.dWidth = aleatorio(50,80);
+        this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
         this.dHeight = this.dWidth/2;
         this.sWidth = 540;
         this.sHeight = 290;
         this.imageDirection = 'izquierda';
         this.vivir = true;
         this.salud = 'sano'
-        this.canvas = canvas;
-        this.ctx = ctx;
         this.tamaño = 10;
         // Area de nado
         this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.dWidth;
@@ -260,7 +260,7 @@ class Pecera {
 
 
 ///  Funciones
-cajaPeces.value=1;
+cajaPeces.value=10;
 let pecera = new Pecera(4);
 let peces = generar(Pez,cajaPeces.value);
 let burbujas = generar (Burbuja,5);
