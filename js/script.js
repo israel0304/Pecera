@@ -17,6 +17,7 @@ boton.addEventListener('click', alerta);
 boton2.addEventListener('click', enfermar);
 boton3.addEventListener('click', crearPunto);
 boton4.addEventListener('click', pecesDinamicos);
+cajaPeces.addEventListener('change',pecesDinamicos);
 
 
 // clases
@@ -259,8 +260,9 @@ class Pecera {
 
 
 ///  Funciones
+cajaPeces.value=5;
 let pecera = new Pecera(4);
-let peces = generar(Pez,10);
+let peces = generar(Pez,cajaPeces.value);
 let burbujas = generar (Burbuja,10);
 
 function generar(obj,n){
@@ -271,9 +273,10 @@ function generar(obj,n){
     return p;
 }
 
-function pecesDinamicos(){
+function pecesDinamicos(e){
+    e.preventDefault();
     let nuevop = generar(Pez,cajaPeces.value);
-    peces = nuevop;
+        peces = nuevop;
 }
 
 function aleatorio(min,max){
