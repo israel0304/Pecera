@@ -245,7 +245,7 @@ class Pecera {
         this.image.src = './img/pecera.png';
         this.ctx = ctx;
         this.temperatura = temp;
-        this.saturacion = this.calSaturacion(this.temperatura);     
+        this.saturacion = this.calSaturacion(this.temperatura);
     }
 
     aparecer(){      
@@ -263,10 +263,11 @@ class Pecera {
 
 ///  Funciones
 cajaPeces.value=10;
-cajaTemperatura.value=10;
-let pecera = new Pecera(4);
+cajaTemperatura.value=22;
+let pecera = new Pecera(cajaTemperatura.value);
 let peces = generar(Pez,cajaPeces.value);
-let burbujas = generar (Burbuja,20);
+let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value));
+
 
 
 function pecesDinamicos(e){
@@ -279,7 +280,28 @@ function tempDinamica(e){
     e.preventDefault();
     let nuevaTemp = cajaTemperatura.value;
     pecera = new Pecera (nuevaTemp);
-    console.log(pecera.temperatura);
+    burbujasDinamicas();
+}
+
+function burbujasDinamicas(){
+    let nuevasBurbujas = Math.floor(pecera.saturacion);
+    if (pecera.temperatura<22){
+        burbujas = generar (Burbuja,nuevasBurbujas*50);
+    }else if(pecera.temperatura>28){
+        burbujas = generar (Burbuja,nuevasBurbujas-5);
+    } else{
+        burbujas = generar (Burbuja,nuevasBurbujas+50)
+    }
+}
+
+function validarBurbujasIniciales(b){
+    if (b<22){
+        return Math.floor(pecera.saturacion)*50
+    }else if(b>28){
+        return Math.floor(pecera.saturacion)-5
+    } else {
+        return Math.floor(pecera.saturacion)+50
+    }
 }
 
 function generar(obj,n){
