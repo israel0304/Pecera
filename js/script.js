@@ -16,6 +16,9 @@ canvas.height=canvas.width/2
 boton.addEventListener('click', alerta);
 boton2.addEventListener('click', enfermar);
 boton3.addEventListener('click', crearPunto);
+boton4.addEventListener('click', pecesDinamicos);
+cajaPeces.addEventListener('change',pecesDinamicos);
+
 
 // clases
 
@@ -76,17 +79,17 @@ class Vector {
 
 class Pez { 
     constructor(){
+        this.canvas = canvas;
+        this.ctx = ctx;
         this.image = image;
         this.image.src = './img/pez_neon_todos.png';
-        this.dWidth = aleatorio(50,80);
+        this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
         this.dHeight = this.dWidth/2;
         this.sWidth = 540;
         this.sHeight = 290;
         this.imageDirection = 'izquierda';
         this.vivir = true;
         this.salud = 'sano'
-        this.canvas = canvas;
-        this.ctx = ctx;
         this.tamaño = 10;
         // Area de nado
         this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.dWidth;
@@ -257,9 +260,10 @@ class Pecera {
 
 
 ///  Funciones
+cajaPeces.value=10;
 let pecera = new Pecera(4);
-let peces = generar(Pez,20);
-let burbujas = generar (Burbuja,10);
+let peces = generar(Pez,cajaPeces.value);
+let burbujas = generar (Burbuja,5);
 
 function generar(obj,n){
     let p = [];
@@ -267,6 +271,12 @@ function generar(obj,n){
         p[i] = new obj();
     }
     return p;
+}
+
+function pecesDinamicos(e){
+    e.preventDefault();
+    let nuevop = generar(Pez,cajaPeces.value);
+        peces = nuevop;
 }
 
 function aleatorio(min,max){
@@ -296,7 +306,6 @@ function enfermar(){
 }
 
 function actualizar(){
-
     ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
     pecera.aparecer();
     
@@ -305,14 +314,14 @@ function actualizar(){
     }
     
     for(i=0;i<peces.length;i++){
-       peces[i].aparecer();
-
-        if(peces[i].vivir===true){
-            peces[i].nadar();
-            }else{
-            peces[i].morir();
-        }  
-    }
+        peces[i].aparecer();
+ 
+         if(peces[i].vivir===true){
+             peces[i].nadar();
+             }else{
+             peces[i].morir();
+         }  
+     }
 
     
     
