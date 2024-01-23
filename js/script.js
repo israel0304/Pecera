@@ -16,6 +16,8 @@ canvas.height=canvas.width/2
 boton.addEventListener('click', alerta);
 boton2.addEventListener('click', enfermar);
 boton3.addEventListener('click', crearPunto);
+boton4.addEventListener('click', pecesDinamicos);
+
 
 // clases
 
@@ -258,7 +260,7 @@ class Pecera {
 
 ///  Funciones
 let pecera = new Pecera(4);
-let peces = generar(Pez,20);
+let peces = generar(Pez,10);
 let burbujas = generar (Burbuja,10);
 
 function generar(obj,n){
@@ -267,6 +269,11 @@ function generar(obj,n){
         p[i] = new obj();
     }
     return p;
+}
+
+function pecesDinamicos(){
+    let nuevop = generar(Pez,cajaPeces.value);
+    peces = nuevop;
 }
 
 function aleatorio(min,max){
@@ -296,7 +303,6 @@ function enfermar(){
 }
 
 function actualizar(){
-
     ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
     pecera.aparecer();
     
@@ -305,14 +311,14 @@ function actualizar(){
     }
     
     for(i=0;i<peces.length;i++){
-       peces[i].aparecer();
-
-        if(peces[i].vivir===true){
-            peces[i].nadar();
-            }else{
-            peces[i].morir();
-        }  
-    }
+        peces[i].aparecer();
+ 
+         if(peces[i].vivir===true){
+             peces[i].nadar();
+             }else{
+             peces[i].morir();
+         }  
+     }
 
     
     
