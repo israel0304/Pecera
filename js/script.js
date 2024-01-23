@@ -260,10 +260,10 @@ class Pecera {
 
 
 ///  Funciones
-cajaPeces.value=5;
+cajaPeces.value=1;
 let pecera = new Pecera(4);
 let peces = generar(Pez,cajaPeces.value);
-let burbujas = generar (Burbuja,10);
+let burbujas = generar (Burbuja,5);
 
 function generar(obj,n){
     let p = [];
