@@ -392,7 +392,7 @@ var board = JXG.JSXGraph.initBoard
     showCopyright: false,
 }
 );
-graph.style.height = `${innerHeight/1.8}px`;
+graph.style.height = `${innerHeight/2}px`;
 
 function crearPunto(){
     let caja = document.getElementById('temp')
