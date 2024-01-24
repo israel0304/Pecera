@@ -155,7 +155,7 @@ class Pez {
 
     enfermar(){
         if (this.salud === 'enfermo'){
-            this.dWidth = aleatorio(50,80);
+            this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
             this.dHeight = this.dWidth/2;
         }
     }
