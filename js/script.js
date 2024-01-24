@@ -13,7 +13,9 @@ canvas.height=canvas.width/2
 // event listeers
 boton3.addEventListener('click', crearPunto);
 cajaPeces.addEventListener('change',pecesDinamicos);
-cajaTemperatura.addEventListener('change', tempDinamica)
+cajaTemperatura.addEventListener('change', tempDinamica);
+cajaTemperatura.addEventListener('keydown', pressIntro);
+
 
 
 // clases
@@ -392,23 +394,29 @@ var board = JXG.JSXGraph.initBoard
 );
 graph.style.height = `${innerHeight/1.8}px`;
 
-function crearPunto(e){
-    e.preventDefault();
+function crearPunto(){
     let caja = document.getElementById('temp')
     pecera.temperatura=caja.value;
     let psaturacion = pecera.calSaturacion(pecera.temperatura);
-    console.log(caja.value);
-
+    let pointColor = pecera.temperatura >= 22 & pecera.temperatura <= 28?'#5dc1b9':'#fd7b7b';
+    console.log(pointColor);
     board.create(
         'point', 
         [pecera.temperatura,psaturacion],
         {
             name:'', 
-            strokecolor:'#00b8ff',
-            fillColor:'#00b8ff',
+            strokecolor: pointColor,
+            fillColor: pointColor,
             fixed : true
         }
         );
+        
+}
+
+function pressIntro(e){
+    if(e.keyCode === 13){
+    crearPunto();
+    }
         
 }
 
