@@ -7,9 +7,9 @@ let boton3 = document.getElementById("point");
 let boton4 = document.getElementById("npeces");
 let cajaPeces = document.getElementById("peces");
 let cajaTemperatura = document.getElementById("temp");
+let textSaturacion = document.getElementById("sat");
 let image = new Image();
 let imgPecera = new Image();
-
 canvas.width=innerWidth;
 canvas.height=canvas.width/2
 
@@ -243,12 +243,14 @@ class Pecera {
         this.alto = canvas.width/2;
         this.image = imgPecera;
         this.image.src = './img/pecera.png';
+        this.texto = textSaturacion
         this.ctx = ctx;
         this.temperatura = temp;
         this.saturacion = this.calSaturacion(this.temperatura);
     }
 
-    aparecer(){      
+    aparecer(){
+        this.texto.innerHTML = this.saturacion;      
         this.ctx.drawImage(this.image,0,0,this.ancho,this.alto); 
     }
 
