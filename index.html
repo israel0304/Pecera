@@ -14,9 +14,8 @@
 <body>
 
     <div id="contenedor" class="container-fluid">
-        <!-- <img id="pez" src="/img/pez_neon.png" alt=""> -->
         <div class="row">
-            <div class="col">
+            <div class="col-md">
                 <div class="row">
                     <div class="col-md p-2">
                         Temperatura: 
@@ -26,33 +25,27 @@
                         Número de peces: 
                         <input type="number" name="peces" id="peces">
                     </div>
-                    <div class="col-md p-2">
-                        <p>Saturación de oxigeno</p>
-                        <p id="sat"></p>
-                    </div>
-
                 </div>
-                
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col pb-3">
-                <button id="die">morir</button>
-                <button id="sick">enfermar</button>
-                <button id="point">crear punto</button>
-                <button id="npeces">crear peces</button>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-7 col-offset-0">
-                <canvas id="canvas">Esto solo si no esta implementado</canvas>
+                <div class="row">
+                    <div class="col pb-3">
+                        <p><b>Saturación de oxígeno (SO) = <span id="sat"></span></b></p> 
+                        <button id="point">graficar punto</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <canvas id="canvas">Esto solo si no esta implementado</canvas>
+                    </div>
+                </div>
             </div>
             <div class="col-md">
                 <div id="box" class="jxgbox"></div>
             </div>
         </div>
+        
+        
+
+        
         
         <script src="js/script.js"></script>
     </div>   

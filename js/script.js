@@ -1,21 +1,22 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 let graph = document.getElementById("box");
-let boton = document.getElementById("die");
-let boton2 = document.getElementById("sick");
 let boton3 = document.getElementById("point");
-let boton4 = document.getElementById("npeces");
 let cajaPeces = document.getElementById("peces");
+let cajaTemperatura = document.getElementById("temp");
+let textSaturacion = document.getElementById("sat");
 let image = new Image();
 let imgPecera = new Image();
-
 canvas.width=innerWidth;
 canvas.height=canvas.width/2
 
 // event listeers
-boton.addEventListener('click', alerta);
-boton2.addEventListener('click', enfermar);
 boton3.addEventListener('click', crearPunto);
+cajaPeces.addEventListener('change',pecesDinamicos);
+cajaTemperatura.addEventListener('change', tempDinamica);
+cajaTemperatura.addEventListener('keydown', pressIntro);
+
+
 
 // clases
 
@@ -76,17 +77,17 @@ class Vector {
 
 class Pez { 
     constructor(){
+        this.canvas = canvas;
+        this.ctx = ctx;
         this.image = image;
         this.image.src = './img/pez_neon_todos.png';
-        this.dWidth = aleatorio(50,80);
+        this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
         this.dHeight = this.dWidth/2;
         this.sWidth = 540;
         this.sHeight = 290;
         this.imageDirection = 'izquierda';
         this.vivir = true;
         this.salud = 'sano'
-        this.canvas = canvas;
-        this.ctx = ctx;
         this.tamaño = 10;
         // Area de nado
         this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.dWidth;
@@ -154,12 +155,13 @@ class Pez {
 
     enfermar(){
         if (this.salud === 'enfermo'){
-            this.dWidth = aleatorio(50,80);
+            this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
             this.dHeight = this.dWidth/2;
         }
     }
 
     morir(){
+        this.vivir = false;
         let pMuerto=new Vector(this.posicion.x,this.paddingArr);//cambia direccion de vector en posicion.y a -1
         this.dir = Vector.res(pMuerto,this.posicion);
         this.dir.norm();
@@ -238,12 +240,14 @@ class Pecera {
         this.alto = canvas.width/2;
         this.image = imgPecera;
         this.image.src = './img/pecera.png';
+        this.texto = textSaturacion
         this.ctx = ctx;
         this.temperatura = temp;
-        this.saturacion = this.calSaturacion(this.temperatura);     
+        this.saturacion = this.calSaturacion(this.temperatura);
     }
 
-    aparecer(){      
+    aparecer(){
+        this.texto.innerHTML = this.saturacion;      
         this.ctx.drawImage(this.image,0,0,this.ancho,this.alto); 
     }
 
@@ -257,9 +261,55 @@ class Pecera {
 
 
 ///  Funciones
-let pecera = new Pecera(4);
-let peces = generar(Pez,20);
-let burbujas = generar (Burbuja,10);
+cajaPeces.value=10;
+cajaTemperatura.value=22;
+let pecera = new Pecera(cajaTemperatura.value);
+let peces = generar(Pez,cajaPeces.value);
+let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value));
+
+
+
+function pecesDinamicos(e){
+    e.preventDefault();
+    let nuevop = generar(Pez,cajaPeces.value);
+        peces = nuevop;
+}
+
+function tempDinamica(e){
+    e.preventDefault();
+    let nuevaTemp = cajaTemperatura.value;
+    pecera = new Pecera (nuevaTemp);
+    burbujasDinamicas();
+    resucitarPez();
+}
+
+function burbujasDinamicas(){
+    let nuevasBurbujas = Math.floor(pecera.saturacion);
+    if (pecera.temperatura<22){
+        burbujas = generar (Burbuja,nuevasBurbujas*50);
+    }else if(pecera.temperatura>28){
+        burbujas = generar (Burbuja,nuevasBurbujas-5);
+    } else{
+        burbujas = generar (Burbuja,nuevasBurbujas+50)
+    }
+}
+
+function validarBurbujasIniciales(b){
+    if (b<22){
+        return Math.floor(pecera.saturacion)*50
+    }else if(b>28){
+        return Math.floor(pecera.saturacion)-5
+    } else {
+        return Math.floor(pecera.saturacion)+50
+    }
+}
+
+function resucitarPez(){
+    for (let i = 0; i < peces.length; i++) {
+        peces[i].vivir = true;
+        peces[i].dir = new Vector(signo()*Math.random()*canvas.width/2,signo()*Math.random()*canvas.height/2);   
+    } 
+}
 
 function generar(obj,n){
     let p = [];
@@ -296,7 +346,6 @@ function enfermar(){
 }
 
 function actualizar(){
-
     ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
     pecera.aparecer();
     
@@ -305,14 +354,23 @@ function actualizar(){
     }
     
     for(i=0;i<peces.length;i++){
-       peces[i].aparecer();
+        peces[i].aparecer();
 
-        if(peces[i].vivir===true){
+        if(pecera.temperatura<22){
+            peces[i].salud = 'enfermo';
             peces[i].nadar();
-            }else{
+        }else{
+            peces[i].salud = 'sano';
+            peces[i].nadar();
+        }
+ 
+        if(pecera.temperatura>28){
+            peces[i].nadar();
             peces[i].morir();
-        }  
-    }
+             }else{
+            peces[i].nadar();
+         }  
+     }
 
     
     
@@ -334,25 +392,31 @@ var board = JXG.JSXGraph.initBoard
     showCopyright: false,
 }
 );
-graph.style.height = `${innerHeight/1.8}px`;
+graph.style.height = `${innerHeight/2}px`;
 
-function crearPunto(e){
-    e.preventDefault();
+function crearPunto(){
     let caja = document.getElementById('temp')
     pecera.temperatura=caja.value;
     let psaturacion = pecera.calSaturacion(pecera.temperatura);
-    console.log(caja.value);
-
+    let pointColor = pecera.temperatura >= 22 & pecera.temperatura <= 28?'#5dc1b9':'#fd7b7b';
+    console.log(pointColor);
     board.create(
         'point', 
         [pecera.temperatura,psaturacion],
         {
             name:'', 
-            strokecolor:'#00b8ff',
-            fillColor:'#00b8ff',
+            strokecolor: pointColor,
+            fillColor: pointColor,
             fixed : true
         }
         );
+        
+}
+
+function pressIntro(e){
+    if(e.keyCode === 13){
+    crearPunto();
+    }
         
 }
 
