@@ -155,7 +155,7 @@ class Pez {
 
     enfermar(){
         if (this.salud === 'enfermo'){
-            this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
+            this.dWidth = aleatorio(50,80);
             this.dHeight = this.dWidth/2;
         }
     }
@@ -419,5 +419,11 @@ function pressIntro(e){
     }
         
 }
+
+function crearGrafica(){
+    board.create('functiongraph', [function(x){return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57}]);
+}
+console.log(pecera.sat);
+crearGrafica();
 
 
