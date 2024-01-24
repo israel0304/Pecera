@@ -350,8 +350,15 @@ function actualizar(){
     
     for(i=0;i<peces.length;i++){
         peces[i].aparecer();
+
+        if(pecera.temperatura<22){
+            peces[i].salud = 'enfermo';
+        }else{
+            peces[i].salud = 'sano';
+        }
  
-         if(peces[i].vivir===true){
+        if(peces[i].vivir===true){
+            
              peces[i].nadar();
              }else{
              peces[i].morir();
