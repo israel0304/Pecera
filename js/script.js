@@ -1,10 +1,7 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 let graph = document.getElementById("box");
-let boton = document.getElementById("die");
-let boton2 = document.getElementById("sick");
 let boton3 = document.getElementById("point");
-let boton4 = document.getElementById("npeces");
 let cajaPeces = document.getElementById("peces");
 let cajaTemperatura = document.getElementById("temp");
 let textSaturacion = document.getElementById("sat");
@@ -14,10 +11,7 @@ canvas.width=innerWidth;
 canvas.height=canvas.width/2
 
 // event listeers
-boton.addEventListener('click', alerta);
-boton2.addEventListener('click', enfermar);
 boton3.addEventListener('click', crearPunto);
-boton4.addEventListener('click', pecesDinamicos);
 cajaPeces.addEventListener('change',pecesDinamicos);
 cajaTemperatura.addEventListener('change', tempDinamica)
 
@@ -363,7 +357,6 @@ function actualizar(){
         if(pecera.temperatura<22){
             peces[i].salud = 'enfermo';
             peces[i].nadar();
-            peces[i].morir();
         }else{
             peces[i].salud = 'sano';
             peces[i].nadar();
