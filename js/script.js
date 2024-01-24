@@ -6,9 +6,10 @@ let boton2 = document.getElementById("sick");
 let boton3 = document.getElementById("point");
 let boton4 = document.getElementById("npeces");
 let cajaPeces = document.getElementById("peces");
+let cajaTemperatura = document.getElementById("temp");
+let textSaturacion = document.getElementById("sat");
 let image = new Image();
 let imgPecera = new Image();
-
 canvas.width=innerWidth;
 canvas.height=canvas.width/2
 
@@ -18,6 +19,7 @@ boton2.addEventListener('click', enfermar);
 boton3.addEventListener('click', crearPunto);
 boton4.addEventListener('click', pecesDinamicos);
 cajaPeces.addEventListener('change',pecesDinamicos);
+cajaTemperatura.addEventListener('change', tempDinamica)
 
 
 // clases
@@ -241,12 +243,14 @@ class Pecera {
         this.alto = canvas.width/2;
         this.image = imgPecera;
         this.image.src = './img/pecera.png';
+        this.texto = textSaturacion
         this.ctx = ctx;
         this.temperatura = temp;
-        this.saturacion = this.calSaturacion(this.temperatura);     
+        this.saturacion = this.calSaturacion(this.temperatura);
     }
 
-    aparecer(){      
+    aparecer(){
+        this.texto.innerHTML = this.saturacion;      
         this.ctx.drawImage(this.image,0,0,this.ancho,this.alto); 
     }
 
@@ -261,9 +265,46 @@ class Pecera {
 
 ///  Funciones
 cajaPeces.value=10;
-let pecera = new Pecera(4);
+cajaTemperatura.value=22;
+let pecera = new Pecera(cajaTemperatura.value);
 let peces = generar(Pez,cajaPeces.value);
-let burbujas = generar (Burbuja,5);
+let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value));
+
+
+
+function pecesDinamicos(e){
+    e.preventDefault();
+    let nuevop = generar(Pez,cajaPeces.value);
+        peces = nuevop;
+}
+
+function tempDinamica(e){
+    e.preventDefault();
+    let nuevaTemp = cajaTemperatura.value;
+    pecera = new Pecera (nuevaTemp);
+    burbujasDinamicas();
+}
+
+function burbujasDinamicas(){
+    let nuevasBurbujas = Math.floor(pecera.saturacion);
+    if (pecera.temperatura<22){
+        burbujas = generar (Burbuja,nuevasBurbujas*50);
+    }else if(pecera.temperatura>28){
+        burbujas = generar (Burbuja,nuevasBurbujas-5);
+    } else{
+        burbujas = generar (Burbuja,nuevasBurbujas+50)
+    }
+}
+
+function validarBurbujasIniciales(b){
+    if (b<22){
+        return Math.floor(pecera.saturacion)*50
+    }else if(b>28){
+        return Math.floor(pecera.saturacion)-5
+    } else {
+        return Math.floor(pecera.saturacion)+50
+    }
+}
 
 function generar(obj,n){
     let p = [];
@@ -271,12 +312,6 @@ function generar(obj,n){
         p[i] = new obj();
     }
     return p;
-}
-
-function pecesDinamicos(e){
-    e.preventDefault();
-    let nuevop = generar(Pez,cajaPeces.value);
-        peces = nuevop;
 }
 
 function aleatorio(min,max){
