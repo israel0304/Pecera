@@ -165,6 +165,7 @@ class Pez {
     }
 
     morir(){
+        this.vivir = false;
         let pMuerto=new Vector(this.posicion.x,this.paddingArr);//cambia direccion de vector en posicion.y a -1
         this.dir = Vector.res(pMuerto,this.posicion);
         this.dir.norm();
@@ -283,6 +284,7 @@ function tempDinamica(e){
     let nuevaTemp = cajaTemperatura.value;
     pecera = new Pecera (nuevaTemp);
     burbujasDinamicas();
+    resucitarPez();
 }
 
 function burbujasDinamicas(){
@@ -304,6 +306,13 @@ function validarBurbujasIniciales(b){
     } else {
         return Math.floor(pecera.saturacion)+50
     }
+}
+
+function resucitarPez(){
+    for (let i = 0; i < peces.length; i++) {
+        peces[i].vivir = true;
+        peces[i].dir = new Vector(signo()*Math.random()*canvas.width/2,signo()*Math.random()*canvas.height/2);   
+    } 
 }
 
 function generar(obj,n){
@@ -353,15 +362,18 @@ function actualizar(){
 
         if(pecera.temperatura<22){
             peces[i].salud = 'enfermo';
+            peces[i].nadar();
+            peces[i].morir();
         }else{
             peces[i].salud = 'sano';
+            peces[i].nadar();
         }
  
-        if(peces[i].vivir===true){
-            
-             peces[i].nadar();
+        if(pecera.temperatura>28){
+            peces[i].nadar();
+            peces[i].morir();
              }else{
-             peces[i].morir();
+            peces[i].nadar();
          }  
      }
 
