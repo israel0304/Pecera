@@ -5,6 +5,8 @@ let boton3 = document.getElementById("point");
 let cajaPeces = document.getElementById("peces");
 let cajaTemperatura = document.getElementById("temp");
 let textSaturacion = document.getElementById("sat");
+let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
+
 let image = new Image();
 let imgPecera = new Image();
 canvas.width=innerWidth;
@@ -387,12 +389,12 @@ var board = JXG.JSXGraph.initBoard
 (
     'box', 
 {
-    boundingbox: [-5, 50, 100, -5], 
+    boundingbox: [-5, 40, 55, -5], 
     axis:true,
     showCopyright: false,
 }
 );
-graph.style.height = `45vh`;
+graph.style.height = `${rowHeight.height}px`;
 
 function crearPunto(){
     let caja = document.getElementById('temp')
@@ -421,9 +423,15 @@ function pressIntro(e){
 }
 
 function crearGrafica(){
-    board.create('functiongraph', [function(x){return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57}]);
+    var checkbox = board.create('checkbox', [40, 35, 'Mostrar Grafico'], {fixed : true,strokecolor:'#fd7b7b'})
+    board.create('functiongraph', [
+        function(x){
+            if(checkbox.Value()){
+                return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57
+            }
+        }
+    ]);
 }
-console.log(pecera.sat);
 crearGrafica();
 
 
