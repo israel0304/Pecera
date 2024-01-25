@@ -14,7 +14,6 @@ canvas.height=canvas.width/2
 boton3.addEventListener('click', crearPunto);
 cajaPeces.addEventListener('change',pecesDinamicos);
 cajaTemperatura.addEventListener('change', tempDinamica);
-cajaTemperatura.addEventListener('keydown', pressIntro);
 
 
 
@@ -276,11 +275,12 @@ function pecesDinamicos(e){
 }
 
 function tempDinamica(e){
-    e.preventDefault();
+    cajaTemperatura.addEventListener('keydown', pressIntro);
     let nuevaTemp = cajaTemperatura.value;
     pecera = new Pecera (nuevaTemp);
     burbujasDinamicas();
     resucitarPez();
+    pressIntro(e);
 }
 
 function burbujasDinamicas(){
@@ -392,14 +392,13 @@ var board = JXG.JSXGraph.initBoard
     showCopyright: false,
 }
 );
-graph.style.height = `${innerHeight/2}px`;
+graph.style.height = `45vh`;
 
 function crearPunto(){
     let caja = document.getElementById('temp')
     pecera.temperatura=caja.value;
     let psaturacion = pecera.calSaturacion(pecera.temperatura);
     let pointColor = pecera.temperatura >= 22 & pecera.temperatura <= 28?'#5dc1b9':'#fd7b7b';
-    console.log(pointColor);
     board.create(
         'point', 
         [pecera.temperatura,psaturacion],
@@ -414,10 +413,11 @@ function crearPunto(){
 }
 
 function pressIntro(e){
+    console.log(e); 
     if(e.keyCode === 13){
     crearPunto();
     }
-        
+    
 }
 
 function crearGrafica(){
