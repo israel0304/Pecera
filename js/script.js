@@ -5,6 +5,8 @@ let boton3 = document.getElementById("point");
 let cajaPeces = document.getElementById("peces");
 let cajaTemperatura = document.getElementById("temp");
 let textSaturacion = document.getElementById("sat");
+let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
+
 let image = new Image();
 let imgPecera = new Image();
 canvas.width=innerWidth;
@@ -14,7 +16,6 @@ canvas.height=canvas.width/2
 boton3.addEventListener('click', crearPunto);
 cajaPeces.addEventListener('change',pecesDinamicos);
 cajaTemperatura.addEventListener('change', tempDinamica);
-cajaTemperatura.addEventListener('keydown', pressIntro);
 
 
 
@@ -187,7 +188,7 @@ class Burbuja {
       this.canvas = canvas;
       this.canvas.width = canvas.width;
       this.canvas.height = canvas.height;
-      this.radius = aleatorio(3, 10);
+      this.radius = aleatorio((this.canvas.width * 0.3)/100, (this.canvas.height * 2)/100);
       // Area de burbujas
       this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.radius;
       this.paddingIzq = (this.canvas.width * 5)/100;
@@ -276,11 +277,12 @@ function pecesDinamicos(e){
 }
 
 function tempDinamica(e){
-    e.preventDefault();
+    cajaTemperatura.addEventListener('keydown', pressIntro);
     let nuevaTemp = cajaTemperatura.value;
     pecera = new Pecera (nuevaTemp);
     burbujasDinamicas();
     resucitarPez();
+    pressIntro(e);
 }
 
 function burbujasDinamicas(){
@@ -387,19 +389,18 @@ var board = JXG.JSXGraph.initBoard
 (
     'box', 
 {
-    boundingbox: [-5, 50, 100, -5], 
+    boundingbox: [-5, 40, 55, -5], 
     axis:true,
     showCopyright: false,
 }
 );
-graph.style.height = `${innerHeight/2}px`;
+graph.style.height = `${rowHeight.height}px`;
 
 function crearPunto(){
     let caja = document.getElementById('temp')
     pecera.temperatura=caja.value;
     let psaturacion = pecera.calSaturacion(pecera.temperatura);
     let pointColor = pecera.temperatura >= 22 & pecera.temperatura <= 28?'#5dc1b9':'#fd7b7b';
-    console.log(pointColor);
     board.create(
         'point', 
         [pecera.temperatura,psaturacion],
@@ -414,10 +415,23 @@ function crearPunto(){
 }
 
 function pressIntro(e){
+    console.log(e); 
     if(e.keyCode === 13){
     crearPunto();
     }
-        
+    
 }
+
+function crearGrafica(){
+    var checkbox = board.create('checkbox', [40, 35, 'Mostrar Grafico'], {fixed : true,strokecolor:'#fd7b7b'})
+    board.create('functiongraph', [
+        function(x){
+            if(checkbox.Value()){
+                return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57
+            }
+        }
+    ]);
+}
+crearGrafica();
 
 
