@@ -189,7 +189,7 @@ class Burbuja {
       this.canvas = canvas;
       this.canvas.width = canvas.width;
       this.canvas.height = canvas.height;
-      this.radius = aleatorio((this.canvas.width * 0.3)/100, (this.canvas.height * 2)/100);
+      this.radius = aleatorio((this.canvas.width * 0.3)/100, (this.canvas.height * 3.5)/100);
       // Area de burbujas
       this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.radius;
       this.paddingIzq = (this.canvas.width * 5)/100;
