@@ -245,6 +245,7 @@ class Pecera {
         this.texto = textSaturacion
         this.ctx = ctx;
         this.temperatura = temp;
+        this.saturacion = this.calSaturacion(this.temperatura);
     }
 
     aparecer(){
@@ -293,6 +294,7 @@ cajaTemperatura.value=22;
 let pecera = new Pecera(cajaTemperatura.value);
 let peces = generar(Pez,cajaPeces.value);
 let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value));
+
 
 
 
