@@ -269,7 +269,6 @@ class Grafica{
         this.height = this.idRowParent.getBoundingClientRect().height;
         this.pecera = pecera;
         this.place.style.height = `${this.height}px`;
-        // this.funcion = this.mostrarFuncion();
     }
 
     graficarPunto(){
@@ -286,14 +285,7 @@ class Grafica{
             ); 
     }
 
-    mostrarFuncion(){
-        this.board.create('functiongraph', [
-            function(x){
-                return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57
-            }
-        ]);
-    }
-}
+ }
 
 ///  Funciones
 cajaPeces.value=10;
@@ -417,7 +409,7 @@ requestAnimationFrame(actualizar);
 
 //////////JSXGraph
 
-let graff = new Grafica('box','contenedor',pecera,
+let grafica = new Grafica('box','contenedor',pecera,
 {
     boundingbox: [-5, 40, 55, -5], 
     axis:true,
@@ -425,11 +417,19 @@ let graff = new Grafica('box','contenedor',pecera,
 }
 );
 
-graff.mostrarFuncion()
-
+function crearGrafica(){
+    var checkbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], {fixed : true,strokecolor:'#fd7b7b'})
+    grafica.board.create('functiongraph', [
+        function(x){
+            if(checkbox.Value()){
+                return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57
+            }
+        }
+    ]);
+}
 
 function crearPunto(){
-    graff.graficarPunto();
+    grafica.graficarPunto();
 }
 
 function pressIntro(e){
@@ -437,3 +437,4 @@ function pressIntro(e){
     crearPunto();
     }
 }
+crearGrafica();
