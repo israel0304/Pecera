@@ -418,14 +418,14 @@ let grafica = new Grafica('box','contenedor',pecera,
 );
 
 function crearGrafica(){
-    var checkbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], {fixed : true,strokecolor:'#fd7b7b'})
+    var checkbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], {fixed : true})
     grafica.board.create('functiongraph', [
         function(x){
             if(checkbox.Value()){
                 return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57
             }
         }
-    ]);
+    ], {strokecolor:'#3673c5',strokeWidth:2});
 }
 
 function crearPunto(){
