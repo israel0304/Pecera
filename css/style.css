@@ -1,6 +1,6 @@
 body{
 margin: 0;
-padding-top: 50px;
+padding-top: 15px;
 }
 #canvas{
     border: thin inset cornflowerblue;
@@ -9,6 +9,7 @@ padding-top: 50px;
 
 #box{
     width: 90%;
+    height: auto;
 }
  /* #contenedor{
      display: flex;

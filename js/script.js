@@ -5,6 +5,8 @@ let boton3 = document.getElementById("point");
 let cajaPeces = document.getElementById("peces");
 let cajaTemperatura = document.getElementById("temp");
 let textSaturacion = document.getElementById("sat");
+let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
+
 let image = new Image();
 let imgPecera = new Image();
 canvas.width=innerWidth;
@@ -187,7 +189,7 @@ class Burbuja {
       this.canvas = canvas;
       this.canvas.width = canvas.width;
       this.canvas.height = canvas.height;
-      this.radius = aleatorio(3, 10);
+      this.radius = aleatorio((this.canvas.width * 0.3)/100, (this.canvas.height * 2)/100);
       // Area de burbujas
       this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.radius;
       this.paddingIzq = (this.canvas.width * 5)/100;
@@ -247,6 +249,7 @@ class Pecera {
     }
 
     aparecer(){
+        this.saturacion = this.calSaturacion(this.temperatura);
         this.texto.innerHTML = this.saturacion;      
         this.ctx.drawImage(this.image,0,0,this.ancho,this.alto); 
     }
@@ -258,7 +261,32 @@ class Pecera {
 
 }
 
+class Grafica{
+    constructor(id,idRowParent,pecera,paramJSX){
+        this.id = id
+        this.board = JXG.JSXGraph.initBoard(this.id,paramJSX);
+        this.place = document.getElementById(this.id);
+        this.idRowParent = document.getElementById(idRowParent);
+        this.height = this.idRowParent.getBoundingClientRect().height;
+        this.pecera = pecera;
+        this.place.style.height = `${this.height}px`;
+    }
 
+    graficarPunto(){
+        this.pointColor = this.pecera.temperatura >= 22 & this.pecera.temperatura <= 28?'#5dc1b9':'#fd7b7b';
+        this.board.create(
+            'point', 
+            [this.pecera.temperatura,this.pecera.saturacion],
+            {
+                name:'', 
+                strokecolor: this.pointColor,
+                fillColor: this.pointColor,
+                fixed : true
+            }
+            ); 
+    }
+
+ }
 
 ///  Funciones
 cajaPeces.value=10;
@@ -269,6 +297,7 @@ let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value))
 
 
 
+
 function pecesDinamicos(e){
     e.preventDefault();
     let nuevop = generar(Pez,cajaPeces.value);
@@ -276,10 +305,10 @@ function pecesDinamicos(e){
 }
 
 function tempDinamica(e){
-    e.preventDefault();
-    let nuevaTemp = cajaTemperatura.value;
-    pecera = new Pecera (nuevaTemp);
+    pecera.temperatura = cajaTemperatura.value;
+    pecera.calSaturacion(pecera.temperatura);
     burbujasDinamicas();
+    pressIntro(e);
     resucitarPez();
 }
 
@@ -382,42 +411,32 @@ requestAnimationFrame(actualizar);
 
 //////////JSXGraph
 
-
-var board = JXG.JSXGraph.initBoard
-(
-    'box', 
+let grafica = new Grafica('box','contenedor',pecera,
 {
-    boundingbox: [-5, 50, 100, -5], 
+    boundingbox: [-5, 40, 55, -5], 
     axis:true,
     showCopyright: false,
 }
 );
-graph.style.height = `${innerHeight/2}px`;
+
+function crearGrafica(){
+    var checkbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], {fixed : true})
+    grafica.board.create('functiongraph', [
+        function(x){
+            if(checkbox.Value()){
+                return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57
+            }
+        }
+    ], {strokecolor:'#3673c5',strokeWidth:2});
+}
 
 function crearPunto(){
-    let caja = document.getElementById('temp')
-    pecera.temperatura=caja.value;
-    let psaturacion = pecera.calSaturacion(pecera.temperatura);
-    let pointColor = pecera.temperatura >= 22 & pecera.temperatura <= 28?'#5dc1b9':'#fd7b7b';
-    console.log(pointColor);
-    board.create(
-        'point', 
-        [pecera.temperatura,psaturacion],
-        {
-            name:'', 
-            strokecolor: pointColor,
-            fillColor: pointColor,
-            fixed : true
-        }
-        );
-        
+    grafica.graficarPunto();
 }
 
 function pressIntro(e){
     if(e.keyCode === 13){
     crearPunto();
     }
-        
 }
-
-
+crearGrafica();
