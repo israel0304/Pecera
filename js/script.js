@@ -6,6 +6,7 @@ let cajaPeces = document.getElementById("peces");
 let cajaTemperatura = document.getElementById("temp");
 let textSaturacion = document.getElementById("sat");
 let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
+let btnReset = document.getElementById('reset');
 
 let image = new Image();
 let imgPecera = new Image();
@@ -17,6 +18,7 @@ boton3.addEventListener('click', crearPunto);
 cajaPeces.addEventListener('change',pecesDinamicos);
 cajaTemperatura.addEventListener('change', tempDinamica);
 cajaTemperatura.addEventListener('keydown', pressIntro);
+btnReset.addEventListener('click', reiniciar);
 
 
 
@@ -407,6 +409,11 @@ function actualizar(){
 }
 
 requestAnimationFrame(actualizar);
+
+function reiniciar(){
+    window.location.reload();
+}
+
 
 
 //////////JSXGraph
