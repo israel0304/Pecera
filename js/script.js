@@ -7,6 +7,7 @@ let cajaTemperatura = document.getElementById("temp");
 let textSaturacion = document.getElementById("sat");
 let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
 let btnReset = document.getElementById('reset');
+let cajaSize = document.getElementById('tpeces');
 
 let image = new Image();
 let imgPecera = new Image();
@@ -18,6 +19,7 @@ boton3.addEventListener('click', crearPunto);
 cajaPeces.addEventListener('change',pecesDinamicos);
 cajaTemperatura.addEventListener('change', tempDinamica);
 cajaTemperatura.addEventListener('keydown', pressIntro);
+cajaSize.addEventListener('change', pecesDinamicos);
 btnReset.addEventListener('click', reiniciar);
 
 
@@ -80,19 +82,19 @@ class Vector {
 
 
 class Pez { 
-    constructor(){
+    constructor(t){
         this.canvas = canvas;
         this.ctx = ctx;
         this.image = image;
         this.image.src = './img/pez_neon_todos.png';
-        this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
+        this.size = t
+        this.dWidth = (this.canvas.width * this.size)/100 //aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
         this.dHeight = this.dWidth/2;
         this.sWidth = 540;
         this.sHeight = 290;
         this.imageDirection = 'izquierda';
         this.vivir = true;
         this.salud = 'sano'
-        this.tamaño = 10;
         // Area de nado
         this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.dWidth;
         this.paddingIzq = (this.canvas.width * 5)/100;
@@ -291,10 +293,11 @@ class Grafica{
  }
 
 ///  Funciones
-cajaPeces.value=10;
+cajaPeces.value=1;
 cajaTemperatura.value=22;
+cajaSize.value = 1;
 let pecera = new Pecera(cajaTemperatura.value);
-let peces = generar(Pez,cajaPeces.value);
+let peces = generar(Pez,cajaPeces.value,cajaSize.value);
 let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value));
 
 
@@ -302,7 +305,7 @@ let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value))
 
 function pecesDinamicos(e){
     e.preventDefault();
-    let nuevop = generar(Pez,cajaPeces.value);
+    let nuevop = generar(Pez,cajaPeces.value,cajaSize.value);
         peces = nuevop;
 }
 
@@ -342,10 +345,10 @@ function resucitarPez(){
     } 
 }
 
-function generar(obj,n){
+function generar(obj,n,param){
     let p = [];
     for(i=0;i<n;i++){
-        p[i] = new obj();
+        p[i] = new obj(param);
     }
     return p;
 }
