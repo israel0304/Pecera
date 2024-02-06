@@ -87,7 +87,7 @@ class Pez {
         this.ctx = ctx;
         this.image = image;
         this.image.src = './img/pez-neon_todos.png';
-        this.size = t
+        this.size = Number(t)+7;
         this.dWidth = (this.canvas.width * this.size)/100 //aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
         this.dHeight = this.dWidth/2;
         this.sWidth = 540;
@@ -300,7 +300,7 @@ class Grafica{
 ///  Funciones
 cajaPeces.value=1;
 cajaTemperatura.value=23;
-cajaSize.value = 15
+cajaSize.value = 1
 
 
 ;
@@ -313,6 +313,14 @@ let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value))
 
 function pecesDinamicos(e){
     e.preventDefault();
+    if(cajaSize.value>7){
+        alert('Los peces no pueden ser mayores a 7 cm');
+        cajaSize.value = 7;
+    }
+    if(cajaSize.value<0){
+        alert('Los peces no pueden ser mayores a 0 cm');
+        cajaSize.value = 0;
+    }
     let nuevop = generar(Pez,cajaPeces.value,cajaSize.value);
         peces = nuevop;
 }
