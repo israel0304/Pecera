@@ -313,6 +313,10 @@ let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value))
 
 function pecesDinamicos(e){
     e.preventDefault();
+    if(cajaPeces.value < 0){
+        alert('Los peces no pueden menores a 0');
+        cajaPeces.value = 0;
+    }
     if(cajaSize.value>7){
         alert('Los peces no pueden ser mayores a 7 cm');
         cajaSize.value = 7;
