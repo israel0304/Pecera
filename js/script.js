@@ -322,7 +322,7 @@ function pecesDinamicos(e){
         cajaSize.value = 7;
     }
     if(cajaSize.value<0){
-        alert('Los peces no pueden ser mayores a 0 cm');
+        alert('Los peces no pueden ser menores a 0 cm');
         cajaSize.value = 0;
     }
     let nuevop = generar(Pez,cajaPeces.value,cajaSize.value);
