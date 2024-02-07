@@ -17,19 +17,23 @@
             <div class="col-md">
                 <div class="row">
                     <div class="col-md p-2">
-                        Temperatura: 
+                        <p>Temperatura:</p> 
                         <input type="number" name="tmp" id="temp">
                     </div>
                     <div class="col-md p-2">
-                        Número de peces: 
-                        <input type="number" name="peces" id="peces">
+                        <p>Número de peces:</p> 
+                        <input type="number" name="peces" id="npeces">
+                    </div>
+                    <div class="col-md p-2">
+                        <p>Tamaño de peces</p> 
+                        <input type="number" name="peces" id="tpeces">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col pb-3">
                         <p><b>Saturación de oxígeno (SO) = <span id="sat"></span></b></p> 
                         <button id="point">graficar punto</button>
-                        <button id="borrarPuntos" style="display: none">Borrar</button>
+                        <button id="reset">Reiniciar</button>
                     </div>
                 </div>
                 <div class="row">
