@@ -2,11 +2,12 @@ let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 let graph = document.getElementById("box");
 let boton3 = document.getElementById("point");
-let cajaPeces = document.getElementById("peces");
+let cajaPeces = document.getElementById("npeces");
 let cajaTemperatura = document.getElementById("temp");
 let textSaturacion = document.getElementById("sat");
 let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
 let btnReset = document.getElementById('reset');
+let cajaSize = document.getElementById('tpeces');
 
 let image = new Image();
 let imgPecera = new Image();
@@ -18,6 +19,7 @@ boton3.addEventListener('click', crearPunto);
 cajaPeces.addEventListener('change',pecesDinamicos);
 cajaTemperatura.addEventListener('change', tempDinamica);
 cajaTemperatura.addEventListener('keydown', pressIntro);
+cajaSize.addEventListener('change', pecesDinamicos);
 btnReset.addEventListener('click', reiniciar);
 
 
@@ -80,19 +82,20 @@ class Vector {
 
 
 class Pez { 
-    constructor(){
+    constructor(t){
         this.canvas = canvas;
         this.ctx = ctx;
         this.image = image;
-        this.image.src = './img/pez_neon_todos.png';
-        this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
+        this.image.src = './img/pez-neon_todos.png';
+        this.size = Number(t)+7;
+        this.dWidth = (this.canvas.width * this.size)/100 //aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
         this.dHeight = this.dWidth/2;
         this.sWidth = 540;
         this.sHeight = 290;
+        this.sy = 0
         this.imageDirection = 'izquierda';
         this.vivir = true;
         this.salud = 'sano'
-        this.tamaño = 10;
         // Area de nado
         this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.dWidth;
         this.paddingIzq = (this.canvas.width * 5)/100;
@@ -109,7 +112,6 @@ class Pez {
     }
 
     aparecer() {
-        
         this.enfermar();
         // Dirección del pez
         if( this.aceleracion.x < 0){
@@ -122,13 +124,13 @@ class Pez {
         // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
         
         if(this.imageDirection==='derecha' & this.vivir===true){
-            this.ctx.drawImage(this.image,0,0,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
+            this.ctx.drawImage(this.image,0,this.sy,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
         }else if(this.imageDirection==='derecha' & this.vivir===false){
             this.ctx.drawImage(this.image,this.sWidth*2,0,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
         }
 
         if (this.imageDirection==='izquierda' & this.vivir===true){
-            this.ctx.drawImage(this.image,this.sWidth,0,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
+            this.ctx.drawImage(this.image,this.sWidth,this.sy,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
         }else if(this.imageDirection==='izquierda' & this.vivir===false){
             this.ctx.drawImage(this.image,this.sWidth*3,0,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
         }
@@ -159,7 +161,12 @@ class Pez {
 
     enfermar(){
         if (this.salud === 'enfermo'){
-            this.dWidth = aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
+            this.sy = 290
+            this.dWidth = aleatorio((this.canvas.width * this.size)/100,(this.canvas.width * this.size*(18/20))/100);
+            this.dHeight = this.dWidth/2;
+        }else{
+            this.sy = 0
+            this.dWidth = (this.canvas.width * this.size)/100
             this.dHeight = this.dWidth/2;
         }
     }
@@ -291,10 +298,14 @@ class Grafica{
  }
 
 ///  Funciones
-cajaPeces.value=10;
-cajaTemperatura.value=22;
+cajaPeces.value=1;
+cajaTemperatura.value=23;
+cajaSize.value = 1
+
+
+;
 let pecera = new Pecera(cajaTemperatura.value);
-let peces = generar(Pez,cajaPeces.value);
+let peces = generar(Pez,cajaPeces.value,cajaSize.value);
 let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value));
 
 
@@ -302,7 +313,15 @@ let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value))
 
 function pecesDinamicos(e){
     e.preventDefault();
-    let nuevop = generar(Pez,cajaPeces.value);
+    if(cajaSize.value>7){
+        alert('Los peces no pueden ser mayores a 7 cm');
+        cajaSize.value = 7;
+    }
+    if(cajaSize.value<0){
+        alert('Los peces no pueden ser mayores a 0 cm');
+        cajaSize.value = 0;
+    }
+    let nuevop = generar(Pez,cajaPeces.value,cajaSize.value);
         peces = nuevop;
 }
 
@@ -342,10 +361,10 @@ function resucitarPez(){
     } 
 }
 
-function generar(obj,n){
+function generar(obj,n,param){
     let p = [];
     for(i=0;i<n;i++){
-        p[i] = new obj();
+        p[i] = new obj(param);
     }
     return p;
 }
