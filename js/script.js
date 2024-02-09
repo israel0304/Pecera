@@ -8,6 +8,7 @@ let textSaturacion = document.getElementById("sat");
 let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
 let btnReset = document.getElementById('reset');
 let cajaSize = document.getElementById('tpeces');
+let anchoPecera = document.getElementById('Ancho');
 
 let image = new Image();
 let imgPecera = new Image();
@@ -21,6 +22,7 @@ cajaTemperatura.addEventListener('change', tempDinamica);
 cajaTemperatura.addEventListener('keydown', pressIntro);
 cajaSize.addEventListener('change', pecesDinamicos);
 btnReset.addEventListener('click', reiniciar);
+anchoPecera.addEventListener('change',peceraDinamica);
 
 
 
@@ -309,7 +311,10 @@ let peces = generar(Pez,cajaPeces.value,cajaSize.value);
 let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value));
 
 
-
+function peceraDinamica(e){
+e.preventDefault();
+pecera.ancho = ( canvas.width * anchoPecera.value ) /100;
+}
 
 function pecesDinamicos(e){
     e.preventDefault();
@@ -321,9 +326,9 @@ function pecesDinamicos(e){
         alert('Los peces no pueden ser mayores a 7 cm');
         cajaSize.value = 7;
     }
-    if(cajaSize.value<0){
-        alert('Los peces no pueden ser menores a 0 cm');
-        cajaSize.value = 0;
+    if(cajaSize.value<1){
+        alert('Los peces no pueden ser menores a 1 cm');
+        cajaSize.value = 1;
     }
     let nuevop = generar(Pez,cajaPeces.value,cajaSize.value);
         peces = nuevop;
