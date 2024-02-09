@@ -9,6 +9,7 @@ let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
 let btnReset = document.getElementById('reset');
 let cajaSize = document.getElementById('tpeces');
 let anchoPecera = document.getElementById('Ancho');
+let altoPecera = document.getElementById('Alto');
 
 let image = new Image();
 let imgPecera = new Image();
@@ -23,6 +24,7 @@ cajaTemperatura.addEventListener('keydown', pressIntro);
 cajaSize.addEventListener('change', pecesDinamicos);
 btnReset.addEventListener('click', reiniciar);
 anchoPecera.addEventListener('change',peceraDinamica);
+altoPecera.addEventListener('change',peceraDinamica);
 
 
 
@@ -251,6 +253,7 @@ class Pecera {
     constructor(temp){
         this.ancho = canvas.width;
         this.alto = canvas.width/2;
+        this.posY = 0;
         this.image = imgPecera;
         this.image.src = './img/pecera.png';
         this.texto = textSaturacion
@@ -262,7 +265,7 @@ class Pecera {
     aparecer(){
         this.saturacion = this.calSaturacion(this.temperatura);
         this.texto.innerHTML = this.saturacion;      
-        this.ctx.drawImage(this.image,0,0,this.ancho,this.alto); 
+        this.ctx.drawImage(this.image,0,this.posY,this.ancho,this.alto); 
     }
 
     calSaturacion(t){
@@ -313,7 +316,9 @@ let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value))
 
 function peceraDinamica(e){
 e.preventDefault();
-pecera.ancho = ( canvas.width * anchoPecera.value ) /100;
+pecera.ancho = ( canvas.width * anchoPecera.value ) /200;
+pecera.alto = ( canvas.width/2 * altoPecera.value ) /100;
+pecera.posY = canvas.width/2 - pecera.alto;
 }
 
 function pecesDinamicos(e){
