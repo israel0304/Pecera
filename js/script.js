@@ -8,7 +8,6 @@ let textSaturacion = document.getElementById("sat");
 let tempValSpan = document.getElementById("tempVal");
 let npecesValSpan = document.getElementById("npecesVal");
 let tpecesValSpan = document.getElementById("tpecesVal");
-let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
 let btnReset = document.getElementById('reset');
 let cajaSize = document.getElementById('tpeces');
 let playBtn = document.getElementById('playTemp');
@@ -17,8 +16,20 @@ let isPlaying = false;
 
 let image = new Image();
 let imgPecera = new Image();
-canvas.width = innerWidth;
-canvas.height = canvas.width / 2
+let imgPanel = new Image();
+let imgBomba = new Image();
+imgPanel.src = './img/panel_solar.png';
+imgBomba.src = './img/bomba_agua.png';
+let contenedorCanvas = document.getElementById('contenedorCanvas');
+
+function redimensionarCanvas() {
+    let w = contenedorCanvas.clientWidth;
+    canvas.width = w;
+    canvas.height = w / 2;
+}
+redimensionarCanvas();
+
+window.addEventListener('resize', redimensionarCanvas);
 
 // event listeers
 boton3.addEventListener('click', crearPunto);
@@ -95,7 +106,7 @@ class Pez {
         this.image = image;
         this.image.src = './img/pez-neon_todos.png';
         this.size = Number(t) + 7;
-        this.dWidth = (this.canvas.width * this.size) / 100 //aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
+        this.dWidth = (canvas.width * this.size) / 100
         this.dHeight = this.dWidth / 2;
         this.sWidth = 540;
         this.sHeight = 290;
@@ -104,10 +115,10 @@ class Pez {
         this.vivir = true;
         this.salud = 'sano'
         // Area de nado
-        this.paddingDer = this.canvas.width - ((this.canvas.width * 5) / 100) - this.dWidth;
-        this.paddingIzq = (this.canvas.width * 5) / 100;
-        this.paddingArr = (this.canvas.height * 11) / 100;
-        this.paddingAba = this.canvas.height - ((this.canvas.height * 11) / 100) - this.dHeight;
+        this.paddingDer = canvas.width - ((canvas.width * 5) / 100) - this.dWidth;
+        this.paddingIzq = (canvas.width * 5) / 100;
+        this.paddingArr = (canvas.height * 11) / 100;
+        this.paddingAba = canvas.height - ((canvas.height * 11) / 100) - this.dHeight;
 
         // Valores de nado 
         this.posicion = new Vector(this.validarPosicionX(), this.validarPosicionY());
@@ -169,11 +180,11 @@ class Pez {
     enfermar() {
         if (this.salud === 'enfermo') {
             this.sy = 290
-            this.dWidth = aleatorio((this.canvas.width * this.size) / 100, (this.canvas.width * this.size * (18 / 20)) / 100);
+            this.dWidth = aleatorio((canvas.width * this.size) / 100, (canvas.width * this.size * (18 / 20)) / 100);
             this.dHeight = this.dWidth / 2;
         } else {
             this.sy = 0
-            this.dWidth = (this.canvas.width * this.size) / 100
+            this.dWidth = (canvas.width * this.size) / 100
             this.dHeight = this.dWidth / 2;
         }
     }
@@ -203,14 +214,12 @@ class Pez {
 class Burbuja {
     constructor() {
         this.canvas = canvas;
-        this.canvas.width = canvas.width;
-        this.canvas.height = canvas.height;
-        this.radius = aleatorio((this.canvas.width * 0.3) / 100, (this.canvas.height * 2) / 100);
+        this.radius = aleatorio((canvas.width * 0.3) / 100, (canvas.height * 2) / 100);
         // Area de burbujas
-        this.paddingDer = this.canvas.width - ((this.canvas.width * 5) / 100) - this.radius;
-        this.paddingIzq = (this.canvas.width * 5) / 100;
-        this.paddingArr = (this.canvas.height * 12) / 100;
-        this.paddingAba = this.canvas.height - ((this.canvas.height * 11) / 100) - this.radius;
+        this.paddingDer = canvas.width - ((canvas.width * 5) / 100) - this.radius;
+        this.paddingIzq = (canvas.width * 5) / 100;
+        this.paddingArr = (canvas.height * 12) / 100;
+        this.paddingAba = canvas.height - ((canvas.height * 11) / 100) - this.radius;
         //Posición burbuja
         this.x = aleatorio(this.paddingIzq, this.paddingDer);
         this.y = aleatorio(this.paddingArr, this.paddingAba);
@@ -254,8 +263,6 @@ class Burbuja {
 
 class Pecera {
     constructor(temp) {
-        this.ancho = canvas.width;
-        this.alto = canvas.width / 2;
         this.image = imgPecera;
         this.image.src = './img/pecera.png';
         this.texto = textSaturacion
@@ -267,7 +274,7 @@ class Pecera {
     aparecer() {
         this.saturacion = this.calSaturacion(this.temperatura);
         this.texto.innerHTML = this.saturacion;
-        this.ctx.drawImage(this.image, 0, 0, this.ancho, this.alto);
+        this.ctx.drawImage(this.image, 0, 0, canvas.width, canvas.height);
     }
 
     calSaturacion(t) {
@@ -420,33 +427,35 @@ function enfermar() {
 }
 
 function actualizar() {
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    pecera.aparecer();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (escenarioActual === 1) {
+        pecera.aparecer();
 
-    for (i = 0; i < burbujas.length; i++) {
-        burbujas[i].draw();
-    }
-
-    for (i = 0; i < peces.length; i++) {
-        peces[i].aparecer();
-
-        if (pecera.temperatura < 22) {
-            peces[i].salud = 'enfermo';
-            peces[i].nadar();
-        } else {
-            peces[i].salud = 'sano';
-            peces[i].nadar();
+        for (i = 0; i < burbujas.length; i++) {
+            burbujas[i].draw();
         }
 
-        if (pecera.temperatura > 28) {
-            peces[i].nadar();
-            peces[i].morir();
-        } else {
-            peces[i].nadar();
+        for (i = 0; i < peces.length; i++) {
+            peces[i].aparecer();
+
+            if (pecera.temperatura < 22) {
+                peces[i].salud = 'enfermo';
+                peces[i].nadar();
+            } else {
+                peces[i].salud = 'sano';
+                peces[i].nadar();
+            }
+
+            if (pecera.temperatura > 28) {
+                peces[i].nadar();
+                peces[i].morir();
+            } else {
+                peces[i].nadar();
+            }
         }
+    } else {
+        actualizarEscenario2();
     }
-
-
 
     requestAnimationFrame(actualizar);
 }
@@ -517,3 +526,251 @@ function pressIntro(e) {
     }
 }
 crearGrafica();
+
+// ============================================
+// ESCENARIO 2: Sistema Sustentable
+// ============================================
+
+let escenarioActual = 1;
+
+// DOM refs
+let voltSlider = document.getElementById('voltaje');
+let voltVal = document.getElementById('voltVal');
+let corrVal = document.getElementById('corrVal');
+let potVal = document.getElementById('potVal');
+let odVal = document.getElementById('odVal');
+let btnPointOD = document.getElementById('point-od');
+let btnResetEsc2 = document.getElementById('reset-esc2');
+let esc1Btn = document.getElementById('esc1-btn');
+let esc2Btn = document.getElementById('esc2-btn');
+let esc1Controls = document.getElementById('esc1-controls');
+let esc2Controls = document.getElementById('esc2-controls');
+let box = document.getElementById('box');
+let box2 = document.getElementById('box2');
+let contenedorGrafica = document.getElementById('contenedorGrafica');
+
+let R = 5;
+
+function getCorriente(V) {
+    return V / R;
+}
+
+class ParticulaAgua {
+    constructor(pumpX, pumpY, voltaje) {
+        let factor = 0.3 + 0.7 * (voltaje / 50);
+        this.radius = aleatorio(3, 6) * factor;
+        this.x = pumpX + aleatorio(-15, 15);
+        this.y = pumpY;
+        this.speedY = aleatorio(1, 3) * factor;
+        this.phase = Math.random() * Math.PI * 2;
+    }
+
+    move() {
+        this.y -= this.speedY;
+        this.phase += 0.03;
+        this.x += Math.sin(this.phase) * 0.4;
+    }
+
+    draw() {
+        ctx.fillStyle = 'rgba(81, 209, 246, 0.5)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    get vivo() {
+        return this.y > canvas.height * 0.3;
+    }
+}
+
+// Escenario 2 state
+let particulasEsc2 = [];
+
+function cambiarEscenario(n) {
+    escenarioActual = n;
+    if (n === 1) {
+        esc1Btn.className = 'btn btn-primary btn-sm';
+        esc2Btn.className = 'btn btn-secondary btn-sm';
+        esc1Controls.style.display = '';
+        esc2Controls.style.display = 'none';
+        contenedorGrafica.style.display = '';
+        box.style.display = '';
+    } else {
+        esc1Btn.className = 'btn btn-secondary btn-sm';
+        esc2Btn.className = 'btn btn-primary btn-sm';
+        esc1Controls.style.display = 'none';
+        esc2Controls.style.display = '';
+        contenedorGrafica.style.display = 'none';
+        actualizarDisplayEsc2();
+    }
+}
+
+function actualizarDisplayEsc2() {
+    let V = Number(voltSlider.value);
+    let I = getCorriente(V);
+    voltVal.textContent = V;
+    corrVal.textContent = I.toFixed(2);
+}
+
+function actualizarEscenario2() {
+    let w = canvas.width;
+    let h = canvas.height;
+    let V = Number(voltSlider.value);
+    let I = getCorriente(V);
+
+    // Sky - darker when low V, brighter when high V
+    let brightness = 0.3 + 0.7 * (V / 50);
+    let skyR = Math.floor(135 * brightness);
+    let skyG = Math.floor(206 * brightness);
+    let skyB = Math.floor(235 * brightness);
+    let skyColor = `rgb(${skyR}, ${skyG}, ${skyB})`;
+    let skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.3);
+    skyGrad.addColorStop(0, skyColor);
+    skyGrad.addColorStop(1, `rgb(${Math.floor(184 * brightness)}, ${Math.floor(224 * brightness)}, ${Math.floor(247 * brightness)})`);
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, h * 0.3);
+
+    // Sun - glow and size based on V
+    let sunX = w * 0.12, sunY = h * 0.08;
+    let sunR = w * 0.015 + (w * 0.02) * (V / 50);
+    let glowR = sunR * (1.5 + 1.5 * (V / 50));
+    let alpha = 0.15 + 0.35 * (V / 50);
+    ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, glowR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = `rgba(255, 243, 176, ${alpha * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, glowR * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ground / shore (right side)
+    ctx.fillStyle = '#8B7355';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.6, h * 0.3);
+    ctx.lineTo(w, h * 0.3);
+    ctx.lineTo(w, h);
+    ctx.lineTo(w * 0.55, h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Pond water
+    let waterGrad = ctx.createLinearGradient(0, h * 0.3, 0, h);
+    waterGrad.addColorStop(0, '#4A90D9');
+    waterGrad.addColorStop(0.5, '#3173B3');
+    waterGrad.addColorStop(1, '#1A4D8C');
+    ctx.fillStyle = waterGrad;
+    ctx.fillRect(0, h * 0.3, w * 0.6, h * 0.7);
+
+    // Water surface
+    ctx.strokeStyle = '#A0D4FF';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = 0; x < w * 0.6; x += 3) {
+        ctx.lineTo(x, h * 0.3 + Math.sin(x * 0.02 + Date.now() * 0.001) * 3);
+    }
+    ctx.stroke();
+
+    // Pond bottom detail
+    ctx.fillStyle = '#2C5F2D';
+    ctx.beginPath();
+    ctx.ellipse(w * 0.1, h * 0.92, w * 0.08, h * 0.02, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.25, h * 0.88, w * 0.05, h * 0.015, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.4, h * 0.9, w * 0.06, h * 0.018, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pump vars
+    let pumpX = w * 0.25, pumpY = h * 0.62;
+    let pumpW = w * 0.18, pumpH = pumpW * (311 / 803);
+
+    // Solar panel image
+    let px = w * 0.50, py = h * 0.30;
+    let pw = w * 0.45, ph = pw * (302 / 827);
+    if (imgPanel.complete && imgPanel.naturalWidth > 0) {
+        ctx.drawImage(imgPanel, px, py, pw, ph);
+    } else {
+        ctx.fillStyle = '#2C3E50';
+        ctx.fillRect(px, py, pw, ph);
+    }
+    ctx.fillStyle = '#FFF';
+    ctx.font = `bold ${w * 0.014}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText(`V = ${V} V   I = ${I.toFixed(2)} A`, px + pw / 2, py + ph + h * 0.025);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = `${w * 0.01}px Arial`;
+    ctx.fillText(`R = ${R}Ω`, px + pw / 2, py + ph + h * 0.045);
+
+    // Wire from panel to pump
+    ctx.strokeStyle = '#7F8C8D';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(px + pw * 0.8, py + ph * 0.5);
+    ctx.lineTo(w * 0.55, py + ph * 0.5);
+    ctx.lineTo(w * 0.55, pumpY + pumpH * 0.3);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Pump image
+    if (imgBomba.complete && imgBomba.naturalWidth > 0) {
+        ctx.drawImage(imgBomba, pumpX - pumpW / 2, pumpY, pumpW, pumpH);
+    } else {
+        ctx.fillStyle = '#95A5A6';
+        ctx.fillRect(pumpX - pumpW / 2, pumpY, pumpW, pumpH);
+    }
+
+    // Bubbles
+    let bubbleY = pumpY + pumpH * 0.3;
+    particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+    particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+    for (let i = particulasEsc2.length - 1; i >= 0; i--) {
+        particulasEsc2[i].move();
+        particulasEsc2[i].draw();
+        if (!particulasEsc2[i].vivo) {
+            particulasEsc2.splice(i, 1);
+        }
+    }
+
+    // Status
+    let statusText, statusColor;
+    if (I < 2) {
+        statusText = 'Corriente baja - Bomba no oxigena suficiente';
+        statusColor = '#E74C3C';
+    } else if (I <= 8) {
+        statusText = 'Rango optimo - Sistema funcionando correctamente';
+        statusColor = '#2ECC71';
+    } else {
+        statusText = 'Corriente alta - Sobrecalentamiento, energia desperdiciada';
+        statusColor = '#E67E22';
+    }
+    ctx.fillStyle = statusColor;
+    ctx.font = `bold ${w * 0.014}px Arial`;
+    ctx.textAlign = 'left';
+    ctx.fillText(statusText, w * 0.05, h * 0.96);
+}
+
+// Event listeners for escenario 2
+esc1Btn.addEventListener('click', function () { cambiarEscenario(1); });
+esc2Btn.addEventListener('click', function () { cambiarEscenario(2); });
+
+voltSlider.addEventListener('input', function () {
+    actualizarDisplayEsc2();
+});
+
+btnResetEsc2.addEventListener('click', function () {
+    window.location.reload();
+});

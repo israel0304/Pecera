@@ -4,12 +4,21 @@ padding-top: 15px;
 }
 #canvas{
     border: thin inset cornflowerblue;
-    width: 90%; 
+    width: 100%;
 }
 
 #box{
-    width: 90%;
+    width: 100%;
     height: auto;
+}
+
+#box2{
+    width: 100%;
+    height: auto;
+}
+
+.btn-group .btn-sm {
+    font-size: 0.8rem;
 }
  /* #contenedor{
      display: flex;
