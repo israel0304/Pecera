@@ -585,7 +585,7 @@ class ParticulaAgua {
     }
 
     get vivo() {
-        return this.y > canvas.height * 0.3;
+        return this.y > canvas.height * 0.5;
     }
 }
 
@@ -630,14 +630,14 @@ function actualizarEscenario2() {
     let skyG = Math.floor(206 * brightness);
     let skyB = Math.floor(235 * brightness);
     let skyColor = `rgb(${skyR}, ${skyG}, ${skyB})`;
-    let skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.3);
+    let skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.5);
     skyGrad.addColorStop(0, skyColor);
     skyGrad.addColorStop(1, `rgb(${Math.floor(184 * brightness)}, ${Math.floor(224 * brightness)}, ${Math.floor(247 * brightness)})`);
     ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, w, h * 0.3);
+    ctx.fillRect(0, 0, w, h * 0.5);
 
     // Sun - glow and size based on V
-    let sunX = w * 0.12, sunY = h * 0.08;
+    let sunX = w * 0.12, sunY = h * 0.15;
     let sunR = w * 0.015 + (w * 0.02) * (V / 50);
     let glowR = sunR * (1.5 + 1.5 * (V / 50));
     let alpha = 0.15 + 0.35 * (V / 50);
@@ -657,49 +657,39 @@ function actualizarEscenario2() {
     // Ground / shore (right side)
     ctx.fillStyle = '#8B7355';
     ctx.beginPath();
-    ctx.moveTo(w * 0.6, h * 0.3);
-    ctx.lineTo(w, h * 0.3);
+    ctx.moveTo(w * 0.6, h * 0.5);
+    ctx.lineTo(w, h * 0.5);
     ctx.lineTo(w, h);
     ctx.lineTo(w * 0.55, h);
     ctx.closePath();
     ctx.fill();
 
     // Pond water
-    let waterGrad = ctx.createLinearGradient(0, h * 0.3, 0, h);
+    let waterGrad = ctx.createLinearGradient(0, h * 0.5, 0, h);
     waterGrad.addColorStop(0, '#4A90D9');
     waterGrad.addColorStop(0.5, '#3173B3');
     waterGrad.addColorStop(1, '#1A4D8C');
     ctx.fillStyle = waterGrad;
-    ctx.fillRect(0, h * 0.3, w * 0.6, h * 0.7);
+    ctx.fillRect(0, h * 0.5, w * 0.6, h * 0.5);
 
     // Water surface
     ctx.strokeStyle = '#A0D4FF';
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let x = 0; x < w * 0.6; x += 3) {
-        ctx.lineTo(x, h * 0.3 + Math.sin(x * 0.02 + Date.now() * 0.001) * 3);
+        ctx.lineTo(x, h * 0.5 + Math.sin(x * 0.02 + Date.now() * 0.001) * 3);
     }
     ctx.stroke();
 
-    // Pond bottom detail
-    ctx.fillStyle = '#2C5F2D';
-    ctx.beginPath();
-    ctx.ellipse(w * 0.1, h * 0.92, w * 0.08, h * 0.02, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(w * 0.25, h * 0.88, w * 0.05, h * 0.015, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(w * 0.4, h * 0.9, w * 0.06, h * 0.018, 0, 0, Math.PI * 2);
-    ctx.fill();
+   
 
     // Pump vars
-    let pumpX = w * 0.25, pumpY = h * 0.62;
-    let pumpW = w * 0.18, pumpH = pumpW * (311 / 803);
+    let pumpX = w * 0.52, pumpY = h * 0.72;
+    let pumpW = w * 0.30, pumpH = pumpW * (311 / 803);
 
     // Solar panel image
-    let px = w * 0.50, py = h * 0.30;
-    let pw = w * 0.45, ph = pw * (302 / 827);
+    let px = w * 0.55, py = h * 0.23;
+    let pw = w * 0.50, ph = pw * (302 / 827);
     if (imgPanel.complete && imgPanel.naturalWidth > 0) {
         ctx.drawImage(imgPanel, px, py, pw, ph);
     } else {
@@ -715,13 +705,13 @@ function actualizarEscenario2() {
     ctx.fillText(`R = ${R}Ω`, px + pw / 2, py + ph + h * 0.045);
 
     // Wire from panel to pump
-    ctx.strokeStyle = '#7F8C8D';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
-    ctx.moveTo(px + pw * 0.8, py + ph * 0.5);
-    ctx.lineTo(w * 0.55, py + ph * 0.5);
-    ctx.lineTo(w * 0.55, pumpY + pumpH * 0.3);
+    ctx.moveTo(px + pw * 0.5, py + ph * 0.9);
+    ctx.lineTo(pumpX+10, py + ph * 0.9);
+    ctx.lineTo(pumpX+10, pumpY + pumpH * 0.4);
     ctx.stroke();
     ctx.setLineDash([]);
 
@@ -760,7 +750,7 @@ function actualizarEscenario2() {
     ctx.fillStyle = statusColor;
     ctx.font = `bold ${w * 0.014}px Arial`;
     ctx.textAlign = 'left';
-    ctx.fillText(statusText, w * 0.05, h * 0.96);
+    ctx.fillText(statusText, w * 0.05, h * 0.97);
 }
 
 // Event listeners for escenario 2
