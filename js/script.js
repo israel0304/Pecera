@@ -653,7 +653,7 @@ function actualizarEscenario2() {
     ctx.beginPath();
     ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
     ctx.fill();
-
+    
     // Ground / shore (right side)
     ctx.fillStyle = '#8B7355';
     ctx.beginPath();
@@ -684,7 +684,7 @@ function actualizarEscenario2() {
    
 
     // Pump vars
-    let pumpX = w * 0.52, pumpY = h * 0.72;
+    let pumpX = w * 0.50, pumpY = h * 0.72;
     let pumpW = w * 0.30, pumpH = pumpW * (311 / 803);
 
     // Solar panel image
@@ -705,9 +705,9 @@ function actualizarEscenario2() {
     ctx.fillText(`R = ${R}Ω`, px + pw / 2, py + ph + h * 0.045);
 
     // Wire from panel to pump
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 4;
-    ctx.setLineDash([10, 10]);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 10;
+    ctx.setLineDash([40, 10]);
     ctx.beginPath();
     ctx.moveTo(px + pw * 0.5, py + ph * 0.9);
     ctx.lineTo(pumpX+50, py + ph * 0.9);
