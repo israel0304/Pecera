@@ -20,6 +20,8 @@ let imgPanel = new Image();
 let imgBomba = new Image();
 imgPanel.src = './img/panel_solar.png';
 imgBomba.src = './img/bomba_agua.png';
+let imgBombaIssue = new Image();
+imgBombaIssue.src = './img/bomba_agua_issue.png';
 let contenedorCanvas = document.getElementById('contenedorCanvas');
 
 function redimensionarCanvas() {
@@ -591,6 +593,7 @@ class ParticulaAgua {
 
 // Escenario 2 state
 let particulasEsc2 = [];
+let pumpBroken = false;
 
 function cambiarEscenario(n) {
     escenarioActual = n;
@@ -607,6 +610,7 @@ function cambiarEscenario(n) {
         esc1Controls.style.display = 'none';
         esc2Controls.style.display = '';
         contenedorGrafica.style.display = 'none';
+        pumpBroken = false;
         actualizarDisplayEsc2();
     }
 }
@@ -623,6 +627,9 @@ function actualizarEscenario2() {
     let h = canvas.height;
     let V = Number(voltSlider.value);
     let I = getCorriente(V);
+
+    // Pump state tracking
+    pumpBroken = (V >= 50);
 
     // Sky - darker when low V, brighter when high V
     let brightness = 0.3 + 0.7 * (V / 50);
@@ -715,18 +722,50 @@ function actualizarEscenario2() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Pump image
-    if (imgBomba.complete && imgBomba.naturalWidth > 0) {
-        ctx.drawImage(imgBomba, pumpX - pumpW / 2, pumpY, pumpW, pumpH);
-    } else {
-        ctx.fillStyle = '#95A5A6';
-        ctx.fillRect(pumpX - pumpW / 2, pumpY, pumpW, pumpH);
+    // Red glow when overheated
+    if (I > 8 && !pumpBroken) {
+        ctx.save();
+        let pulse = 0.45 + Math.sin(Date.now() * 0.004) * 0.2;
+        let grad = ctx.createRadialGradient(pumpX, pumpY + pumpH * 0.5, 0, pumpX, pumpY + pumpH * 0.5, pumpW * 0.35);
+        grad.addColorStop(0, `rgba(255, 0, 0, ${pulse})`);
+        grad.addColorStop(0.5, `rgba(255, 0, 0, ${pulse * 0.6})`);
+        grad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(pumpX, pumpY + pumpH * 0.5, pumpW * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
     }
 
-    // Bubbles
-    let bubbleY = pumpY + pumpH * 0.3;
-    particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
-    particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+    // Pump vibration (only when overheated and not broken)
+    let vibX = 0, vibY = 0;
+    if (I > 8 && !pumpBroken) {
+        let t = Date.now() * 0.02;
+        vibX = Math.sin(t * 1.3) * 3;
+        vibY = Math.cos(t * 1.7) * 3;
+    }
+
+    // Pump image
+    if (pumpBroken) {
+        if (imgBombaIssue.complete && imgBombaIssue.naturalWidth > 0) {
+            ctx.drawImage(imgBombaIssue, pumpX - pumpW / 2, pumpY, pumpW, pumpH);
+        } else {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(pumpX - pumpW / 2, pumpY, pumpW, pumpH);
+        }
+    } else if (imgBomba.complete && imgBomba.naturalWidth > 0) {
+        ctx.drawImage(imgBomba, pumpX - pumpW / 2 + vibX, pumpY + vibY, pumpW, pumpH);
+    } else {
+        ctx.fillStyle = '#95A5A6';
+        ctx.fillRect(pumpX - pumpW / 2 + vibX, pumpY + vibY, pumpW, pumpH);
+    }
+
+    // Bubbles (only if V > 0 and pump not broken)
+    if (V > 0 && !pumpBroken) {
+        let bubbleY = pumpY + pumpH * 0.3;
+        particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+        particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+    }
     for (let i = particulasEsc2.length - 1; i >= 0; i--) {
         particulasEsc2[i].move();
         particulasEsc2[i].draw();
