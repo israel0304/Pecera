@@ -23,7 +23,7 @@ imgBomba.src = './img/bomba_agua.png';
 let contenedorCanvas = document.getElementById('contenedorCanvas');
 
 function redimensionarCanvas() {
-    let w = contenedorCanvas.clientWidth;
+    let w = 1600;
     canvas.width = w;
     canvas.height = w / 2;
 }
@@ -706,12 +706,12 @@ function actualizarEscenario2() {
 
     // Wire from panel to pump
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10, 10]);
     ctx.beginPath();
     ctx.moveTo(px + pw * 0.5, py + ph * 0.9);
-    ctx.lineTo(pumpX+10, py + ph * 0.9);
-    ctx.lineTo(pumpX+10, pumpY + pumpH * 0.4);
+    ctx.lineTo(pumpX+50, py + ph * 0.9);
+    ctx.lineTo(pumpX+50, pumpY + pumpH * 0.4);
     ctx.stroke();
     ctx.setLineDash([]);
 
