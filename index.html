@@ -14,7 +14,7 @@
 <body>
     <div id="contenedor" class="container">
         <!-- Scenario Tabs -->
-        <div class="row mb-3">
+        <div class="row mb-1">
             <div class="col-md">
                 <div class="btn-group" role="group">
                     <button type="button" id="esc1-btn" class="btn btn-primary btn-sm">Escenario 1: Pecera</button>
@@ -25,37 +25,42 @@
 
         <!-- Canvas & Graph -->
         <div class="row">
-            <div class="col-6" id="contenedorCanvas">
+            <div class="col-12 col-sm-6" id="contenedorCanvas">
                 <canvas id="canvas">Esto solo si no esta implementado</canvas>
 
                 <!-- Escenario 1 Controls -->
                 <div id="esc1-controls">
                     <div class="row">
-                        <div class="col-md p-2">
-                            <p>Temperatura: <span id="tempVal">23</span>&deg;C</p>
+                        <div class="col-md py-1">
+                            <p class="mb-1">Temperatura: <span id="tempVal">23</span>&deg;C</p>
                             <div class="d-flex align-items-center">
                                 <input type="range" min="0" max="50" value="23" id="temp" class="w-100">
-                                <button id="playTemp" class="btn btn-success btn-sm ms-2">&#9654;</button>
+                                <button id="playTemp" class="btn btn-success btn-sm">&#9654;</button>
                             </div>
                         </div>
-                        <div class="col-md p-2">
-                            <p>N&uacute;mero de peces: <span id="npecesVal">1</span></p>
+                        <div class="col-md py-1">
+                            <p class="mb-1">N&uacute;mero de peces: <span id="npecesVal">1</span></p>
                             <input type="range" min="0" max="20" value="1" id="npeces" class="w-100">
                         </div>
-                        <div class="col-md p-2">
-                            <p>Tama&ntilde;o de peces: <span id="tpecesVal">1</span> cm</p>
+                        <div class="col-md py-1">
+                            <p class="mb-1">Tama&ntilde;o de peces: <span id="tpecesVal">1</span> cm</p>
                             <input type="range" min="1" max="7" value="1" id="tpeces" class="w-100">
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col pb-3">
-                            <p><b>Saturaci&oacute;n de ox&iacute;geno (SO) = <span id="sat"></span></b></p>
-                            <button id="point">graficar punto</button>
-                            <button id="reset">Reiniciar</button>
+                        <div class="col pb-1">
+                            <p class="mb-1"><b>Saturaci&oacute;n de ox&iacute;geno (SO) = <span id="sat"></span></b></p>
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                <button id="point" class="btn btn-info btn-sm">graficar punto</button>
+                                <button id="reset" class="btn btn-secondary btn-sm">Reiniciar</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-
+            </div>
+            <div class="col-12 col-sm-6 d-flex flex-column" id="contenedorGrafica">
+                <div id="box" class="jxgbox flex-grow-1"></div>
+                <div id="box2" class="jxgbox" style="display:none;"></div>
                 <!-- Escenario 2 Controls -->
                 <div id="esc2-controls" style="display:none;">
                     <div class="row">
@@ -70,16 +75,18 @@
                     </div>
                     <div class="row">
                         <div class="col pb-3">
-                            <button id="reset-esc2">Reiniciar</button>
+                            <div class="d-flex justify-content-center">
+                                <button id="reset-esc2" class="btn btn-secondary btn-sm">Reiniciar</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-6" id="contenedorGrafica">
-                <div id="box" class="jxgbox"></div>
-                <div id="box2" class="jxgbox" style="display:none;"></div>
-            </div>
         </div>
+    </div>
+
+    <div id="btnContinuarWrap">
+        <button id="btnContinuar" class="btn btn-primary btn-lg">Continuar</button>
     </div>
 
     <script src="js/script.js"></script>

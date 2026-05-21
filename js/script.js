@@ -294,11 +294,12 @@ class Grafica {
         this.place = document.getElementById(this.id);
         this.pecera = pecera;
         this.board = JXG.JSXGraph.initBoard(this.id, paramJSX);
+        this.puntos = [];
     }
 
     graficarPunto() {
         this.pointColor = this.pecera.temperatura >= 22 & this.pecera.temperatura <= 28 ? '#5dc1b9' : '#fd7b7b';
-        this.board.create(
+        let p = this.board.create(
             'point',
             [this.pecera.temperatura, this.pecera.saturacion],
             {
@@ -308,6 +309,7 @@ class Grafica {
                 fixed: true
             }
         );
+        this.puntos.push(p);
     }
 
 }
@@ -466,7 +468,26 @@ requestAnimationFrame(actualizar);
 function reiniciar() {
     clearInterval(tempInterval);
     isPlaying = false;
-    window.location.reload();
+    playBtn.textContent = '▶';
+    playBtn.classList.remove('btn-danger');
+    playBtn.classList.add('btn-success');
+
+    cajaTemperatura.value = 23;
+    tempValSpan.textContent = 23;
+    pecera.temperatura = 23;
+    pecera.calSaturacion(23);
+
+    cajaPeces.value = 1;
+    npecesValSpan.textContent = 1;
+
+    cajaSize.value = 1;
+    tpecesValSpan.textContent = 1;
+
+    peces = generar(Pez, 1, 1);
+    burbujas = generar(Burbuja, validarBurbujasIniciales(23));
+
+    grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
+    grafica.puntos = [];
 }
 
 
@@ -596,11 +617,11 @@ let particulasEsc2 = [];
 let pumpBroken = false;
 
 function sincronizarAlturaGrafica() {
-    if (contenedorGrafica.style.display !== 'none') {
+    if (escenarioActual === 1) {
         let h = contenedorCanvas.clientHeight;
         box.style.height = h + 'px';
         if (grafica && grafica.board) {
-            grafica.board.resizeContainer(contenedorGrafica.clientWidth, h);
+            grafica.board.resizeContainer(box.clientWidth, h);
         }
     }
 }
@@ -612,17 +633,22 @@ function cambiarEscenario(n) {
         esc2Btn.className = 'btn btn-secondary btn-sm';
         esc1Controls.style.display = '';
         esc2Controls.style.display = 'none';
-        contenedorCanvas.className = 'col-6';
-        contenedorGrafica.style.display = '';
+        contenedorCanvas.className = 'col-12 col-sm-6';
+        contenedorGrafica.className = 'col-12 col-sm-6 d-flex flex-column';
+        contenedorGrafica.style.display = 'flex';
         box.style.display = '';
+        box2.style.display = 'none';
         sincronizarAlturaGrafica();
     } else {
         esc1Btn.className = 'btn btn-secondary btn-sm';
         esc2Btn.className = 'btn btn-primary btn-sm';
         esc1Controls.style.display = 'none';
         esc2Controls.style.display = '';
-        contenedorCanvas.className = 'col-12';
-        contenedorGrafica.style.display = 'none';
+        contenedorCanvas.className = 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1';
+        contenedorGrafica.className = 'col-12 col-sm-6 col-lg-10 offset-lg-1 d-flex flex-column';
+        contenedorGrafica.style.display = 'flex';
+        box.style.display = 'none';
+        box2.style.display = 'none';
         pumpBroken = false;
         actualizarDisplayEsc2();
     }
@@ -842,5 +868,12 @@ voltSlider.addEventListener('input', function () {
 });
 
 btnResetEsc2.addEventListener('click', function () {
-    window.location.reload();
+    voltSlider.value = 25;
+    particulasEsc2 = [];
+    pumpBroken = false;
+    actualizarDisplayEsc2();
+});
+
+document.getElementById('btnContinuar').addEventListener('click', function () {
+    cambiarEscenario(escenarioActual === 1 ? 2 : 1);
 });

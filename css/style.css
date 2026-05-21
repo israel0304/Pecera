@@ -4,8 +4,10 @@
 
 body {
     margin: 0;
-    padding: 10px 0 0;
     overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 #contenedorCanvas {
@@ -37,6 +39,10 @@ body {
     height: auto;
 }
 
+#contenedor {
+    flex: 1;
+}
+
 .btn-group .btn-sm {
     font-size: 0.8rem;
 }
@@ -65,5 +71,51 @@ input[type="range"] {
         font-size: 0.7rem;
         padding: 6px 8px;
     }
+
+    #box {
+        max-height: 250px;
+        min-height: 150px;
+        overflow-x: hidden;
+    }
+
+    #contenedorGrafica {
+        overflow-x: hidden;
+    }
+}
+
+#esc1-controls .btn,
+#esc2-controls .btn,
+#reset-esc2,
+#esc1-btn,
+#esc2-btn {
+    max-width: 250px;
+}
+
+#esc1-controls .btn,
+#esc1-controls input[type="range"] {
+    min-height: unset;
+}
+
+#esc1-controls p {
+    margin-bottom: 0.25rem;
+}
+
+#esc1-controls .row + .row {
+    margin-top: 0;
+}
+
+#btnContinuarWrap {
+    background: #fff;
+    width: 100%;
+    padding: 10px 0;
+    position: sticky;
+    bottom: 0;
+}
+
+#btnContinuar {
+    display: block;
+    width: 100%;
+    max-width: 250px;
+    margin: 0 auto;
 }
  
