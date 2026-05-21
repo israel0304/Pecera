@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.3.0 (no publicado)
+
+### Features
+- Escenario 2: sistema estanque sustentable completo
+- Panel solar con imagen (`img/panel_solar.png`)
+- Control de voltaje (0–50 V), R = 5Ω fijo, I = V / R
+- Brillo rojo pulsante en bomba cuando I > 8 A
+- Vibración (±3px) de bomba cuando I > 8 A
+- Bomba se rompe a V ≥ 50 V (imagen `img/bomba_agua_issue.png`, sin burbujas, sin brillo, sin vibración)
+- Canvas fijo 1600×800 para nitidez en pantallas retina
+- Partículas de agua (burbujas) escalan con voltaje
+- Info box blanco con V, I, R y estado del sistema
+- Cable eléctrico del panel a la bomba
+- Cielo, sol, orilla y estanque renderizados en canvas
+
+### Fix
+- Scroll horizontal eliminado en layout responsive
+
+### Documentation
+- Actualización de `README.md` con tabla de estados y nueva estructura
+- Actualización de `AGENTS.md` con comportamiento detallado de Escenario 2
+
+---
+
 ## 1.2.0 (no publicado)
 
 ### Refactor
