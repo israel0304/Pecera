@@ -25,13 +25,15 @@ imgBombaIssue.src = './img/bomba_agua_issue.png';
 let contenedorCanvas = document.getElementById('contenedorCanvas');
 
 function redimensionarCanvas() {
-    let w = 1600;
-    canvas.width = w;
-    canvas.height = w / 2;
+    canvas.width = 1600;
+    canvas.height = 800;
 }
 redimensionarCanvas();
 
-window.addEventListener('resize', redimensionarCanvas);
+window.addEventListener('resize', function () {
+    redimensionarCanvas();
+    sincronizarAlturaGrafica();
+});
 
 // event listeers
 boton3.addEventListener('click', crearPunto);
@@ -287,14 +289,11 @@ class Pecera {
 }
 
 class Grafica {
-    constructor(id, idRowParent, pecera, paramJSX) {
+    constructor(id, pecera, paramJSX) {
         this.id = id
-        this.board = JXG.JSXGraph.initBoard(this.id, paramJSX);
         this.place = document.getElementById(this.id);
-        this.idRowParent = document.getElementById(idRowParent);
-        this.height = this.idRowParent.getBoundingClientRect().height;
         this.pecera = pecera;
-        this.place.style.height = `${this.height}px`;
+        this.board = JXG.JSXGraph.initBoard(this.id, paramJSX);
     }
 
     graficarPunto() {
@@ -499,7 +498,7 @@ function toggleTempPlay() {
 
 //////////JSXGraph
 
-let grafica = new Grafica('box', 'contenedor', pecera,
+let grafica = new Grafica('box', pecera,
     {
         boundingbox: [-5, 40, 55, -5],
         axis: true,
@@ -528,6 +527,7 @@ function pressIntro(e) {
     }
 }
 crearGrafica();
+setTimeout(sincronizarAlturaGrafica, 100);
 
 // ============================================
 // ESCENARIO 2: Sistema Sustentable
@@ -595,6 +595,16 @@ class ParticulaAgua {
 let particulasEsc2 = [];
 let pumpBroken = false;
 
+function sincronizarAlturaGrafica() {
+    if (contenedorGrafica.style.display !== 'none') {
+        let h = contenedorCanvas.clientHeight;
+        box.style.height = h + 'px';
+        if (grafica && grafica.board) {
+            grafica.board.resizeContainer(contenedorGrafica.clientWidth, h);
+        }
+    }
+}
+
 function cambiarEscenario(n) {
     escenarioActual = n;
     if (n === 1) {
@@ -602,13 +612,16 @@ function cambiarEscenario(n) {
         esc2Btn.className = 'btn btn-secondary btn-sm';
         esc1Controls.style.display = '';
         esc2Controls.style.display = 'none';
+        contenedorCanvas.className = 'col-6';
         contenedorGrafica.style.display = '';
         box.style.display = '';
+        sincronizarAlturaGrafica();
     } else {
         esc1Btn.className = 'btn btn-secondary btn-sm';
         esc2Btn.className = 'btn btn-primary btn-sm';
         esc1Controls.style.display = 'none';
         esc2Controls.style.display = '';
+        contenedorCanvas.className = 'col-12';
         contenedorGrafica.style.display = 'none';
         pumpBroken = false;
         actualizarDisplayEsc2();
@@ -703,13 +716,57 @@ function actualizarEscenario2() {
         ctx.fillStyle = '#2C3E50';
         ctx.fillRect(px, py, pw, ph);
     }
-    ctx.fillStyle = '#FFF';
-    ctx.font = `bold ${w * 0.014}px Arial`;
+    // White info box below panel
+    let fontScale = w / canvas.clientWidth;
+    let isSmall = canvas.clientWidth < 600;
+    let fs1 = Math.max((isSmall ? 13 : 18) * fontScale, isSmall ? 13 : 18);
+    let fs2 = Math.max((isSmall ? 11 : 15) * fontScale, isSmall ? 11 : 15);
+    let fs3 = Math.max((isSmall ? 12 : 16) * fontScale, isSmall ? 12 : 16);
+    let lh1 = fs1 * 1.6;
+    let lh2 = fs2 * 1.6;
+    let lh3 = fs3 * 1.6;
+    let padBox = fs1 * 0.8;
+    let boxX = px + w * 0.08;
+    let boxW = pw - w * 0.16;
+    let boxY = py + ph + h * 0.02;
+    let line1Y = boxY + padBox + lh1;
+    let line2Y = line1Y + lh2;
+    let line3Y = line2Y + lh3;
+    let line4Y = line3Y + lh3;
+    let boxH = line4Y + lh3 * 0.5 + padBox - boxY;
+
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+    ctx.fill();
+
     ctx.textAlign = 'center';
-    ctx.fillText(`V = ${V} V   I = ${I.toFixed(2)} A`, px + pw / 2, py + ph + h * 0.025);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = `${w * 0.01}px Arial`;
-    ctx.fillText(`R = ${R}Ω`, px + pw / 2, py + ph + h * 0.045);
+    ctx.fillStyle = '#222';
+    ctx.font = `bold ${Math.round(fs1)}px Arial`;
+    ctx.fillText(`V = ${V} V  |  I = ${I.toFixed(2)} A`, px + pw / 2, line1Y);
+    ctx.fillStyle = '#666';
+    ctx.font = `${Math.round(fs2)}px Arial`;
+    ctx.fillText(`R = ${R} Ω`, px + pw / 2, line2Y);
+    let statusText, statusColor;
+    if (I < 2) {
+        statusText = 'Corriente baja - Baja oxigenacion';
+        statusColor = '#E74C3C';
+    } else if (I <= 8) {
+        statusText = 'Rango optimo - Funcionando correctamente';
+        statusColor = '#2ECC71';
+    } else {
+        statusText = 'Corriente alta - Sobrecalentamiento';
+        statusColor = '#E67E22';
+    }
+    ctx.fillStyle = statusColor;
+    ctx.font = `bold ${Math.round(fs3)}px Arial`;
+    let statusParts = statusText.split(' - ');
+    if (statusParts.length === 2) {
+        ctx.fillText(statusParts[0], px + pw / 2, line3Y);
+        ctx.fillText('-' + statusParts[1], px + pw / 2, line4Y);
+    } else {
+        ctx.fillText(statusText, px + pw / 2, line3Y);
+    }
 
     // Wire from panel to pump
     ctx.strokeStyle = '#fff';
@@ -774,22 +831,6 @@ function actualizarEscenario2() {
         }
     }
 
-    // Status
-    let statusText, statusColor;
-    if (I < 2) {
-        statusText = 'Corriente baja - Bomba no oxigena suficiente';
-        statusColor = '#E74C3C';
-    } else if (I <= 8) {
-        statusText = 'Rango optimo - Sistema funcionando correctamente';
-        statusColor = '#2ECC71';
-    } else {
-        statusText = 'Corriente alta - Sobrecalentamiento, energia desperdiciada';
-        statusColor = '#E67E22';
-    }
-    ctx.fillStyle = statusColor;
-    ctx.font = `bold ${w * 0.014}px Arial`;
-    ctx.textAlign = 'left';
-    ctx.fillText(statusText, w * 0.05, h * 0.97);
 }
 
 // Event listeners for escenario 2
