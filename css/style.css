@@ -104,18 +104,19 @@ input[type="range"] {
     margin-top: 0;
 }
 
-#btnContinuarWrap {
+#navWrap {
     background: #fff;
     width: 100%;
     padding: 10px 0;
     position: sticky;
     bottom: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
 
-#btnContinuar {
-    display: block;
-    width: 100%;
+#navWrap .btn {
     max-width: 250px;
-    margin: 0 auto;
+    flex: 1;
 }
  

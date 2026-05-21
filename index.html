@@ -85,8 +85,28 @@
         </div>
     </div>
 
-    <div id="btnContinuarWrap">
-        <button id="btnContinuar" class="btn btn-primary btn-lg">Continuar</button>
+    <div id="navWrap">
+        <button id="btnAtras" class="btn btn-secondary btn-lg">← Atrás</button>
+        <button id="btnContinuar" class="btn btn-primary btn-lg">Continuar →</button>
+    </div>
+
+    <div class="modal fade" id="codigoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Código Secreto</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Ingresa el código secreto para continuar:</p>
+                    <input type="text" id="codigoInput" class="form-control" placeholder="Ingresa el código secreto">
+                    <div id="codigoError" class="text-danger mt-2" style="display:none;">Código incorrecto</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmarCodigo" class="btn btn-primary">Confirmar</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/script.js"></script>

@@ -626,32 +626,48 @@ function sincronizarAlturaGrafica() {
     }
 }
 
+const ESCENARIOS = {
+    1: {
+        btn: { 'esc1-btn': 'primary', 'esc2-btn': 'secondary' },
+        mostrar: ['esc1-controls', 'box'],
+        ocultar: ['esc2-controls', 'box2'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'pez',
+        alEntrar: function () { sincronizarAlturaGrafica(); }
+    },
+    2: {
+        btn: { 'esc1-btn': 'secondary', 'esc2-btn': 'primary' },
+        mostrar: ['esc2-controls'],
+        ocultar: ['esc1-controls', 'box', 'box2'],
+        canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
+        graficaClass: 'col-12 col-sm-6 col-lg-10 offset-lg-1 d-flex flex-column',
+        codigo: 'neon',
+        alEntrar: function () {
+            pumpBroken = false;
+            actualizarDisplayEsc2();
+        }
+    }
+};
+
 function cambiarEscenario(n) {
     escenarioActual = n;
-    if (n === 1) {
-        esc1Btn.className = 'btn btn-primary btn-sm';
-        esc2Btn.className = 'btn btn-secondary btn-sm';
-        esc1Controls.style.display = '';
-        esc2Controls.style.display = 'none';
-        contenedorCanvas.className = 'col-12 col-sm-6';
-        contenedorGrafica.className = 'col-12 col-sm-6 d-flex flex-column';
-        contenedorGrafica.style.display = 'flex';
-        box.style.display = '';
-        box2.style.display = 'none';
-        sincronizarAlturaGrafica();
-    } else {
-        esc1Btn.className = 'btn btn-secondary btn-sm';
-        esc2Btn.className = 'btn btn-primary btn-sm';
-        esc1Controls.style.display = 'none';
-        esc2Controls.style.display = '';
-        contenedorCanvas.className = 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1';
-        contenedorGrafica.className = 'col-12 col-sm-6 col-lg-10 offset-lg-1 d-flex flex-column';
-        contenedorGrafica.style.display = 'flex';
-        box.style.display = 'none';
-        box2.style.display = 'none';
-        pumpBroken = false;
-        actualizarDisplayEsc2();
+    let cfg = ESCENARIOS[n];
+    if (!cfg) return;
+
+    for (let [id, clase] of Object.entries(cfg.btn)) {
+        document.getElementById(id).className = `btn btn-${clase} btn-sm`;
     }
+    cfg.mostrar.forEach(id => document.getElementById(id).style.display = '');
+    cfg.ocultar.forEach(id => document.getElementById(id).style.display = 'none');
+
+    contenedorCanvas.className = cfg.canvasClass;
+    contenedorGrafica.className = cfg.graficaClass;
+    contenedorGrafica.style.display = 'flex';
+
+    document.getElementById('btnAtras').disabled = n === getOrden()[0];
+
+    cfg.alEntrar();
 }
 
 function actualizarDisplayEsc2() {
@@ -874,6 +890,63 @@ btnResetEsc2.addEventListener('click', function () {
     actualizarDisplayEsc2();
 });
 
-document.getElementById('btnContinuar').addEventListener('click', function () {
-    cambiarEscenario(escenarioActual === 1 ? 2 : 1);
+function getOrden() {
+    return Object.keys(ESCENARIOS).map(Number);
+}
+
+function getSiguiente(n) {
+    let o = getOrden();
+    return o[(o.indexOf(n) + 1) % o.length];
+}
+
+function getAnterior(n) {
+    let o = getOrden();
+    return o[(o.indexOf(n) - 1 + o.length) % o.length];
+}
+
+function navegar(dir) {
+    let cfg = ESCENARIOS[escenarioActual];
+    if (!cfg) return;
+    if (dir === -1 && escenarioActual === getOrden()[0]) return;
+    let destino = dir === 1 ? getSiguiente(escenarioActual) : getAnterior(escenarioActual);
+    if (dir === -1 || !cfg.codigo) {
+        cambiarEscenario(destino);
+        return;
+    }
+    document.getElementById('codigoInput').value = '';
+    document.getElementById('codigoError').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('codigoModal')).show();
+}
+
+async function obtenerCodigos() {
+    let map = {};
+    for (let [n, cfg] of Object.entries(ESCENARIOS)) {
+        if (cfg.codigo) map[n + 'a' + getSiguiente(Number(n))] = cfg.codigo;
+    }
+    return map;
+}
+
+document.getElementById('btnContinuar').addEventListener('click', function () { navegar(1); });
+document.getElementById('btnAtras').addEventListener('click', function () { navegar(-1); });
+
+document.getElementById('confirmarCodigo').addEventListener('click', async function () {
+    let codigo = document.getElementById('codigoInput').value.trim();
+    let cfg = ESCENARIOS[escenarioActual];
+    let destino = getSiguiente(escenarioActual);
+    let dir = escenarioActual + 'a' + destino;
+    let codigos = await obtenerCodigos();
+    if (codigo.toLowerCase() === codigos[dir]) {
+        bootstrap.Modal.getInstance(document.getElementById('codigoModal')).hide();
+        cambiarEscenario(destino);
+    } else {
+        document.getElementById('codigoError').style.display = 'block';
+    }
+});
+
+document.getElementById('codigoInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('confirmarCodigo').click();
+});
+
+document.getElementById('codigoInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('confirmarCodigo').click();
 });
