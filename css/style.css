@@ -87,7 +87,9 @@ input[type="range"] {
 #esc2-controls .btn,
 #reset-esc2,
 #esc1-btn,
-#esc2-btn {
+#esc3-btn,
+#esc2-btn,
+#pointLA {
     max-width: 250px;
 }
 

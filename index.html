@@ -17,8 +17,9 @@
         <div class="row mb-1">
             <div class="col-md">
                 <div class="btn-group" role="group">
-                    <button type="button" id="esc1-btn" class="btn btn-primary btn-sm">Escenario 1: Pecera</button>
-                    <button type="button" id="esc2-btn" class="btn btn-secondary btn-sm">Escenario 2: Estanque Sustentable</button>
+                    <button type="button" id="esc1-btn" class="btn btn-primary btn-sm">Pecera</button>
+                    <button type="button" id="esc3-btn" class="btn btn-secondary btn-sm">Pecera + Litros</button>
+                    <button type="button" id="esc2-btn" class="btn btn-secondary btn-sm">Estanque Sustentable</button>
                 </div>
             </div>
         </div>
@@ -49,6 +50,16 @@
                     </div>
                     <div class="row">
                         <div class="col pb-1">
+                            <div id="la-section" style="display:none;">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="checkLA">
+                                    <label class="form-check-label" for="checkLA">Litros de agua necesaria</label>
+                                </div>
+                                <div id="dataLA" style="display:none">
+                                    <p><b>Litros de agua (LA) = <span id="LA"></span></b></p>
+                                </div>
+                                <button id="pointLA" class="btn btn-info btn-sm" disabled>graficar punto LA</button>
+                            </div>
                             <p class="mb-1"><b>Saturaci&oacute;n de ox&iacute;geno (SO) = <span id="sat"></span></b></p>
                             <div class="d-flex justify-content-center gap-2 flex-wrap">
                                 <button id="point" class="btn btn-info btn-sm">graficar punto</button>
@@ -60,7 +71,6 @@
             </div>
             <div class="col-12 col-sm-6 d-flex flex-column" id="contenedorGrafica">
                 <div id="box" class="jxgbox flex-grow-1"></div>
-                <div id="box2" class="jxgbox" style="display:none;"></div>
                 <!-- Escenario 2 Controls -->
                 <div id="esc2-controls" style="display:none;">
                     <div class="row">

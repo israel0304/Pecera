@@ -13,6 +13,9 @@ let cajaSize = document.getElementById('tpeces');
 let playBtn = document.getElementById('playTemp');
 let tempInterval = null;
 let isPlaying = false;
+let escenarioActual = 1;
+let box = document.getElementById('box');
+let grafica = null;
 
 let image = new Image();
 let imgPecera = new Image();
@@ -41,7 +44,10 @@ cajaPeces.addEventListener('input', pecesDinamicos);
 cajaTemperatura.addEventListener('input', tempDinamica);
 cajaTemperatura.addEventListener('keydown', pressIntro);
 cajaSize.addEventListener('input', pecesDinamicos);
-btnReset.addEventListener('click', reiniciar);
+btnReset.addEventListener('click', function () {
+    if (escenarioActual === 3) reiniciar3();
+    else reiniciar();
+});
 playBtn.addEventListener('click', toggleTempPlay);
 
 
@@ -348,6 +354,7 @@ function pecesDinamicos(e) {
     }
     npecesValSpan.textContent = cajaPeces.value;
     tpecesValSpan.textContent = cajaSize.value;
+    if (escenarioActual === 3 && checkLA.checked) litrosDinamicos();
     let nuevop = generar(Pez, cajaPeces.value, cajaSize.value);
     peces = nuevop;
 }
@@ -431,7 +438,7 @@ function enfermar() {
 
 function actualizar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (escenarioActual === 1) {
+    if (escenarioActual === 1 || escenarioActual === 3) {
         pecera.aparecer();
 
         for (i = 0; i < burbujas.length; i++) {
@@ -519,7 +526,7 @@ function toggleTempPlay() {
 
 //////////JSXGraph
 
-let grafica = new Grafica('box', pecera,
+grafica = new Grafica('box', pecera,
     {
         boundingbox: [-5, 40, 55, -5],
         axis: true,
@@ -529,22 +536,110 @@ let grafica = new Grafica('box', pecera,
 
 function crearGrafica() {
     var checkbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], { fixed: true })
-    grafica.board.create('functiongraph', [
+    grafica.curvaSO = grafica.board.create('functiongraph', [
         function (x) {
             if (checkbox.Value()) {
                 return -0.0001 * (Math.pow(x, 3)) + 0.01 * (Math.pow(x, 2)) - 0.39 * (x) + 14.57
             }
         }
     ], { strokecolor: '#3673c5', strokeWidth: 2 });
+    grafica.curvaLA = grafica.board.create('functiongraph', [
+        function (x) {
+            if (checkbox.Value()) {
+                return Number(cajaSize.value) * 3 * x;
+            }
+        }
+    ], { strokecolor: '#E67E22', strokeWidth: 2, visible: false });
+    grafica.puntosLA = [];
 }
 
 function crearPunto() {
     grafica.graficarPunto();
 }
 
+function crearPuntoLA() {
+    let cantidad = Number(cajaPeces.value);
+    let tamano = Number(cajaSize.value);
+    let LA = cantidad * tamano * 3;
+    let p = grafica.board.create('point', [cantidad, LA], {
+        name: '',
+        strokecolor: '#E67E22',
+        fillColor: '#E67E22',
+        fixed: true,
+        visible: false
+    });
+    grafica.puntosLA.push(p);
+    // If LA mode is active, make point visible immediately
+    if (checkLA.checked) p.setAttribute({ visible: true });
+}
+
+function checklitros_fn() {
+    if (checkLA.checked) {
+        dataLA.style.display = '';
+        boton3.disabled = true;
+        botonLA.disabled = false;
+        grafica.curvaSO.setAttribute({ visible: false });
+        grafica.curvaLA.setAttribute({ visible: true });
+        grafica.puntos.forEach(function (p) { p.setAttribute({ visible: false }); });
+        grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: true }); });
+        litrosDinamicos();
+    } else {
+        dataLA.style.display = 'none';
+        boton3.disabled = false;
+        botonLA.disabled = true;
+        grafica.curvaSO.setAttribute({ visible: true });
+        grafica.curvaLA.setAttribute({ visible: false });
+        grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
+        grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
+    }
+}
+
+function litrosDinamicos() {
+    textoLA.textContent = Number(cajaPeces.value) * Number(cajaSize.value) * 3;
+}
+
+function reiniciar3() {
+    clearInterval(tempInterval);
+    isPlaying = false;
+    playBtn.textContent = '▶';
+    playBtn.classList.remove('btn-danger');
+    playBtn.classList.add('btn-success');
+
+    cajaTemperatura.value = 23;
+    tempValSpan.textContent = 23;
+    pecera.temperatura = 23;
+    pecera.calSaturacion(23);
+
+    cajaPeces.value = 1;
+    npecesValSpan.textContent = 1;
+
+    cajaSize.value = 1;
+    tpecesValSpan.textContent = 1;
+
+    peces = generar(Pez, 1, 1);
+    burbujas = generar(Burbuja, validarBurbujasIniciales(23));
+
+    grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
+    grafica.puntos = [];
+    grafica.puntosLA.forEach(function (p) { grafica.board.removeObject(p); });
+    grafica.puntosLA = [];
+
+    if (checkLA.checked) checkLA.checked = false;
+    dataLA.style.display = 'none';
+    boton3.disabled = false;
+    botonLA.disabled = true;
+    if (grafica.curvaSO && grafica.curvaLA) {
+        grafica.curvaSO.setAttribute({ visible: true });
+        grafica.curvaLA.setAttribute({ visible: false });
+    }
+    grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
+    grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
+}
+
 function pressIntro(e) {
     if (e.keyCode === 13) {
-        crearPunto();
+        if (escenarioActual === 3 && checkLA.checked) crearPuntoLA();
+        else crearPunto();
     }
 }
 crearGrafica();
@@ -553,8 +648,6 @@ setTimeout(sincronizarAlturaGrafica, 100);
 // ============================================
 // ESCENARIO 2: Sistema Sustentable
 // ============================================
-
-let escenarioActual = 1;
 
 // DOM refs
 let voltSlider = document.getElementById('voltaje');
@@ -565,12 +658,15 @@ let odVal = document.getElementById('odVal');
 let btnPointOD = document.getElementById('point-od');
 let btnResetEsc2 = document.getElementById('reset-esc2');
 let esc1Btn = document.getElementById('esc1-btn');
+let esc3Btn = document.getElementById('esc3-btn');
 let esc2Btn = document.getElementById('esc2-btn');
 let esc1Controls = document.getElementById('esc1-controls');
 let esc2Controls = document.getElementById('esc2-controls');
-let box = document.getElementById('box');
-let box2 = document.getElementById('box2');
-let contenedorGrafica = document.getElementById('contenedorGrafica');
+let checkLA = document.getElementById('checkLA');
+let dataLA = document.getElementById('dataLA');
+let textoLA = document.getElementById('LA');
+let botonLA = document.getElementById('pointLA');
+let laSection = document.getElementById('la-section');
 
 let R = 5;
 
@@ -617,7 +713,7 @@ let particulasEsc2 = [];
 let pumpBroken = false;
 
 function sincronizarAlturaGrafica() {
-    if (escenarioActual === 1) {
+    if (escenarioActual === 1 || escenarioActual === 3) {
         let h = contenedorCanvas.clientHeight;
         box.style.height = h + 'px';
         if (grafica && grafica.board) {
@@ -628,24 +724,60 @@ function sincronizarAlturaGrafica() {
 
 const ESCENARIOS = {
     1: {
-        btn: { 'esc1-btn': 'primary', 'esc2-btn': 'secondary' },
+        btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary' },
         mostrar: ['esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box2'],
+        ocultar: ['esc2-controls'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'pez',
-        alEntrar: function () { sincronizarAlturaGrafica(); }
+        alEntrar: function () {
+            laSection.style.display = 'none';
+            if (checkLA.checked) checkLA.checked = false;
+            dataLA.style.display = 'none';
+            botonLA.disabled = true;
+            boton3.disabled = false;
+            if (grafica.curvaSO) grafica.curvaSO.setAttribute({ visible: true });
+            if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
+            grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
+            grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
+            sincronizarAlturaGrafica();
+        }
     },
     2: {
-        btn: { 'esc1-btn': 'secondary', 'esc2-btn': 'primary' },
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary' },
         mostrar: ['esc2-controls'],
-        ocultar: ['esc1-controls', 'box', 'box2'],
+        ocultar: ['esc1-controls', 'box'],
         canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
         graficaClass: 'col-12 col-sm-6 col-lg-10 offset-lg-1 d-flex flex-column',
         codigo: 'neon',
         alEntrar: function () {
+            laSection.style.display = 'none';
+            if (checkLA.checked) checkLA.checked = false;
+            dataLA.style.display = 'none';
+            botonLA.disabled = true;
+            boton3.disabled = false;
             pumpBroken = false;
             actualizarDisplayEsc2();
+        }
+    },
+    3: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary' },
+        mostrar: ['esc1-controls', 'box'],
+        ocultar: ['esc2-controls'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'litros',
+        alEntrar: function () {
+            laSection.style.display = '';
+            if (checkLA.checked) checkLA.checked = false;
+            dataLA.style.display = 'none';
+            botonLA.disabled = true;
+            boton3.disabled = false;
+            if (grafica.curvaSO) grafica.curvaSO.setAttribute({ visible: true });
+            if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
+            grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
+            grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
+            sincronizarAlturaGrafica();
         }
     }
 };
@@ -877,7 +1009,10 @@ function actualizarEscenario2() {
 
 // Event listeners for escenario 2
 esc1Btn.addEventListener('click', function () { cambiarEscenario(1); });
+esc3Btn.addEventListener('click', function () { cambiarEscenario(3); });
 esc2Btn.addEventListener('click', function () { cambiarEscenario(2); });
+checkLA.addEventListener('change', checklitros_fn);
+botonLA.addEventListener('click', crearPuntoLA);
 
 voltSlider.addEventListener('input', function () {
     actualizarDisplayEsc2();
@@ -891,7 +1026,7 @@ btnResetEsc2.addEventListener('click', function () {
 });
 
 function getOrden() {
-    return Object.keys(ESCENARIOS).map(Number);
+    return [1, 3, 2];
 }
 
 function getSiguiente(n) {
