@@ -21,6 +21,7 @@
                     <button type="button" id="esc3-btn" class="btn btn-secondary btn-sm">Pecera + Litros</button>
                     <button type="button" id="esc2-btn" class="btn btn-secondary btn-sm">Estanque Sustentable</button>
                     <button type="button" id="esc4-btn" class="btn btn-secondary btn-sm">Estanque + Gráfica</button>
+                    <button type="button" id="esc5-btn" class="btn btn-secondary btn-sm">Estanque + Pendiente Variable</button>
                 </div>
             </div>
         </div>
@@ -69,12 +70,20 @@
                         </div>
                     </div>
                 </div>
-                <!-- Escenario 2 & 4 Controls -->
+                <!-- Escenario 2, 4 & 5 Controls -->
                 <div id="esc2-controls" style="display:none;">
                     <div class="row">
-                        <div class="col-md p-2">
+                        <div class="col-md px-2">
                             <p>V = <span id="voltVal">25</span> V &nbsp;|&nbsp; I = <span id="corrVal">5.00</span> A</p>
                             <input type="range" min="0" max="50" value="25" id="voltaje" class="w-100">
+                        </div>
+                    </div>
+                    <div id="esc5-m-section" style="display:none;">
+                        <div class="row">
+                            <div class="col-md px-2">
+                                <p>Pendiente m = <span id="mVal">0.3</span></p>
+                                <input type="range" min="0.1" max="5.0" step="0.1" value="0.3" id="mSlider" class="w-100">
+                            </div>
                         </div>
                     </div>
                     <div class="row">
@@ -89,6 +98,7 @@
             <div class="col-12 col-sm-6 d-flex flex-column" id="contenedorGrafica">
                 <div id="box" class="jxgbox flex-grow-1"></div>
                 <div id="box4" class="jxgbox flex-grow-1" style="display:none;"></div>
+                <div id="box5" class="jxgbox flex-grow-1" style="display:none;"></div>
             </div>
         </div>
     </div>

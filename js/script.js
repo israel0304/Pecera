@@ -36,6 +36,7 @@ redimensionarCanvas();
 window.addEventListener('resize', function () {
     redimensionarCanvas();
     sincronizarAlturaGrafica();
+    sincronizarAlturaGrafica5();
 });
 
 // event listeers
@@ -770,6 +771,19 @@ let curve4 = null;
 let glider4 = null;
 let label4 = null;
 
+let board5 = null;
+let curve5 = null;
+let glider5 = null;
+let label5 = null;
+let mSlider = document.getElementById('mSlider');
+let mVal = document.getElementById('mVal');
+let esc5Btn = document.getElementById('esc5-btn');
+let checkFranjasBoard = null;
+let bandaAzul = null;
+let bandaVerde = null;
+let bandaAmarilla = null;
+let bandaVerdeFuerte = null;
+
 function sincronizarAlturaGrafica() {
     if (escenarioActual === 1 || escenarioActual === 3) {
         let h = contenedorCanvas.clientHeight;
@@ -842,14 +856,114 @@ function sincronizarAlturaGrafica4() {
     }
 }
 
+function sincronizarAlturaGrafica5() {
+    if (escenarioActual === 5 && board5) {
+        let h = contenedorCanvas.clientHeight;
+        let box5 = document.getElementById('box5');
+        box5.style.height = h + 'px';
+        board5.resizeContainer(box5.clientWidth, h);
+    }
+}
+
+function initBoard5() {
+    if (board5) return;
+    let box5 = document.getElementById('box5');
+    board5 = JXG.JSXGraph.initBoard('box5', {
+        boundingbox: [-5, 20, 55, -2],
+        axis: true,
+        showCopyright: false,
+    });
+    checkFranjasBoard = board5.create('checkbox', [2, 18, 'Mostrar franjas', function () {
+        toggleFranjas(!!checkFranjasBoard.Value());
+    }], { checked: false });
+}
+
+function toggleFranjas(show) {
+    if (!board5) return;
+    if (bandaAzul) { board5.removeObject(bandaAzul); bandaAzul = null; }
+    if (bandaVerde) { board5.removeObject(bandaVerde); bandaVerde = null; }
+    if (bandaAmarilla) { board5.removeObject(bandaAmarilla); bandaAmarilla = null; }
+    if (bandaVerdeFuerte) { board5.removeObject(bandaVerdeFuerte); bandaVerdeFuerte = null; }
+    if (show) {
+        bandaAzul = board5.create('polygon', [[2, -2], [4, -2], [4, 20], [2, 20]], {
+            fillColor: '#3498DB', fillOpacity: 0.3, strokeColor: '#3498DB', strokeWidth: 1,
+            layer: 0
+        });
+        bandaVerde = board5.create('polygon', [[4, -2], [6, -2], [6, 20], [4, 20]], {
+            fillColor: '#2ECC71', fillOpacity: 0.3, strokeColor: '#2ECC71', strokeWidth: 1,
+            layer: 0
+        });
+        bandaAmarilla = board5.create('polygon', [[6, -2], [8, -2], [8, 20], [6, 20]], {
+            fillColor: '#F1C40F', fillOpacity: 0.3, strokeColor: '#F1C40F', strokeWidth: 1,
+            layer: 0
+        });
+        bandaVerdeFuerte = board5.create('polygon', [[-5, 1], [55, 1], [55, 2], [-5, 2]], {
+            fillColor: '#27AE60', fillOpacity: 0.35, strokeColor: '#27AE60', strokeWidth: 1,
+            layer: 0
+        });
+    }
+    board5.update();
+}
+
+function recrearCurva5(m) {
+    if (!board5) return;
+    if (curve5) { board5.removeObject(curve5); curve5 = null; }
+    if (glider5) { board5.removeObject(glider5); glider5 = null; }
+    if (label5) { board5.removeObject(label5); label5 = null; }
+    curve5 = board5.create('functiongraph', [
+        function (x) { return m * x; }
+    ], { strokecolor: '#E74C3C', strokeWidth: 2 });
+    let V = Number(voltSlider.value);
+    glider5 = board5.create('glider', [V, m * V, curve5], {
+        name: '',
+        strokecolor: '#2ECC71',
+        fillColor: '#2ECC71',
+        size: 6
+    });
+    label5 = board5.create('text',
+        [
+            function () { return glider5.X() + 1; },
+            function () { return glider5.Y() + 4; },
+            function () { return '(' + Math.round(glider5.X()) + ', ' + Math.round(glider5.Y()) + ')'; }
+        ],
+        { visible: false, fontSize: 12, fixed: true }
+    );
+    let labelTimeout = null;
+    glider5.on('over', function () {
+        label5.setAttribute({ visible: true });
+        if (labelTimeout) { clearTimeout(labelTimeout); labelTimeout = null; }
+    });
+    glider5.on('out', function () {
+        if (!labelTimeout) {
+            label5.setAttribute({ visible: false });
+        }
+    });
+    glider5.on('down', function () {
+        label5.setAttribute({ visible: true });
+        if (labelTimeout) clearTimeout(labelTimeout);
+        labelTimeout = setTimeout(function () {
+            label5.setAttribute({ visible: false });
+            labelTimeout = null;
+        }, 2000);
+    });
+    glider5.on('drag', function () {
+        let V = Math.round(glider5.X());
+        V = Math.max(0, Math.min(50, V));
+        glider5.setPosition(JXG.COORDS_BY_USER, [V, m * V]);
+        voltSlider.value = V;
+        actualizarDisplayEsc2();
+    });
+    board5.update();
+}
+
 const ESCENARIOS = {
     1: {
         btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary' },
         mostrar: ['esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4'],
+        ocultar: ['esc2-controls', 'box4', 'box5'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
-        codigo: 'pez',
+        codigo: 'litros',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -866,10 +980,10 @@ const ESCENARIOS = {
     2: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary' },
         mostrar: ['esc2-controls'],
-        ocultar: ['esc1-controls', 'box', 'box4'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box5'],
         canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
         graficaClass: 'd-none',
-        codigo: 'neon',
+        codigo: 'grafica',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -877,16 +991,17 @@ const ESCENARIOS = {
             botonLA.disabled = true;
             boton3.disabled = false;
             pumpBroken = false;
+            document.getElementById('esc5-m-section').style.display = 'none';
             actualizarDisplayEsc2();
         }
     },
     3: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary' },
         mostrar: ['esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4'],
+        ocultar: ['esc2-controls', 'box4', 'box5'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
-        codigo: 'litros',
+        codigo: 'estanque',
         alEntrar: function () {
             laSection.style.display = '';
             if (checkLA.checked) checkLA.checked = false;
@@ -903,10 +1018,10 @@ const ESCENARIOS = {
     4: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary' },
         mostrar: ['esc2-controls', 'box4'],
-        ocultar: ['esc1-controls', 'box'],
+        ocultar: ['esc1-controls', 'box', 'box5'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
-        codigo: 'eco',
+        codigo: 'pendiente',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -914,6 +1029,7 @@ const ESCENARIOS = {
             botonLA.disabled = true;
             boton3.disabled = false;
             pumpBroken = false;
+            document.getElementById('esc5-m-section').style.display = 'none';
             initBoard4();
             let V = Number(voltSlider.value);
             if (glider4) {
@@ -922,6 +1038,35 @@ const ESCENARIOS = {
             }
             actualizarDisplayEsc2();
             sincronizarAlturaGrafica4();
+        }
+    },
+    5: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary' },
+        mostrar: ['esc2-controls', 'box5'],
+        ocultar: ['esc1-controls', 'box', 'box4'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: '',
+        alEntrar: function () {
+            laSection.style.display = 'none';
+            if (checkLA.checked) checkLA.checked = false;
+            dataLA.style.display = 'none';
+            botonLA.disabled = true;
+            boton3.disabled = false;
+            pumpBroken = false;
+            document.getElementById('esc5-m-section').style.display = '';
+            initBoard5();
+            recrearCurva5(Number(mSlider.value));
+            let V = Number(voltSlider.value);
+            if (glider5) {
+                glider5.setPosition(JXG.COORDS_BY_USER, [V, Number(mSlider.value) * V]);
+                board5.update();
+            }
+            if (checkFranjasBoard && checkFranjasBoard.Value()) {
+                toggleFranjas(true);
+            }
+            actualizarDisplayEsc2();
+            sincronizarAlturaGrafica5();
         }
     }
 };
@@ -1163,6 +1308,7 @@ esc1Btn.addEventListener('click', function () { cambiarEscenario(1); });
 esc3Btn.addEventListener('click', function () { cambiarEscenario(3); });
 esc2Btn.addEventListener('click', function () { cambiarEscenario(2); });
 esc4Btn.addEventListener('click', function () { cambiarEscenario(4); });
+esc5Btn.addEventListener('click', function () { cambiarEscenario(5); });
 checkLA.addEventListener('change', checklitros_fn);
 botonLA.addEventListener('click', crearPuntoLA);
 
@@ -1172,6 +1318,12 @@ voltSlider.addEventListener('input', function () {
         let V = Number(voltSlider.value);
         glider4.setPosition(JXG.COORDS_BY_USER, [V, 0.3 * V]);
         board4.update();
+    }
+    if (escenarioActual === 5 && glider5) {
+        let V = Number(voltSlider.value);
+        let m = Number(mSlider.value);
+        glider5.setPosition(JXG.COORDS_BY_USER, [V, m * V]);
+        board5.update();
     }
 });
 
@@ -1184,10 +1336,30 @@ btnResetEsc2.addEventListener('click', function () {
         glider4.setPosition(JXG.COORDS_BY_USER, [25, 7.5]);
         board4.update();
     }
+    if (escenarioActual === 5 && glider5) {
+        mSlider.value = '0.3';
+        mVal.textContent = '0.3';
+        recrearCurva5(0.3);
+        glider5.setPosition(JXG.COORDS_BY_USER, [25, 7.5]);
+        board5.update();
+    }
+});
+
+mSlider.addEventListener('input', function () {
+    let m = Number(mSlider.value);
+    mVal.textContent = m.toFixed(1);
+    if (escenarioActual === 5) {
+        recrearCurva5(m);
+        let V = Number(voltSlider.value);
+        if (glider5) {
+            glider5.setPosition(JXG.COORDS_BY_USER, [V, m * V]);
+            board5.update();
+        }
+    }
 });
 
 function getOrden() {
-    return [1, 3, 2, 4];
+    return [1, 3, 2, 4, 5];
 }
 
 function getSiguiente(n) {

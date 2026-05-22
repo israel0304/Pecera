@@ -10,6 +10,10 @@ body {
     min-height: 100vh;
 }
 
+#contenedor {
+    flex: 1;
+}
+
 #contenedorCanvas {
     display: flex;
     flex-direction: column;
@@ -34,13 +38,9 @@ body {
     min-height: 300px;
 }
 
-#box2, #box4 {
+#box2, #box4, #box5 {
     width: 100%;
     height: auto;
-}
-
-#contenedor {
-    flex: 1;
 }
 
 .btn-group .btn-sm {
@@ -95,6 +95,7 @@ input[type="range"] {
 #esc1-btn,
 #esc3-btn,
 #esc4-btn,
+#esc5-btn,
 #esc2-btn,
 #pointLA {
     max-width: 250px;
