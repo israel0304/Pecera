@@ -315,6 +315,32 @@ class Grafica {
                 fixed: true
             }
         );
+        let label = this.board.create('text',
+            [
+                function () { return p.X() + 0.3; },
+                function () { return p.Y() + 1.5; },
+                '(' + this.pecera.temperatura + ', ' + this.pecera.saturacion + ')'
+            ],
+            { visible: false, fontSize: 12, fixed: true, cssClass: '' }
+        );
+        let labelTimeout = null;
+        p.on('over', function () {
+            label.setAttribute({ visible: true });
+            if (labelTimeout) { clearTimeout(labelTimeout); labelTimeout = null; }
+        });
+        p.on('out', function () {
+            if (!labelTimeout) {
+                label.setAttribute({ visible: false });
+            }
+        });
+        p.on('down', function () {
+            label.setAttribute({ visible: true });
+            if (labelTimeout) clearTimeout(labelTimeout);
+            labelTimeout = setTimeout(function () {
+                label.setAttribute({ visible: false });
+                labelTimeout = null;
+            }, 2000);
+        });
         this.puntos.push(p);
     }
 
@@ -568,8 +594,33 @@ function crearPuntoLA() {
         fixed: true,
         visible: false
     });
+    let label = grafica.board.create('text',
+        [
+            function () { return p.X() + 0.3; },
+            function () { return p.Y() + 1.5; },
+            '(' + cantidad + ', ' + LA + ')'
+        ],
+        { visible: false, fontSize: 12, fixed: true, cssClass: '' }
+    );
+    let labelTimeout = null;
+    p.on('over', function () {
+        label.setAttribute({ visible: true });
+        if (labelTimeout) { clearTimeout(labelTimeout); labelTimeout = null; }
+    });
+    p.on('out', function () {
+        if (!labelTimeout) {
+            label.setAttribute({ visible: false });
+        }
+    });
+    p.on('down', function () {
+        label.setAttribute({ visible: true });
+        if (labelTimeout) clearTimeout(labelTimeout);
+        labelTimeout = setTimeout(function () {
+            label.setAttribute({ visible: false });
+            labelTimeout = null;
+        }, 2000);
+    });
     grafica.puntosLA.push(p);
-    // If LA mode is active, make point visible immediately
     if (checkLA.checked) p.setAttribute({ visible: true });
 }
 
@@ -782,7 +833,18 @@ const ESCENARIOS = {
     }
 };
 
+function limpiarGrafica() {
+    if (!grafica || !grafica.board) return;
+    grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
+    grafica.puntos = [];
+    if (grafica.puntosLA) {
+        grafica.puntosLA.forEach(function (p) { grafica.board.removeObject(p); });
+        grafica.puntosLA = [];
+    }
+}
+
 function cambiarEscenario(n) {
+    limpiarGrafica();
     escenarioActual = n;
     let cfg = ESCENARIOS[n];
     if (!cfg) return;
