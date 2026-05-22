@@ -76,6 +76,19 @@ Pecera/
 └── README.md
 ```
 
+## Versiones
+
+El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer](https://semver.org/). Las versiones publicadas están disponibles en [GitHub Releases](https://github.com/israel0304/Pecera/releases).
+
+| Versión | Descripción |
+|---------|-------------|
+| v1.0.0 | Lanzamiento inicial — pecera, peces, burbujas, temperatura, gráfica SO |
+| v1.1.0 | Tamaño dinámico de pecera, botón reiniciar, validaciones |
+| v1.1.1 | Fix mensaje de advertencia de peces |
+| v1.2.0 | Refactor general, ajustes de bomba/cableado, documentación |
+| v1.3.0 | Estanque Sustentable — panel solar, bomba, voltaje, partículas de agua |
+| v1.4.0 | Pecera + Litros — cálculo LA, toggle SO/LA, curva naranja, código secreto |
+
 ## Historial de cambios
 
 Ver [`CHANGELOG.md`](CHANGELOG.md) para el registro completo de versiones.
