@@ -34,7 +34,7 @@ body {
     min-height: 300px;
 }
 
-#box2 {
+#box2, #box4 {
     width: 100%;
     height: auto;
 }
@@ -78,6 +78,12 @@ input[type="range"] {
         overflow-x: hidden;
     }
 
+    #box4, #box5 {
+        max-height: 200px;
+        min-height: 120px;
+        overflow-x: hidden;
+    }
+
     #contenedorGrafica {
         overflow-x: hidden;
     }
@@ -88,6 +94,7 @@ input[type="range"] {
 #reset-esc2,
 #esc1-btn,
 #esc3-btn,
+#esc4-btn,
 #esc2-btn,
 #pointLA {
     max-width: 250px;

@@ -710,6 +710,7 @@ let btnPointOD = document.getElementById('point-od');
 let btnResetEsc2 = document.getElementById('reset-esc2');
 let esc1Btn = document.getElementById('esc1-btn');
 let esc3Btn = document.getElementById('esc3-btn');
+let esc4Btn = document.getElementById('esc4-btn');
 let esc2Btn = document.getElementById('esc2-btn');
 let esc1Controls = document.getElementById('esc1-controls');
 let esc2Controls = document.getElementById('esc2-controls');
@@ -763,6 +764,12 @@ class ParticulaAgua {
 let particulasEsc2 = [];
 let pumpBroken = false;
 
+// Escenario 4 state
+let board4 = null;
+let curve4 = null;
+let glider4 = null;
+let label4 = null;
+
 function sincronizarAlturaGrafica() {
     if (escenarioActual === 1 || escenarioActual === 3) {
         let h = contenedorCanvas.clientHeight;
@@ -773,11 +780,73 @@ function sincronizarAlturaGrafica() {
     }
 }
 
+function initBoard4() {
+    if (board4) return;
+    let box4 = document.getElementById('box4');
+    board4 = JXG.JSXGraph.initBoard('box4', {
+        boundingbox: [-5, 20, 55, -2],
+        axis: true,
+        showCopyright: false,
+    });
+    curve4 = board4.create('functiongraph', [
+        function (x) { return 0.3 * x; }
+    ], { strokecolor: '#E74C3C', strokeWidth: 2 });
+    let V = Number(voltSlider.value);
+    glider4 = board4.create('glider', [V, 0.3 * V, curve4], {
+        name: '',
+        strokecolor: '#2ECC71',
+        fillColor: '#2ECC71',
+        size: 6
+    });
+    label4 = board4.create('text',
+        [
+            function () { return glider4.X() + 1; },
+            function () { return glider4.Y() + 4; },
+            function () { return '(' + Math.round(glider4.X()) + ', ' + Math.round(glider4.Y()) + ')'; }
+        ],
+        { visible: false, fontSize: 12, fixed: true }
+    );
+    let labelTimeout = null;
+    glider4.on('over', function () {
+        label4.setAttribute({ visible: true });
+        if (labelTimeout) { clearTimeout(labelTimeout); labelTimeout = null; }
+    });
+    glider4.on('out', function () {
+        if (!labelTimeout) {
+            label4.setAttribute({ visible: false });
+        }
+    });
+    glider4.on('down', function () {
+        label4.setAttribute({ visible: true });
+        if (labelTimeout) clearTimeout(labelTimeout);
+        labelTimeout = setTimeout(function () {
+            label4.setAttribute({ visible: false });
+            labelTimeout = null;
+        }, 2000);
+    });
+    glider4.on('drag', function () {
+        let V = Math.round(glider4.X());
+        V = Math.max(0, Math.min(50, V));
+        glider4.setPosition(JXG.COORDS_BY_USER, [V, 0.3 * V]);
+        voltSlider.value = V;
+        actualizarDisplayEsc2();
+    });
+}
+
+function sincronizarAlturaGrafica4() {
+    if (escenarioActual === 4 && board4) {
+        let h = contenedorCanvas.clientHeight;
+        let box4 = document.getElementById('box4');
+        box4.style.height = h + 'px';
+        board4.resizeContainer(box4.clientWidth, h);
+    }
+}
+
 const ESCENARIOS = {
     1: {
-        btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary' },
+        btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary' },
         mostrar: ['esc1-controls', 'box'],
-        ocultar: ['esc2-controls'],
+        ocultar: ['esc2-controls', 'box4'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'pez',
@@ -795,11 +864,11 @@ const ESCENARIOS = {
         }
     },
     2: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary' },
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary' },
         mostrar: ['esc2-controls'],
-        ocultar: ['esc1-controls', 'box'],
+        ocultar: ['esc1-controls', 'box', 'box4'],
         canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
-        graficaClass: 'col-12 col-sm-6 col-lg-10 offset-lg-1 d-flex flex-column',
+        graficaClass: 'd-none',
         codigo: 'neon',
         alEntrar: function () {
             laSection.style.display = 'none';
@@ -812,9 +881,9 @@ const ESCENARIOS = {
         }
     },
     3: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary' },
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary' },
         mostrar: ['esc1-controls', 'box'],
-        ocultar: ['esc2-controls'],
+        ocultar: ['esc2-controls', 'box4'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'litros',
@@ -829,6 +898,30 @@ const ESCENARIOS = {
             grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
             grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
             sincronizarAlturaGrafica();
+        }
+    },
+    4: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary' },
+        mostrar: ['esc2-controls', 'box4'],
+        ocultar: ['esc1-controls', 'box'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'eco',
+        alEntrar: function () {
+            laSection.style.display = 'none';
+            if (checkLA.checked) checkLA.checked = false;
+            dataLA.style.display = 'none';
+            botonLA.disabled = true;
+            boton3.disabled = false;
+            pumpBroken = false;
+            initBoard4();
+            let V = Number(voltSlider.value);
+            if (glider4) {
+                glider4.setPosition(JXG.COORDS_BY_USER, [V, 0.3 * V]);
+                board4.update();
+            }
+            actualizarDisplayEsc2();
+            sincronizarAlturaGrafica4();
         }
     }
 };
@@ -857,7 +950,9 @@ function cambiarEscenario(n) {
 
     contenedorCanvas.className = cfg.canvasClass;
     contenedorGrafica.className = cfg.graficaClass;
-    contenedorGrafica.style.display = 'flex';
+    if (!cfg.graficaClass.includes('d-none')) {
+        contenedorGrafica.style.display = 'flex';
+    }
 
     document.getElementById('btnAtras').disabled = n === getOrden()[0];
 
@@ -956,18 +1051,15 @@ function actualizarEscenario2() {
     let fontScale = w / canvas.clientWidth;
     let isSmall = canvas.clientWidth < 600;
     let fs1 = Math.max((isSmall ? 13 : 18) * fontScale, isSmall ? 13 : 18);
-    let fs2 = Math.max((isSmall ? 11 : 15) * fontScale, isSmall ? 11 : 15);
     let fs3 = Math.max((isSmall ? 12 : 16) * fontScale, isSmall ? 12 : 16);
-    let lh1 = fs1 * 1.6;
-    let lh2 = fs2 * 1.6;
-    let lh3 = fs3 * 1.6;
+    let lh1 = fs1 * 1;
+    let lh3 = fs3 * 1.2;
     let padBox = fs1 * 0.8;
     let boxX = px + w * 0.08;
     let boxW = pw - w * 0.16;
     let boxY = py + ph + h * 0.02;
     let line1Y = boxY + padBox + lh1;
-    let line2Y = line1Y + lh2;
-    let line3Y = line2Y + lh3;
+    let line3Y = line1Y + lh3 - 3;
     let line4Y = line3Y + lh3;
     let boxH = line4Y + lh3 * 0.5 + padBox - boxY;
 
@@ -980,15 +1072,12 @@ function actualizarEscenario2() {
     ctx.fillStyle = '#222';
     ctx.font = `bold ${Math.round(fs1)}px Arial`;
     ctx.fillText(`V = ${V} V  |  I = ${I.toFixed(2)} A`, px + pw / 2, line1Y);
-    ctx.fillStyle = '#666';
-    ctx.font = `${Math.round(fs2)}px Arial`;
-    ctx.fillText(`R = ${R} Ω`, px + pw / 2, line2Y);
     let statusText, statusColor;
     if (I < 2) {
         statusText = 'Corriente baja - Baja oxigenacion';
         statusColor = '#E74C3C';
     } else if (I <= 8) {
-        statusText = 'Rango optimo - Funcionando correctamente';
+        statusText = 'Rango optimo - Funcionando Bien';
         statusColor = '#2ECC71';
     } else {
         statusText = 'Corriente alta - Sobrecalentamiento';
@@ -1073,11 +1162,17 @@ function actualizarEscenario2() {
 esc1Btn.addEventListener('click', function () { cambiarEscenario(1); });
 esc3Btn.addEventListener('click', function () { cambiarEscenario(3); });
 esc2Btn.addEventListener('click', function () { cambiarEscenario(2); });
+esc4Btn.addEventListener('click', function () { cambiarEscenario(4); });
 checkLA.addEventListener('change', checklitros_fn);
 botonLA.addEventListener('click', crearPuntoLA);
 
 voltSlider.addEventListener('input', function () {
     actualizarDisplayEsc2();
+    if (escenarioActual === 4 && glider4) {
+        let V = Number(voltSlider.value);
+        glider4.setPosition(JXG.COORDS_BY_USER, [V, 0.3 * V]);
+        board4.update();
+    }
 });
 
 btnResetEsc2.addEventListener('click', function () {
@@ -1085,10 +1180,14 @@ btnResetEsc2.addEventListener('click', function () {
     particulasEsc2 = [];
     pumpBroken = false;
     actualizarDisplayEsc2();
+    if (escenarioActual === 4 && glider4) {
+        glider4.setPosition(JXG.COORDS_BY_USER, [25, 7.5]);
+        board4.update();
+    }
 });
 
 function getOrden() {
-    return [1, 3, 2];
+    return [1, 3, 2, 4];
 }
 
 function getSiguiente(n) {

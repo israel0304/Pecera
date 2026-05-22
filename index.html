@@ -20,6 +20,7 @@
                     <button type="button" id="esc1-btn" class="btn btn-primary btn-sm">Pecera</button>
                     <button type="button" id="esc3-btn" class="btn btn-secondary btn-sm">Pecera + Litros</button>
                     <button type="button" id="esc2-btn" class="btn btn-secondary btn-sm">Estanque Sustentable</button>
+                    <button type="button" id="esc4-btn" class="btn btn-secondary btn-sm">Estanque + Gráfica</button>
                 </div>
             </div>
         </div>
@@ -68,19 +69,12 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-12 col-sm-6 d-flex flex-column" id="contenedorGrafica">
-                <div id="box" class="jxgbox flex-grow-1"></div>
-                <!-- Escenario 2 Controls -->
+                <!-- Escenario 2 & 4 Controls -->
                 <div id="esc2-controls" style="display:none;">
                     <div class="row">
                         <div class="col-md p-2">
-                            <p>Voltaje: <span id="voltVal">25</span> V</p>
+                            <p>V = <span id="voltVal">25</span> V &nbsp;|&nbsp; I = <span id="corrVal">5.00</span> A</p>
                             <input type="range" min="0" max="50" value="25" id="voltaje" class="w-100">
-                        </div>
-                        <div class="col-md p-2">
-                            <p>Resistencia: 5 &Omega; (fija)</p>
-                            <p>I = V / R = <span id="corrVal">0.00</span> A</p>
                         </div>
                     </div>
                     <div class="row">
@@ -91,6 +85,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="col-12 col-sm-6 d-flex flex-column" id="contenedorGrafica">
+                <div id="box" class="jxgbox flex-grow-1"></div>
+                <div id="box4" class="jxgbox flex-grow-1" style="display:none;"></div>
             </div>
         </div>
     </div>
