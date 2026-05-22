@@ -8,12 +8,22 @@ Abrir `index.html` en cualquier navegador. No requiere servidor ni build.
 
 ## Escenarios
 
-### Escenario 1: Pecera
+### Pecera
 Simula una pecera con peces que nadan libremente. La temperatura controla la saturación de oxígeno (SO) mediante una función cúbica. Los peces se enferman por debajo de 22 °C y mueren por encima de 28 °C.
 
 **Controles:** temperatura (0–50 °C), número de peces (0–20), tamaño de pez (1–7 cm)
 
-### Escenario 2: Estanque Sustentable
+### Pecera + Litros
+Extensión de Pecera que agrega un cálculo de litros de agua necesarios. Incluye un checkbox "Litros de agua necesaria" que alterna entre la vista de Saturación de Oxígeno (SO) y la de Litros de Agua (LA).
+
+- **Fórmula LA:** `LA = cantidad_peces × tamaño_peces × 3`
+- Curva LA lineal (color naranja) en JSXGraph
+- Botón "graficar punto LA" para marcar puntos en la curva
+- Requiere código secreto `"litros"` para navegar entre escenarios
+
+**Controles:** temperatura (0–50 °C), número de peces (0–20), tamaño de pez (1–7 cm), checkbox LA, botón punto LA
+
+### Estanque Sustentable
 Simula un sistema de bombeo de agua con energía solar. Un panel solar alimenta una bomba sumergida en un estanque; el voltaje controla el brillo del sol, el tamaño/velocidad de las burbujas y el estado del sistema.
 
 **Controles:** voltaje (0–50 V), resistencia fija de 5 Ω, I = V / R

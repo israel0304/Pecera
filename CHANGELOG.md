@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0 (no publicado)
+
+### Features
+- Escenario Pecera + Litros: cálculo de litros de agua necesarios (LA = npeces × tpeces × 3)
+- Checkbox "Litros de agua necesaria" para alternar entre vista SO y LA
+- Curva LA lineal (naranja) en JSXGraph
+- Botón "graficar punto LA" para marcar puntos en la curva LA
+- Código secreto `"litros"` para navegación entre escenarios
+- Navegación con botones atrás/continuar y modal de código secreto
+
 ## 1.3.0 (no publicado)
 
 ### Features

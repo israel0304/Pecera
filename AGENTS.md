@@ -13,13 +13,22 @@ Open `index.html` in any browser. No build or server required.
 
 ## Key Behavior
 
-### Escenario 1: Pecera
+### Pecera
 - Temperature input controls oxygen saturation calculation (cubic function)
 - Fish die above 28°C, get sick below 22°C
 - Breathing animation via `requestAnimationFrame` loop at end of `script.js`
 - JSXGraph plots SO curve in separate container
 
-### Escenario 2: Estanque Sustentable
+### Pecera + Litros
+- Extension of Pecera that adds a "Litros de agua necesaria" checkbox toggle
+- Checkbox switches between Oxygen Saturation (SO) and Liters of Water (LA) views
+- LA formula: `LA = npeces × tpeces × 3` (liters of water needed per fish)
+- JSXGraph plots LA curve (linear, orange) alongside SO controls
+- "graficar punto LA" button to mark data points on LA curve
+- Secret code `"litros"` required to navigate between scenarios
+- Navigation order: Pecera → Pecera + Litros → Estanque Sustentable
+
+### Estanque Sustentable
 - Voltage slider (0–50V) controls current (I = V/R, R = 5Ω fixed)
 - Solar panel image (`img/panel_solar.png`) and pump image (`img/bomba_agua.png`)
 - Water level at 50% of canvas height; shore starts at `w * 0.6`
