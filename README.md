@@ -37,6 +37,17 @@ Simula un sistema de bombeo de agua con energía solar. Un panel solar alimenta 
 | I > 8 A | Sobrecalentamiento | Brillo rojo pulsante + bomba vibra |
 | V ≥ 50 V | Bomba dañada | Imagen `bomba_agua_issue.png`, sin burbujas, sin brillo |
 
+## Navegación
+
+La navegación entre escenarios se hace con los botones "← Atrás" y "Continuar →".
+Avanzar requiere ingresar un código secreto; retroceder no.
+
+| Desde | Hacia | Código |
+|-------|-------|--------|
+| Pecera | Pecera + Litros | `pez` |
+| Pecera + Litros | Estanque Sustentable | `litros` |
+| Estanque Sustentable | Pecera | `neon` |
+
 ## Clases
 
 | Clase | Descripción |
