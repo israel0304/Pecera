@@ -757,7 +757,7 @@ class ParticulaAgua {
     }
 
     get vivo() {
-        return this.y > canvas.height * 0.6;
+        return this.y > canvas.height * 0.55;
     }
 }
 
@@ -1174,7 +1174,7 @@ function actualizarEscenario2() {
 
      // Pared trasera
     ctx.fillStyle = '#8B7355';
-    ctx.strokeStyle = '#655139';
+    ctx.strokeStyle = '#8B7355';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(w * 0.17, h * 0.45);

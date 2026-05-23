@@ -24,29 +24,63 @@ Extensión de Pecera que agrega un cálculo de litros de agua necesarios. Incluy
 **Controles:** temperatura (0–50 °C), número de peces (0–20), tamaño de pez (1–7 cm), checkbox LA, botón punto LA
 
 ### Estanque Sustentable
-Simula un sistema de bombeo de agua con energía solar. Un panel solar alimenta una bomba sumergida en un estanque; el voltaje controla el brillo del sol, el tamaño/velocidad de las burbujas y el estado del sistema.
+Simula un sistema de bombeo de agua con energía solar. El estanque se renderiza como un **prisma 3D isométrico** con paredes, base y cara frontal de agua semitransparente. Un panel solar alimenta una bomba; el voltaje controla el brillo del sol, el tamaño/velocidad de las burbujas y el estado del sistema.
 
-**Controles:** voltaje (0–50 V), resistencia fija de 5 Ω, I = V / R
+**Controles:** voltaje (0–12 V, slider), resistencia fija R = 5 Ω (I = V / R)
+
+**Renderizado del estanque (prisma 3D):**
+
+| Elemento | Forma | Líneas |
+|----------|-------|--------|
+| Base del estanque | Trapecio café | 1136–1147 |
+| Pared izquierda | Romboide café | 1149–1160 |
+| Pared derecha | Romboide café | 1162–1173 |
+| Pared trasera | Rectángulo café | 1175–1186 |
+| Agua frontal | Rectángulo azul semitransparente | 1189–1200 |
+| Superficie/reflejo superior | Trapecio azul | 1202–1213 |
 
 **Comportamiento:**
 
 | Condición | Estado | Efecto visual |
 |-----------|--------|---------------|
-| I < 2 A | Corriente baja | Burbujas pequeñas y lentas |
-| 2 A ≤ I ≤ 8 A | Rango óptimo | Burbujas normales, texto verde |
-| I > 8 A | Sobrecalentamiento | Brillo rojo pulsante + bomba vibra |
-| V ≥ 50 V | Bomba dañada | Imagen `bomba_agua_issue.png`, sin burbujas, sin brillo |
+| V ≤ 3.9 | Corriente baja — baja oxigenación | Texto rojo, burbujas pequeñas |
+| 4 ≤ V ≤ 6.5 | Rango óptimo — funcionando correctamente | Texto verde, burbujas normales |
+| 6.5 < V ≤ 10 | Corriente alta — sobrecalentamiento | Brillo rojo pulsante + bomba vibra |
+| V > 10 | Bomba descompuesta | Imagen `bomba_agua_issue.png`, sin burbujas, sin brillo |
+
+- Las burbujas desaparecen al alcanzar `y = h * 0.6`
+- El sol se ubica en la esquina superior izquierda; su brillo y tamaño escalan con `V / 12`
+- Cable blanco discontinuo conecta panel solar con bomba
+- El escenario inicia por defecto al cargar la página
+
+### Estanque + Gráfica (Escenario 4)
+Estanque Sustentable con una gráfica JSXGraph que muestra la curva I vs V (recta con pendiente 1/R). Incluye un **glider** arrastrable sobre la curva que sincroniza el slider de voltaje.
+
+- Glider siempre visible (etiqueta permanente `(V, I)`)
+- Curva: `I = V / 5` (R = 5 Ω fijo)
+- Botón "graficar punto" para marcar puntos en la curva
+
+### Estanque + Pendiente Variable (Escenario 5)
+Estanque Sustentable con una gráfica JSXGraph donde la **pendiente m** de la recta `I = m × V` es ajustable mediante un slider (0–5.0). Incluye un glider arrastrable.
+
+- Slider de pendiente `m` con paso 0.1
+- Glider siempre visible con etiqueta permanente
+- La recta se redibuja al cambiar m o al arrastrar el glider
 
 ## Navegación
 
 La navegación entre escenarios se hace con los botones "← Atrás" y "Continuar →".
 Avanzar requiere ingresar un código secreto; retroceder no.
+El escenario inicial al cargar la página es **Estanque Sustentable**.
 
 | Desde | Hacia | Código |
 |-------|-------|--------|
-| Pecera | Pecera + Litros | `pez` |
-| Pecera + Litros | Estanque Sustentable | `litros` |
-| Estanque Sustentable | Pecera | `neon` |
+| Pecera | Pecera + Litros | `litros` |
+| Pecera + Litros | Estanque Sustentable | `estanque` |
+| Estanque Sustentable | Estanque + Gráfica | `grafica` |
+| Estanque + Gráfica | Estanque + Pendiente Variable | `pendiente` |
+
+> Retroceder nunca requiere código. El orden de navegación es: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable.
 
 ## Clases
 
@@ -62,7 +96,7 @@ Avanzar requiere ingresar un código secreto; retroceder no.
 ## Tecnologías
 
 - **HTML5 Canvas** — renderizado de escenarios (buffer fijo 1600×800)
-- **JSXGraph** — gráficos de saturación de oxígeno
+- **JSXGraph** — gráficos de saturación de oxígeno, curvas I vs V
 - **Bootstrap** — interfaz de usuario responsive
 - **JavaScript vanilla** — sin frameworks ni librerías externas
 
