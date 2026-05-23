@@ -13,7 +13,7 @@ let cajaSize = document.getElementById('tpeces');
 let playBtn = document.getElementById('playTemp');
 let tempInterval = null;
 let isPlaying = false;
-let escenarioActual = 1;
+let escenarioActual = 2;
 let box = document.getElementById('box');
 let grafica = null;
 
@@ -757,7 +757,7 @@ class ParticulaAgua {
     }
 
     get vivo() {
-        return this.y > canvas.height * 0.5;
+        return this.y > canvas.height * 0.6;
     }
 }
 
@@ -1110,41 +1110,134 @@ function actualizarEscenario2() {
     ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
     ctx.fill();
     
+    // Pond water
+    let waterGrad = ctx.createLinearGradient(0, h * 0.40, 0, h);
+    waterGrad.addColorStop(0, '#69d94a');
+    waterGrad.addColorStop(0.5, '#31b338');
+    waterGrad.addColorStop(1, '#358c1a');
+    ctx.fillStyle = waterGrad;
+    ctx.fillRect(0, h * 0.40, w, h * 0.5);
+
+    // Water surface
+    ctx.strokeStyle = '#A0D4FF';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = w * 0.15; x < w * 0.6; x += 3) {
+        ctx.lineTo(x, h * 0.55 + Math.sin(x * 0.02 + Date.now() * 0.001) * 3);
+    }
+    ctx.stroke();
+
+    ctx.beginPath();
+    for (let x = w * 0.15; x < w * 0.6; x += 3) {
+        ctx.lineTo(x, h * 0.6 + Math.sin(x * 0.02 + Date.now() * 0.001) * 3);
+    }
+    ctx.stroke();
+
+    // Trapecio decorativo base
+    ctx.fillStyle = '#655139';
+    ctx.strokeStyle = 'rgba(184, 109, 97, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.17, h * 0.95);
+    ctx.lineTo(w * 0.57, h * 0.95);
+    ctx.lineTo(w * 0.60, h);
+    ctx.lineTo(w * 0.15, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Romboide pared izquierda
+    ctx.fillStyle = '#655139';
+    ctx.strokeStyle = '#655139';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.15, h * 0.5);
+    ctx.lineTo(w * 0.17, h * 0.45);
+    ctx.lineTo(w * 0.17, h*0.95);
+    ctx.lineTo(w * 0.15, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+     // Romboide pared derecha
+    ctx.fillStyle = '#655139';
+    ctx.strokeStyle = '#655139';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.6, h * 0.5);
+    ctx.lineTo(w * 0.57, h * 0.45);
+    ctx.lineTo(w * 0.57, h*0.95);
+    ctx.lineTo(w * 0.6, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+     // Pared trasera
+    ctx.fillStyle = '#8B7355';
+    ctx.strokeStyle = '#655139';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.17, h * 0.45);
+    ctx.lineTo(w * 0.57, h * 0.45);
+    ctx.lineTo(w * 0.57, h * 0.95);
+    ctx.lineTo(w * 0.17, h * 0.95);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+
+    // Agua frontal
+    ctx.fillStyle = 'rgba(67, 144, 207, 0.6)';
+    ctx.strokeStyle = 'rgba(160, 212, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.15, h * 0.6);
+    ctx.lineTo(w * 0.60, h * 0.6);
+    ctx.lineTo(w * 0.60, h);
+    ctx.lineTo(w * 0.15, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    //trapecio decorativo sobre el agua (reflejo)
+  ctx.fillStyle = 'rgba(67, 144, 207, 0.8)';
+    ctx.strokeStyle = 'rgba(160, 212, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.17, h * 0.55);
+    ctx.lineTo(w * 0.57, h * 0.55);
+    ctx.lineTo(w * 0.60, h* 0.6);
+    ctx.lineTo(w * 0.15, h* 0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Ground / shore (left side)
+    ctx.fillStyle = '#8B7355';
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.5);
+    ctx.lineTo(w * 0.15, h * 0.5);
+    ctx.lineTo(w * 0.15, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
+
     // Ground / shore (right side)
     ctx.fillStyle = '#8B7355';
     ctx.beginPath();
     ctx.moveTo(w * 0.6, h * 0.5);
     ctx.lineTo(w, h * 0.5);
     ctx.lineTo(w, h);
-    ctx.lineTo(w * 0.55, h);
+    ctx.lineTo(w * 0.6, h);
     ctx.closePath();
     ctx.fill();
-
-    // Pond water
-    let waterGrad = ctx.createLinearGradient(0, h * 0.5, 0, h);
-    waterGrad.addColorStop(0, '#4A90D9');
-    waterGrad.addColorStop(0.5, '#3173B3');
-    waterGrad.addColorStop(1, '#1A4D8C');
-    ctx.fillStyle = waterGrad;
-    ctx.fillRect(0, h * 0.5, w * 0.6, h * 0.5);
-
-    // Water surface
-    ctx.strokeStyle = '#A0D4FF';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let x = 0; x < w * 0.6; x += 3) {
-        ctx.lineTo(x, h * 0.5 + Math.sin(x * 0.02 + Date.now() * 0.001) * 3);
-    }
-    ctx.stroke();
-
-   
 
     // Pump vars
     let pumpX = w * 0.50, pumpY = h * 0.72;
     let pumpW = w * 0.30, pumpH = pumpW * (311 / 803);
 
     // Solar panel image
-    let px = w * 0.55, py = h * 0.23;
+    let px = w * 0.55, py = h * 0.13;
     let pw = w * 0.50, ph = pw * (302 / 827);
     if (imgPanel.complete && imgPanel.naturalWidth > 0) {
         ctx.drawImage(imgPanel, px, py, pw, ph);
@@ -1381,3 +1474,5 @@ document.getElementById('codigoInput').addEventListener('keydown', function (e) 
 document.getElementById('codigoInput').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') document.getElementById('confirmarCodigo').click();
 });
+
+cambiarEscenario(2);
