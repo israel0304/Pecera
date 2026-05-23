@@ -64,7 +64,8 @@ Estanque Sustentable con una gráfica JSXGraph que muestra la curva I vs V (rect
 Estanque Sustentable con una gráfica JSXGraph donde la **pendiente m** de la recta `I = m × V` es ajustable mediante un slider (0–5.0). Incluye un glider arrastrable.
 
 - Slider de pendiente `m` con paso 0.1
-- Glider siempre visible con etiqueta permanente
+- Glider siempre visible con etiqueta permanente `U (V, I)` con 2 decimales
+- Franjas de colores (activables con código secreto `"franjas"`) que muestran zonas de voltaje: azul (2–4V), verde (4–6V), amarillo (6–8V), rojo (8–10V) y banda verde horizontal de rango óptimo
 - La recta se redibuja al cambiar m o al arrastrar el glider
 
 ## Navegación
@@ -81,6 +82,8 @@ El escenario inicial al cargar la página es **Estanque Sustentable**.
 | Estanque + Gráfica | Estanque + Pendiente Variable | `pendiente` |
 
 > Retroceder nunca requiere código. El orden de navegación es: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable.
+>
+> En el Escenario 5, el checkbox "Mostrar franjas" requiere el código `"franjas"` (solo una vez por sesión) para activar las bandas de voltaje en la gráfica.
 
 ## Clases
 

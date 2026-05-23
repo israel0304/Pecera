@@ -137,6 +137,7 @@ class Pez {
         this.velocidad.limit(0.4);
         this.aceleracion = new Vector(0.01, 0.01);
         this.dir = new Vector(signo() * Math.random() * canvas.width / 2, signo() * Math.random() * canvas.height / 2);
+        this.velMax = 0.5;
 
     }
 
@@ -169,7 +170,7 @@ class Pez {
     nadar() {
         this.aceleracion = this.dir;
         this.velocidad.add(this.aceleracion);
-        this.velocidad.limit(0.5);
+        this.velocidad.limit(this.velMax);
         this.posicion.add(this.velocidad);
         this.chocar();
     }
@@ -177,13 +178,25 @@ class Pez {
 
     chocar() {
 
-        if (this.posicion.x > this.paddingDer || this.posicion.x < this.paddingIzq) {
+        if (this.posicion.x > this.paddingDer) {
             this.velocidad.x = -this.velocidad.x;
             this.aceleracion.x = -this.aceleracion.x;
+            this.posicion.x = this.paddingDer;
         }
-        if (this.posicion.y > this.paddingAba || this.posicion.y < this.paddingArr) {
+        if (this.posicion.x < this.paddingIzq) {
+            this.velocidad.x = -this.velocidad.x;
+            this.aceleracion.x = -this.aceleracion.x;
+            this.posicion.x = this.paddingIzq;
+        }
+        if (this.posicion.y > this.paddingAba) {
             this.velocidad.y = -this.velocidad.y;
             this.aceleracion.y = -this.aceleracion.y;
+            this.posicion.y = this.paddingAba;
+        }
+        if (this.posicion.y < this.paddingArr) {
+            this.velocidad.y = -this.velocidad.y;
+            this.aceleracion.y = -this.aceleracion.y;
+            this.posicion.y = this.paddingArr;
         }
 
     }
@@ -473,21 +486,34 @@ function actualizar() {
         }
 
         for (i = 0; i < peces.length; i++) {
-            peces[i].aparecer();
+            let pez = peces[i];
+            pez.velMax = 0.5;
+            if (cursorX !== null) {
+                let dx = pez.posicion.x - cursorX;
+                let dy = pez.posicion.y - cursorY;
+                if (dx * dx + dy * dy < 40000) {
+                    let away = new Vector(dx, dy);
+                    away.norm();
+                    away.mul(5);
+                    pez.dir = away;
+                    pez.velMax = 4;
+                }
+            }
+            pez.aparecer();
 
             if (pecera.temperatura < 22) {
-                peces[i].salud = 'enfermo';
-                peces[i].nadar();
+                pez.salud = 'enfermo';
+                pez.nadar();
             } else {
-                peces[i].salud = 'sano';
-                peces[i].nadar();
+                pez.salud = 'sano';
+                pez.nadar();
             }
 
             if (pecera.temperatura > 28) {
-                peces[i].nadar();
-                peces[i].morir();
+                pez.nadar();
+                pez.morir();
             } else {
-                peces[i].nadar();
+                pez.nadar();
             }
         }
     } else {
@@ -764,6 +790,8 @@ class ParticulaAgua {
 // Escenario 2 state
 let particulasEsc2 = [];
 let pumpBroken = false;
+let pecesEstanque = [];
+let cursorX = null, cursorY = null;
 
 // Escenario 4 state
 let board4 = null;
@@ -778,11 +806,12 @@ let label5 = null;
 let mSlider = document.getElementById('mSlider');
 let mVal = document.getElementById('mVal');
 let esc5Btn = document.getElementById('esc5-btn');
-let checkFranjasBoard = null;
 let bandaAzul = null;
 let bandaVerde = null;
 let bandaAmarilla = null;
 let bandaVerdeFuerte = null;
+let bandaRoja = null;
+let franjasUnlocked = false;
 
 function sincronizarAlturaGrafica() {
     if (escenarioActual === 1 || escenarioActual === 3) {
@@ -798,10 +827,40 @@ function initBoard4() {
     if (board4) return;
     let box4 = document.getElementById('box4');
     board4 = JXG.JSXGraph.initBoard('box4', {
-        boundingbox: [-5, 20, 55, -2],
-        axis: true,
+        boundingbox: [-2, 15, 15, -2],
+        axis: false,
         showCopyright: false,
+        showNavigation: true,
+        zoom: { wheel: true, min: 0.5, max: 5 },
     });
+    board4.create('axis', [[-5, 0], [55, 0]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: {
+            majorHeight: 20,
+            drawLabels: true,
+            insertTicks: false,
+            ticksDistance: 2,
+            minorTicks: 0
+        }
+    });
+    board4.create('axis', [[0, -2], [0, 20]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: {
+            majorHeight: 20,
+            drawLabels: true,
+            insertTicks: false,
+            ticksDistance: 2,
+            minorTicks: 0
+        }
+    });
+    board4.create('grid', [{
+        ticksDistance: 2,
+        drawLabels: false,
+        minorTicks: 0,
+        majorHeight: -1
+    }]);
     curve4 = board4.create('functiongraph', [
         function (x) { return 0.3 * x; }
     ], { strokecolor: '#E74C3C', strokeWidth: 2 });
@@ -816,7 +875,7 @@ function initBoard4() {
         [
             function () { return glider4.X() + 0.4; },
             function () { return glider4.Y() + 0.8; },
-            function () { return '(' + Math.round(glider4.X()) + ', ' + Math.round(glider4.Y()) + ')'; }
+            function () { return 'U (' + glider4.X().toFixed(2) + ', ' + glider4.Y().toFixed(2) + ')'; }
         ],
         { visible: true, fontSize: 10, fixed: true }
     );
@@ -849,13 +908,51 @@ function initBoard5() {
     if (board5) return;
     let box5 = document.getElementById('box5');
     board5 = JXG.JSXGraph.initBoard('box5', {
-        boundingbox: [-5, 20, 55, -2],
-        axis: true,
+        boundingbox: [-2, 15, 15, -2],
+        axis: false,
         showCopyright: false,
+        showNavigation: true,
+        zoom: { wheel: true, min: 0.5, max: 5 },
     });
-    checkFranjasBoard = board5.create('checkbox', [2, 18, 'Mostrar franjas', function () {
-        toggleFranjas(!!checkFranjasBoard.Value());
-    }], { checked: false });
+    board5.create('axis', [[-5, 0], [55, 0]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: {
+            majorHeight: 20,
+            drawLabels: true,
+            insertTicks: false,
+            ticksDistance: 2,
+            minorTicks: 0
+        }
+    });
+    board5.create('axis', [[0, -2], [0, 20]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: {
+            majorHeight: 20,
+            drawLabels: true,
+            insertTicks: false,
+            ticksDistance: 2,
+            minorTicks: 0
+        }
+    });
+    board5.create('grid', [{
+        ticksDistance: 2,
+        drawLabels: false,
+        minorTicks: 0,
+        majorHeight: -1
+    }]);
+}
+
+function crearBanda(x1, x2, color, opacity) {
+    return board5.create('curve', [
+        [x1, x2, x2, x1],
+        [-20, -20, 20, 20]
+    ], {
+        fillColor: color, fillOpacity: opacity || 0.3,
+        strokeColor: color, strokeWidth: 1,
+        closedCurve: true, layer: 1
+    });
 }
 
 function toggleFranjas(show) {
@@ -864,22 +961,19 @@ function toggleFranjas(show) {
     if (bandaVerde) { board5.removeObject(bandaVerde); bandaVerde = null; }
     if (bandaAmarilla) { board5.removeObject(bandaAmarilla); bandaAmarilla = null; }
     if (bandaVerdeFuerte) { board5.removeObject(bandaVerdeFuerte); bandaVerdeFuerte = null; }
+    if (bandaRoja) { board5.removeObject(bandaRoja); bandaRoja = null; }
     if (show) {
-        bandaAzul = board5.create('polygon', [[2, -2], [4, -2], [4, 20], [2, 20]], {
-            fillColor: '#3498DB', fillOpacity: 0.3, strokeColor: '#3498DB', strokeWidth: 1,
-            layer: 0
-        });
-        bandaVerde = board5.create('polygon', [[4, -2], [6, -2], [6, 20], [4, 20]], {
-            fillColor: '#2ECC71', fillOpacity: 0.3, strokeColor: '#2ECC71', strokeWidth: 1,
-            layer: 0
-        });
-        bandaAmarilla = board5.create('polygon', [[6, -2], [8, -2], [8, 20], [6, 20]], {
-            fillColor: '#F1C40F', fillOpacity: 0.3, strokeColor: '#F1C40F', strokeWidth: 1,
-            layer: 0
-        });
-        bandaVerdeFuerte = board5.create('polygon', [[-5, 1], [55, 1], [55, 2], [-5, 2]], {
-            fillColor: '#27AE60', fillOpacity: 0.35, strokeColor: '#27AE60', strokeWidth: 1,
-            layer: 0
+        bandaAzul = crearBanda(2, 4, '#3498DB');
+        bandaVerde = crearBanda(4, 6, '#2ECC71');
+        bandaAmarilla = crearBanda(6, 8, '#F1C40F');
+        bandaRoja = crearBanda(8, 10, '#E74C3C');
+        bandaVerdeFuerte = board5.create('curve', [
+            [-5, 55, 55, -5],
+            [1, 1, 2, 2]
+        ], {
+            fillColor: '#27AE60', fillOpacity: 0.35,
+            strokeColor: '#27AE60', strokeWidth: 1,
+            closedCurve: true, layer: 1
         });
     }
     board5.update();
@@ -904,7 +998,7 @@ function recrearCurva5(m) {
         [
             function () { return glider5.X() + 0.4; },
             function () { return glider5.Y() + 0.8; },
-            function () { return '(' + Math.round(glider5.X()) + ', ' + Math.round(glider5.Y()) + ')'; }
+            function () { return 'U (' + glider5.X().toFixed(2) + ', ' + glider5.Y().toFixed(2) + ')'; }
         ],
         { visible: true, fontSize: 10, fixed: true }
     );
@@ -953,6 +1047,7 @@ const ESCENARIOS = {
             pumpBroken = false;
             document.getElementById('esc5-m-section').style.display = 'none';
             actualizarDisplayEsc2();
+            initPecesEstanque();
         }
     },
     3: {
@@ -997,6 +1092,7 @@ const ESCENARIOS = {
                 board4.update();
             }
             actualizarDisplayEsc2();
+            initPecesEstanque();
             sincronizarAlturaGrafica4();
         }
     },
@@ -1022,10 +1118,14 @@ const ESCENARIOS = {
                 glider5.setPosition(JXG.COORDS_BY_USER, [V, Number(mSlider.value) * V]);
                 board5.update();
             }
-            if (checkFranjasBoard && checkFranjasBoard.Value()) {
+            if (franjasUnlocked) {
+                document.getElementById('checkFranjas').disabled = false;
+            }
+            if (document.getElementById('checkFranjas').checked) {
                 toggleFranjas(true);
             }
             actualizarDisplayEsc2();
+            initPecesEstanque();
             sincronizarAlturaGrafica5();
         }
     }
@@ -1069,6 +1169,26 @@ function actualizarDisplayEsc2() {
     let I = getCorriente(V);
     voltVal.textContent = V;
     corrVal.textContent = I.toFixed(2);
+}
+
+function initPecesEstanque() {
+    pecesEstanque = [];
+    let n = Math.floor(aleatorio(15, 25));
+    for (let i = 0; i < n; i++) {
+        let pez = new Pez(0);
+        pez.size = 4;
+        pez.dWidth = (canvas.width * pez.size) / 100;
+        pez.dHeight = pez.dWidth / 2;
+        pez.paddingIzq = canvas.width * 0.15 + 5;
+        pez.paddingDer = canvas.width * 0.60 - pez.dWidth - 5;
+        pez.paddingArr = canvas.height * 0.6 + 5;
+        pez.paddingAba = canvas.height - pez.dHeight - 5;
+        pez.posicion = new Vector(
+            aleatorio(pez.paddingIzq, pez.paddingDer + pez.dWidth),
+            aleatorio(pez.paddingArr, pez.paddingAba + pez.dHeight)
+        );
+        pecesEstanque.push(pez);
+    }
 }
 
 function actualizarEscenario2() {
@@ -1212,6 +1332,41 @@ function actualizarEscenario2() {
     ctx.fill();
     ctx.stroke();
 
+    // Pump position (used by fish flee logic and pump drawing)
+    let pumpX = w * 0.50, pumpY = h * 0.72;
+
+    // Peces decorativos en el agua frontal
+    for (let pez of pecesEstanque) {
+        pez.velMax = 0.5;
+        let fleeing = false;
+        if (cursorX !== null) {
+            let dx = pez.posicion.x - cursorX;
+            let dy = pez.posicion.y - cursorY;
+            if (dx * dx + dy * dy < 40000) {
+                let away = new Vector(dx, dy);
+                away.norm();
+                away.mul(5);
+                pez.dir = away;
+                pez.velMax = 4;
+                fleeing = true;
+            }
+        }
+        if (!fleeing && V > 6.5 && !pumpBroken) {
+            let pumpPos = new Vector(pumpX, pumpY);
+            let away = Vector.res(pez.posicion, pumpPos);
+            away.norm();
+            away.mul(3);
+            pez.dir = away;
+            fleeing = true;
+        }
+        if (!fleeing && Math.random() < 0.008) {
+            pez.dir = new Vector(signo() * Math.random() * 3, signo() * Math.random() * 2);
+            pez.dir.norm();
+        }
+        pez.nadar();
+        pez.aparecer();
+    }
+
     // Ground / shore (left side)
     ctx.fillStyle = '#8B7355';
     ctx.beginPath();
@@ -1233,7 +1388,6 @@ function actualizarEscenario2() {
     ctx.fill();
 
     // Pump vars
-    let pumpX = w * 0.50, pumpY = h * 0.72;
     let pumpW = w * 0.30, pumpH = pumpW * (311 / 803);
 
     // Solar panel image
@@ -1278,7 +1432,7 @@ function actualizarEscenario2() {
         statusText = 'Corriente alta - Sobrecalentamiento';
         statusColor = '#E67E22';
     } else if (V >= 4) {
-        statusText = 'Rango optimo - Funcionando correctamente';
+        statusText = 'Rango optimo - Funcionando bien';
         statusColor = '#2ECC71';
     } else {
         statusText = 'Corriente alta - Baja oxigenacion';
@@ -1387,6 +1541,8 @@ btnResetEsc2.addEventListener('click', function () {
     voltSlider.value = 5;
     particulasEsc2 = [];
     pumpBroken = false;
+    pecesEstanque = [];
+    initPecesEstanque();
     actualizarDisplayEsc2();
     if (escenarioActual === 4 && glider4) {
         glider4.setPosition(JXG.COORDS_BY_USER, [5, 1.5]);
@@ -1412,6 +1568,36 @@ mSlider.addEventListener('input', function () {
             board5.update();
         }
     }
+});
+
+document.getElementById('confirmarFranjasCode').addEventListener('click', function () {
+    let code = document.getElementById('franjasModalInput').value.trim().toLowerCase();
+    if (code === 'franjas') {
+        franjasUnlocked = true;
+        document.getElementById('checkFranjas').disabled = false;
+        document.getElementById('checkFranjas').checked = true;
+        document.getElementById('franjasModalError').style.display = 'none';
+        document.getElementById('franjasModalInput').value = '';
+        bootstrap.Modal.getInstance(document.getElementById('franjasCodeModal')).hide();
+        toggleFranjas(true);
+    } else {
+        document.getElementById('franjasModalError').style.display = 'block';
+    }
+});
+document.getElementById('franjasModalInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('confirmarFranjasCode').click();
+});
+document.getElementById('checkFranjas').addEventListener('click', function (e) {
+    if (!franjasUnlocked) {
+        e.preventDefault();
+        document.getElementById('franjasModalError').style.display = 'none';
+        document.getElementById('franjasModalInput').value = '';
+        new bootstrap.Modal(document.getElementById('franjasCodeModal')).show();
+    }
+});
+
+document.getElementById('checkFranjas').addEventListener('change', function () {
+    toggleFranjas(this.checked);
 });
 
 function getOrden() {
@@ -1475,4 +1661,28 @@ document.getElementById('codigoInput').addEventListener('keydown', function (e) 
     if (e.key === 'Enter') document.getElementById('confirmarCodigo').click();
 });
 
-cambiarEscenario(2);
+canvas.addEventListener('mousemove', function (e) {
+    let rect = canvas.getBoundingClientRect();
+    cursorX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    cursorY = (e.clientY - rect.top) * (canvas.height / rect.height);
+});
+canvas.addEventListener('mouseenter', function (e) {
+    let rect = canvas.getBoundingClientRect();
+    cursorX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    cursorY = (e.clientY - rect.top) * (canvas.height / rect.height);
+});
+canvas.addEventListener('mouseleave', function () { cursorX = cursorY = null; });
+canvas.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    let rect = canvas.getBoundingClientRect();
+    cursorX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width);
+    cursorY = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height);
+}, { passive: false });
+canvas.addEventListener('touchstart', function (e) {
+    let rect = canvas.getBoundingClientRect();
+    cursorX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width);
+    cursorY = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height);
+}, { passive: true });
+canvas.addEventListener('touchend', function () { cursorX = cursorY = null; });
+
+cambiarEscenario(1);
