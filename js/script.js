@@ -729,7 +729,7 @@ function getCorriente(V) {
 
 class ParticulaAgua {
     constructor(pumpX, pumpY, voltaje) {
-        let factor = 0.3 + 0.7 * (voltaje / 12);
+        let factor = 0.3 + 0.7 * (voltaje / 50);
         this.radius = aleatorio(3, 6) * factor;
         this.x = pumpX + aleatorio(-15, 15);
         this.y = pumpY;
@@ -814,14 +814,34 @@ function initBoard4() {
     });
     label4 = board4.create('text',
         [
-            function () { return glider4.X() + 0.4; },
-            function () { return glider4.Y() + 0.8; },
+            function () { return glider4.X() + 1; },
+            function () { return glider4.Y() + 5; },
             function () { return '(' + Math.round(glider4.X()) + ', ' + Math.round(glider4.Y()) + ')'; }
         ],
-        { visible: true, fontSize: 10, fixed: true }
+        { visible: false, fontSize: 12, fixed: true }
     );
+    let labelTimeout = null;
+    glider4.on('over', function () {
+        label4.setAttribute({ visible: true });
+        if (labelTimeout) { clearTimeout(labelTimeout); labelTimeout = null; }
+    });
+    glider4.on('out', function () {
+        if (!labelTimeout) {
+            label4.setAttribute({ visible: false });
+        }
+    });
+    glider4.on('down', function () {
+        label4.setAttribute({ visible: true });
+        if (labelTimeout) clearTimeout(labelTimeout);
+        labelTimeout = setTimeout(function () {
+            label4.setAttribute({ visible: false });
+            labelTimeout = null;
+        }, 2000);
+    });
     glider4.on('drag', function () {
         let V = Math.round(glider4.X());
+        V = Math.max(0, Math.min(50, V));
+        glider4.setPosition(JXG.COORDS_BY_USER, [V, 0.3 * V]);
         voltSlider.value = V;
         actualizarDisplayEsc2();
     });
@@ -902,14 +922,34 @@ function recrearCurva5(m) {
     });
     label5 = board5.create('text',
         [
-            function () { return glider5.X() + 0.4; },
-            function () { return glider5.Y() + 0.8; },
+            function () { return glider5.X() + 1; },
+            function () { return glider5.Y() + 4; },
             function () { return '(' + Math.round(glider5.X()) + ', ' + Math.round(glider5.Y()) + ')'; }
         ],
-        { visible: true, fontSize: 10, fixed: true }
+        { visible: false, fontSize: 12, fixed: true }
     );
+    let labelTimeout = null;
+    glider5.on('over', function () {
+        label5.setAttribute({ visible: true });
+        if (labelTimeout) { clearTimeout(labelTimeout); labelTimeout = null; }
+    });
+    glider5.on('out', function () {
+        if (!labelTimeout) {
+            label5.setAttribute({ visible: false });
+        }
+    });
+    glider5.on('down', function () {
+        label5.setAttribute({ visible: true });
+        if (labelTimeout) clearTimeout(labelTimeout);
+        labelTimeout = setTimeout(function () {
+            label5.setAttribute({ visible: false });
+            labelTimeout = null;
+        }, 2000);
+    });
     glider5.on('drag', function () {
         let V = Math.round(glider5.X());
+        V = Math.max(0, Math.min(50, V));
+        glider5.setPosition(JXG.COORDS_BY_USER, [V, m * V]);
         voltSlider.value = V;
         actualizarDisplayEsc2();
     });
@@ -1078,11 +1118,10 @@ function actualizarEscenario2() {
     let I = getCorriente(V);
 
     // Pump state tracking
-    pumpBroken = (V > 10);
+    pumpBroken = (V >= 50);
 
     // Sky - darker when low V, brighter when high V
-    let t = V / 12;
-    let brightness = 0.3 + 0.7 * t;
+    let brightness = 0.3 + 0.7 * (V / 50);
     let skyR = Math.floor(135 * brightness);
     let skyG = Math.floor(206 * brightness);
     let skyB = Math.floor(235 * brightness);
@@ -1095,9 +1134,9 @@ function actualizarEscenario2() {
 
     // Sun - glow and size based on V
     let sunX = w * 0.12, sunY = h * 0.15;
-    let sunR = w * 0.015 + (w * 0.02) * t;
-    let glowR = sunR * (1.5 + 1.5 * t);
-    let alpha = 0.15 + 0.35 * t;
+    let sunR = w * 0.015 + (w * 0.02) * (V / 50);
+    let glowR = sunR * (1.5 + 1.5 * (V / 50));
+    let alpha = 0.15 + 0.35 * (V / 50);
     ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.3})`;
     ctx.beginPath();
     ctx.arc(sunX, sunY, glowR, 0, Math.PI * 2);
@@ -1179,18 +1218,15 @@ function actualizarEscenario2() {
     ctx.font = `bold ${Math.round(fs1)}px Arial`;
     ctx.fillText(`V = ${V} V  |  I = ${I.toFixed(2)} A`, px + pw / 2, line1Y);
     let statusText, statusColor;
-    if (pumpBroken) {
-        statusText = 'Corriente alta - Bomba descompuesta';
+    if (I < 2) {
+        statusText = 'Corriente baja - Baja oxigenacion';
         statusColor = '#E74C3C';
-    } else if (V > 6.5) {
-        statusText = 'Corriente alta - Sobrecalentamiento';
-        statusColor = '#E67E22';
-    } else if (V >= 4) {
-        statusText = 'Rango optimo - Funcionando correctamente';
+    } else if (I <= 8) {
+        statusText = 'Rango optimo - Funcionando Bien';
         statusColor = '#2ECC71';
     } else {
-        statusText = 'Corriente alta - Baja oxigenacion';
-        statusColor = '#E74C3C';
+        statusText = 'Corriente alta - Sobrecalentamiento';
+        statusColor = '#E67E22';
     }
     ctx.fillStyle = statusColor;
     ctx.font = `bold ${Math.round(fs3)}px Arial`;
@@ -1214,7 +1250,7 @@ function actualizarEscenario2() {
     ctx.setLineDash([]);
 
     // Red glow when overheated
-    if (V > 6.5 && !pumpBroken) {
+    if (I > 8 && !pumpBroken) {
         ctx.save();
         let pulse = 0.45 + Math.sin(Date.now() * 0.004) * 0.2;
         let grad = ctx.createRadialGradient(pumpX, pumpY + pumpH * 0.5, 0, pumpX, pumpY + pumpH * 0.5, pumpW * 0.35);
@@ -1230,7 +1266,7 @@ function actualizarEscenario2() {
 
     // Pump vibration (only when overheated and not broken)
     let vibX = 0, vibY = 0;
-    if (V > 6.5 && !pumpBroken) {
+    if (I > 8 && !pumpBroken) {
         let t = Date.now() * 0.02;
         vibX = Math.sin(t * 1.3) * 3;
         vibY = Math.cos(t * 1.7) * 3;
@@ -1292,19 +1328,19 @@ voltSlider.addEventListener('input', function () {
 });
 
 btnResetEsc2.addEventListener('click', function () {
-    voltSlider.value = 5;
+    voltSlider.value = 25;
     particulasEsc2 = [];
     pumpBroken = false;
     actualizarDisplayEsc2();
     if (escenarioActual === 4 && glider4) {
-        glider4.setPosition(JXG.COORDS_BY_USER, [5, 1.5]);
+        glider4.setPosition(JXG.COORDS_BY_USER, [25, 7.5]);
         board4.update();
     }
     if (escenarioActual === 5 && glider5) {
         mSlider.value = '0.3';
         mVal.textContent = '0.3';
         recrearCurva5(0.3);
-        glider5.setPosition(JXG.COORDS_BY_USER, [5, 1.5]);
+        glider5.setPosition(JXG.COORDS_BY_USER, [25, 7.5]);
         board5.update();
     }
 });
