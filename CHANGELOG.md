@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.5.0 (no publicado)
+
+### Features
+- Ejes personalizados con `ticksDistance: 2` y cuadrícula (`grid`) en escenarios 4 y 5
+- Zoom con rueda del mouse y botones +/- en gráficas JSXGraph (límites 0.5x–5x)
+- Franjas de colores en escenario 5: azul (2–4V), verde (4–6V), amarillo (6–8V), rojo (8–10V) y banda verde horizontal de rango óptimo
+- Código secreto `"franjas"` para activar las franjas (modal, una sola vez por sesión)
+- Checkbox "Mostrar franjas" movido de JSXGraph a controles HTML nativos
+- Etiqueta del glider con formato `U (5.00, 1.50)` y 2 decimales (`toFixed(2)`)
+- Banda roja adicional para el rango 8 < x ≤ 10
+
+### Fix
+- Polígonos reemplazados por `curve` con `closedCurve: true` para evitar que intercepten eventos táctiles
+- Eventos desactivados en bandas para permitir pan/zoom táctil
+
+### Documentation
+- Actualización de `README.md` con código secreto `"franjas"` y descripción de las franjas de voltaje
+
 ## 1.4.0 (no publicado)
 
 ### Features
