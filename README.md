@@ -43,10 +43,10 @@ Simula un sistema de bombeo de agua con energía solar. El estanque se renderiza
 
 | Condición | Estado | Efecto visual |
 |-----------|--------|---------------|
-| V ≤ 3.9 | Corriente baja — baja oxigenación | Texto rojo, burbujas pequeñas |
-| 4 ≤ V ≤ 6.5 | Rango óptimo — funcionando correctamente | Texto verde, burbujas normales |
-| 6.5 < V ≤ 10 | Corriente alta — sobrecalentamiento | Brillo rojo pulsante + bomba vibra |
-| V > 10 | Bomba descompuesta | Imagen `bomba_agua_issue.png`, sin burbujas, sin brillo |
+| I < 2 A | Corriente baja — burbujas débiles | Texto rojo, burbujas pequeñas |
+| 2 A ≤ I ≤ 8 A | Rango óptimo — funcionando correctamente | Texto verde |
+| I > 8 A | Corriente alta — sobrecalentamiento | Brillo rojo pulsante + bomba vibra |
+| V ≥ 50 V | Bomba descompuesta | Imagen `bomba_agua_issue.png`, sin burbujas, sin brillo |
 
 - Las burbujas desaparecen al alcanzar `y = h * 0.6`
 - El sol se ubica en la esquina superior izquierda; su brillo y tamaño escalan con `V / 12`
@@ -56,15 +56,19 @@ Simula un sistema de bombeo de agua con energía solar. El estanque se renderiza
 ### Estanque + Gráfica (Escenario 4)
 Estanque Sustentable con una gráfica JSXGraph que muestra la curva I vs V (recta con pendiente 1/R). Incluye un **glider** arrastrable sobre la curva que sincroniza el slider de voltaje.
 
-- Glider siempre visible (etiqueta permanente `(V, I)`)
+- Glider siempre visible con etiqueta permanente `U (5.00, 1.50)` con 2 decimales
+- Arrastrar el glider actualiza el slider de voltaje en tiempo real
 - Curva: `I = V / 5` (R = 5 Ω fijo)
-- Botón "graficar punto" para marcar puntos en la curva
+- Ejes personalizados con ticks cada 2 unidades y cuadrícula de fondo
+- Zoom con rueda del mouse o botones +/- (rango 0.5x–5x)
 
 ### Estanque + Pendiente Variable (Escenario 5)
 Estanque Sustentable con una gráfica JSXGraph donde la **pendiente m** de la recta `I = m × V` es ajustable mediante un slider (0–5.0). Incluye un glider arrastrable.
 
 - Slider de pendiente `m` con paso 0.1
-- Glider siempre visible con etiqueta permanente `U (V, I)` con 2 decimales
+- Glider siempre visible con etiqueta permanente `U (5.00, 1.50)` con 2 decimales
+- Ejes personalizados con ticks cada 2 unidades y cuadrícula de fondo
+- Zoom con rueda del mouse o botones +/- (rango 0.5x–5x)
 - Franjas de colores (activables con código secreto `"franjas"`) que muestran zonas de voltaje: azul (2–4V), verde (4–6V), amarillo (6–8V), rojo (8–10V) y banda verde horizontal de rango óptimo
 - La recta se redibuja al cambiar m o al arrastrar el glider
 
@@ -136,6 +140,7 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.2.0 | Refactor general, ajustes de bomba/cableado, documentación |
 | v1.3.0 | Estanque Sustentable — panel solar, bomba, voltaje, partículas de agua |
 | v1.4.0 | Pecera + Litros — cálculo LA, toggle SO/LA, curva naranja, código secreto |
+| v1.5.0 | Estanque + Gráfica/Pendiente — ejes custom, grid, zoom, franjas, glider con 2 decimales |
 
 ## Historial de cambios
 
