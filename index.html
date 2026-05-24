@@ -53,7 +53,7 @@
                     <div class="row">
                         <div class="col pb-1">
                             <div id="la-section" style="display:none;">
-                                <div class="form-check mb-2">
+                        <div class="form-check mb-1">
                                     <input class="form-check-input" type="checkbox" id="checkLA">
                                     <label class="form-check-label" for="checkLA">Litros de agua necesaria</label>
                                 </div>
@@ -72,17 +72,17 @@
                 </div>
                 <!-- Escenario 2, 4 & 5 Controls -->
                 <div id="esc2-controls" style="display:none;">
-                    <div class="row">
+                    <div class="row mb-1">
                         <div class="col-md px-2">
-                            <p>V = <span id="voltVal">5</span> V &nbsp;|&nbsp; I = <span id="corrVal">1.00</span> A</p>
-                            <input type="range" min="0" max="12" value="5" id="voltaje" class="w-100">
+                            <p class="mb-0">V = <span id="voltVal">5</span> V &nbsp;|&nbsp; I = <span id="corrVal">1.00</span> A</p>
+                            <input type="range" min="0" max="12" value="5" step="0.01" id="voltaje" class="w-100">
                         </div>
                     </div>
                     <div id="esc5-m-section" style="display:none;">
-                        <div class="row">
+                        <div class="row mb-1">
                             <div class="col-md px-2">
-                                <p>Pendiente m = <span id="mVal">0.3</span></p>
-                                <input type="range" min="0" max="5.0" step="0.1" value="0.3" id="mSlider" class="w-100">
+                                <p class="mb-0">Pendiente m = <span id="mVal">0.3</span></p>
+                                <input type="range" min="0" max="5.0" step="0.01" value="0.3" id="mSlider" class="w-100">
                             </div>
                         </div>
                         <div class="form-check mb-2">
@@ -91,7 +91,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col pb-3">
+                        <div class="col pb-1">
                             <div class="d-flex justify-content-center">
                                 <button id="reset-esc2" class="btn btn-secondary btn-sm">Reiniciar</button>
                             </div>

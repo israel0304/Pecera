@@ -365,9 +365,9 @@ cajaPeces.value = 1;
 cajaTemperatura.value = 23;
 cajaSize.value = 1
 
-tempValSpan.textContent = cajaTemperatura.value;
+    tempValSpan.textContent = cajaTemperatura.value;
 npecesValSpan.textContent = cajaPeces.value;
-tpecesValSpan.textContent = cajaSize.value;
+    tpecesValSpan.textContent = cajaSize.value;
 
 
 ;
@@ -393,7 +393,7 @@ function pecesDinamicos(e) {
         cajaSize.value = 0;
     }
     npecesValSpan.textContent = cajaPeces.value;
-    tpecesValSpan.textContent = cajaSize.value;
+tpecesValSpan.textContent = cajaSize.value;
     if (escenarioActual === 3 && checkLA.checked) litrosDinamicos();
     let nuevop = generar(Pez, cajaPeces.value, cajaSize.value);
     peces = nuevop;
@@ -411,7 +411,7 @@ function tempDinamica(e) {
     pecera.calSaturacion(pecera.temperatura);
     burbujasDinamicas();
     resucitarPez();
-    tempValSpan.textContent = cajaTemperatura.value;
+tempValSpan.textContent = cajaTemperatura.value;
 }
 
 function burbujasDinamicas() {
@@ -654,7 +654,8 @@ function crearPuntoLA() {
 function checklitros_fn() {
     if (checkLA.checked) {
         dataLA.style.display = '';
-        boton3.disabled = true;
+        boton3.style.display = 'none';
+        botonLA.style.display = '';
         botonLA.disabled = false;
         grafica.curvaSO.setAttribute({ visible: false });
         grafica.curvaLA.setAttribute({ visible: true });
@@ -663,7 +664,8 @@ function checklitros_fn() {
         litrosDinamicos();
     } else {
         dataLA.style.display = 'none';
-        boton3.disabled = false;
+        boton3.style.display = '';
+        botonLA.style.display = 'none';
         botonLA.disabled = true;
         grafica.curvaSO.setAttribute({ visible: true });
         grafica.curvaLA.setAttribute({ visible: false });
@@ -880,7 +882,7 @@ function initBoard4() {
         { visible: true, fontSize: 10, fixed: true }
     );
     glider4.on('drag', function () {
-        let V = Math.round(glider4.X());
+        let V = parseFloat(glider4.X().toFixed(2));
         voltSlider.value = V;
         actualizarDisplayEsc2();
     });
@@ -1003,7 +1005,7 @@ function recrearCurva5(m) {
         { visible: true, fontSize: 10, fixed: true }
     );
     glider5.on('drag', function () {
-        let V = Math.round(glider5.X());
+        let V = parseFloat(glider5.X().toFixed(2));
         voltSlider.value = V;
         actualizarDisplayEsc2();
     });
@@ -1167,7 +1169,7 @@ function cambiarEscenario(n) {
 function actualizarDisplayEsc2() {
     let V = Number(voltSlider.value);
     let I = getCorriente(V);
-    voltVal.textContent = V;
+    voltVal.textContent = V.toFixed(2);
     corrVal.textContent = I.toFixed(2);
 }
 
@@ -1428,7 +1430,7 @@ function actualizarEscenario2() {
     if (pumpBroken) {
         statusText = 'Corriente alta - Bomba descompuesta';
         statusColor = '#E74C3C';
-    } else if (V > 5) {
+    } else if (V > 6) {
         statusText = 'Corriente alta - Sobrecalentamiento';
         statusColor = '#E67E22';
     } else if (V >= 4) {
@@ -1460,7 +1462,7 @@ function actualizarEscenario2() {
     ctx.setLineDash([]);
 
     // Red glow when overheated
-    if (V > 5 && !pumpBroken) {
+    if (V > 6 && !pumpBroken) {
         ctx.save();
         let pulse = 0.45 + Math.sin(Date.now() * 0.004) * 0.2;
         let grad = ctx.createRadialGradient(pumpX, pumpY + pumpH * 0.5, 0, pumpX, pumpY + pumpH * 0.5, pumpW * 0.35);
@@ -1476,7 +1478,7 @@ function actualizarEscenario2() {
 
     // Pump vibration (only when overheated and not broken)
     let vibX = 0, vibY = 0;
-    if (V > 5 && !pumpBroken) {
+    if (V > 6 && !pumpBroken) {
         let t = Date.now() * 0.02;
         vibX = Math.sin(t * 1.3) * 3;
         vibY = Math.cos(t * 1.7) * 3;
@@ -1500,8 +1502,12 @@ function actualizarEscenario2() {
     // Bubbles (only if V > 0 and pump not broken)
     if (V > 0 && !pumpBroken) {
         let bubbleY = pumpY + pumpH * 0.3;
-        particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
-        particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+        if (V < 4) {
+            particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+        } else {
+            particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+            particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+        }
     }
     for (let i = particulasEsc2.length - 1; i >= 0; i--) {
         particulasEsc2[i].move();
