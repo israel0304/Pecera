@@ -43,10 +43,10 @@ Simula un sistema de bombeo de agua con energía solar. El estanque se renderiza
 
 | Condición | Estado | Efecto visual |
 |-----------|--------|---------------|
-| I < 2 A | Corriente baja — burbujas débiles | Texto rojo, burbujas pequeñas |
-| 2 A ≤ I ≤ 8 A | Rango óptimo — funcionando correctamente | Texto verde |
-| I > 8 A | Corriente alta — sobrecalentamiento | Brillo rojo pulsante + bomba vibra |
-| V ≥ 50 V | Bomba descompuesta | Imagen `bomba_agua_issue.png`, sin burbujas, sin brillo |
+| V < 4 V | Corriente baja — baja oxigenación | Texto rojo, 1 burbuja por frame |
+| 4 V ≤ V ≤ 6 V | Rango óptimo — funcionando correctamente | Texto verde |
+| V > 6 V | Sobrecalentamiento | Brillo rojo pulsante + bomba vibra |
+| V > 10 V | Bomba descompuesta | Imagen `bomba_agua_issue.png`, sin burbujas, sin brillo, sin vibración |
 
 - Las burbujas desaparecen al alcanzar `y = h * 0.6`
 - El sol se ubica en la esquina superior izquierda; su brillo y tamaño escalan con `V / 12`
@@ -65,7 +65,7 @@ Estanque Sustentable con una gráfica JSXGraph que muestra la curva I vs V (rect
 ### Estanque + Pendiente Variable (Escenario 5)
 Estanque Sustentable con una gráfica JSXGraph donde la **pendiente m** de la recta `I = m × V` es ajustable mediante un slider (0–5.0). Incluye un glider arrastrable.
 
-- Slider de pendiente `m` con paso 0.1
+- Slider de pendiente `m` con paso 0.01
 - Glider siempre visible con etiqueta permanente `U (5.00, 1.50)` con 2 decimales
 - Ejes personalizados con ticks cada 2 unidades y cuadrícula de fondo
 - Zoom con rueda del mouse o botones +/- (rango 0.5x–5x)
@@ -140,7 +140,8 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.2.0 | Refactor general, ajustes de bomba/cableado, documentación |
 | v1.3.0 | Estanque Sustentable — panel solar, bomba, voltaje, partículas de agua |
 | v1.4.0 | Pecera + Litros — cálculo LA, toggle SO/LA, curva naranja, código secreto |
-| v1.5.0 | Estanque + Gráfica/Pendiente — ejes custom, grid, zoom, franjas, glider con 2 decimales |
+| v1.5.0 | Estanque + Gráfica/Pendiente — ejes custom, grid, zoom, franjas, glider |
+| v1.6.0 | Ajustes de precisión — sliders step 0.01, rango óptimo 4–6V, glider con 2 decimales, menos burbujas en baja corriente |
 
 ## Historial de cambios
 

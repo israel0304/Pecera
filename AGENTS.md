@@ -27,18 +27,18 @@ Open `index.html` in any browser. No build or server required.
 - "graficar punto LA" button to mark data points on LA curve
 
 ### Estanque Sustentable (Escenario 2)
-- Voltage slider (0–50V) controls current (I = V/R, R = 5Ω fixed)
+- Voltage slider (0–12V) controls current (I = V/R, R = 5Ω fixed)
 - Solar panel image (`img/panel_solar.png`) and pump image (`img/bomba_agua.png`)
 - Water level at 50% of canvas height; shore starts at `w * 0.6`
 - Sun brightness, bubble size/speed vary with voltage
 - **Pump states:**
-  - `I < 2A`: Low current, weak bubbles
-  - `2A ≤ I ≤ 8A`: Optimal range, green status
-  - `I > 8A`: Red pulsing glow + pump vibration
-  - `V ≥ 50V`: Pump broken — shows `img/bomba_agua_issue.png`, no bubbles, no glow, no vibration
+  - `V < 4V`: Low current, weak bubbles (1 per frame)
+  - `4V ≤ V ≤ 6V`: Optimal range, green status
+  - `V > 6V`: Red pulsing glow + pump vibration
+  - `V > 10V`: Pump broken — shows `img/bomba_agua_issue.png`, no bubbles, no glow, no vibration
 - Red glow: radial gradient with pulsing alpha (0.45±0.2), radius `pumpW * 0.35`
 - Vibration: ±3px sinusoidal offset on pump image position
-- Bubbles (`ParticulaAgua`): spawned in pairs from pump location, size/speed scale with voltage
+- Bubbles (`ParticulaAgua`): spawned from pump location, size/speed scale with voltage, fewer in low current
 - Canvas buffer: fixed 1600×800, CSS `width: 100%` for retina sharpness
 
 ### Estanque + Gráfica (Escenario 4)
@@ -51,7 +51,7 @@ Open `index.html` in any browser. No build or server required.
 
 ### Estanque + Pendiente Variable (Escenario 5)
 - Same as Estanque Sustentable with adjustable slope curve
-- Slope `m` slider (0–5.0, step 0.1) controls `I = m × V`
+- Slope `m` slider (0–5.0, step 0.01) controls `I = m × V`
 - Green draggable glider, label shows `U (5.00, 1.50)` with 2 decimals
 - Custom axes with ticks every 2 units and grid overlay
 - Zoom via mouse wheel or +/- buttons (0.5x–5x)
@@ -78,6 +78,6 @@ Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanq
 
 ## Fish Behavior
 - Fish flee cursor/touch within 200px radius (`velMax=4`, `dir.mul(5)`)
-- Fish flee pump when `V > 5` (`velMax=3`)
+- Fish flee pump when `V > 6` (`velMax=3`)
 - Random direction change every ~2 seconds
 - Position clamped to water front face bounds via `chocar()`

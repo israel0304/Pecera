@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.0 (no publicado)
+
+### Features
+- Sliders de temperatura, voltaje y pendiente con step `0.01` (2 decimales)
+- Glider en escenarios 4 y 5 actualiza voltaje con 2 decimales (`toFixed(2)`)
+- Rango óptimo ajustado a V ≥ 4 y V ≤ 6, sobrecalentamiento desde V > 6
+- Parámetros de animación de bomba (glow rojo, vibración) sincronizados con nuevo rango
+- Menos burbujas en corriente baja (1 en vez de 2 por frame cuando V < 4)
+
+### Fix
+- Botón "graficar punto" se ocuestra/muestra correctamente al togglear checkbox LA
+- Espaciado reducido entre controles del escenario 5 (mb-1, pb-1, mb-0 en labels)
+
 ## 1.5.0 (no publicado)
 
 ### Features
