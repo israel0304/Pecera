@@ -78,6 +78,6 @@ Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanq
 
 ## Fish Behavior
 - Fish flee cursor/touch within 200px radius (`velMax=4`, `dir.mul(5)`)
-- Fish flee pump when `V > 6.5` (`velMax=3`)
+- Fish flee pump when `V > 5` (`velMax=3`)
 - Random direction change every ~2 seconds
 - Position clamped to water front face bounds via `chocar()`

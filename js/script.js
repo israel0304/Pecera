@@ -1351,7 +1351,7 @@ function actualizarEscenario2() {
                 fleeing = true;
             }
         }
-        if (!fleeing && V > 6.5 && !pumpBroken) {
+        if (!fleeing && V > 5 && !pumpBroken) {
             let pumpPos = new Vector(pumpX, pumpY);
             let away = Vector.res(pez.posicion, pumpPos);
             away.norm();
@@ -1428,7 +1428,7 @@ function actualizarEscenario2() {
     if (pumpBroken) {
         statusText = 'Corriente alta - Bomba descompuesta';
         statusColor = '#E74C3C';
-    } else if (V > 6.5) {
+    } else if (V > 5) {
         statusText = 'Corriente alta - Sobrecalentamiento';
         statusColor = '#E67E22';
     } else if (V >= 4) {
@@ -1460,7 +1460,7 @@ function actualizarEscenario2() {
     ctx.setLineDash([]);
 
     // Red glow when overheated
-    if (V > 6.5 && !pumpBroken) {
+    if (V > 5 && !pumpBroken) {
         ctx.save();
         let pulse = 0.45 + Math.sin(Date.now() * 0.004) * 0.2;
         let grad = ctx.createRadialGradient(pumpX, pumpY + pumpH * 0.5, 0, pumpX, pumpY + pumpH * 0.5, pumpW * 0.35);
@@ -1476,7 +1476,7 @@ function actualizarEscenario2() {
 
     // Pump vibration (only when overheated and not broken)
     let vibX = 0, vibY = 0;
-    if (V > 6.5 && !pumpBroken) {
+    if (V > 5 && !pumpBroken) {
         let t = Date.now() * 0.02;
         vibX = Math.sin(t * 1.3) * 3;
         vibY = Math.cos(t * 1.7) * 3;
