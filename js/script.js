@@ -1739,7 +1739,7 @@ function actualizarInfoEsc6() {
     let L = Number(largoSlider.value);
     let W = Number(anchoSlider.value);
     let H = Number(altoSlider.value);
-    capValInfo.textContent = L * W * H;
+    capValInfo.textContent = (L * W * H / 1000).toFixed(3) + ' L';
 }
 
 // Dimensión variable table
@@ -1834,7 +1834,7 @@ function actualizarTablaDimVar() {
     let mult = fixed[dimTabActual] || 0;
     for (let i = 0; i < dimTabInputs.length; i++) {
         let val = Number(dimTabInputs[i].value);
-        dimTabSpans[i].textContent = isNaN(val) || val <= 0 ? '—' : val * mult;
+        dimTabSpans[i].textContent = isNaN(val) || val <= 0 ? '—' : (val * mult / 1000).toFixed(3) + ' L';
     }
 }
 
