@@ -1107,7 +1107,7 @@ const ESCENARIOS = {
         ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
-        codigo: '',
+        codigo: 'capacidad',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -1140,7 +1140,7 @@ const ESCENARIOS = {
         ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5'],
         canvasClass: 'col-12 col-sm-6 col-md-7',
         graficaClass: 'd-none',
-        codigo: 'dimensiones',
+        codigo: '',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -1651,12 +1651,15 @@ function getAnterior(n) {
     return o[(o.indexOf(n) - 1 + o.length) % o.length];
 }
 
+let codigosIngresados = {};
+
 function navegar(dir) {
     let cfg = ESCENARIOS[escenarioActual];
     if (!cfg) return;
     if (dir === -1 && escenarioActual === getOrden()[0]) return;
     let destino = dir === 1 ? getSiguiente(escenarioActual) : getAnterior(escenarioActual);
-    if (dir === -1 || !cfg.codigo) {
+    let dirKey = escenarioActual + 'a' + destino;
+    if (dir === -1 || !cfg.codigo || codigosIngresados[dirKey]) {
         cambiarEscenario(destino);
         return;
     }
@@ -1683,6 +1686,7 @@ document.getElementById('confirmarCodigo').addEventListener('click', async funct
     let dir = escenarioActual + 'a' + destino;
     let codigos = await obtenerCodigos();
     if (codigo.toLowerCase() === codigos[dir]) {
+        codigosIngresados[dir] = true;
         bootstrap.Modal.getInstance(document.getElementById('codigoModal')).hide();
         cambiarEscenario(destino);
     } else {
@@ -2479,4 +2483,4 @@ btnResetEsc6.addEventListener('click', function () {
 });
 window.addEventListener('resize', redimensionarThree);
 
-cambiarEscenario(6);
+cambiarEscenario(1);
