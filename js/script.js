@@ -1019,7 +1019,7 @@ const ESCENARIOS = {
     1: {
         btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-controls'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'litros',
@@ -1039,7 +1039,7 @@ const ESCENARIOS = {
     2: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-controls'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
         canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
         graficaClass: 'd-none',
         codigo: 'grafica',
@@ -1058,7 +1058,7 @@ const ESCENARIOS = {
     3: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-controls'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'estanque',
@@ -1078,7 +1078,7 @@ const ESCENARIOS = {
     4: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls', 'box4'],
-        ocultar: ['esc1-controls', 'box', 'box5', 'three-container', 'esc6-controls'],
+        ocultar: ['esc1-controls', 'box', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'pendiente',
@@ -1104,7 +1104,7 @@ const ESCENARIOS = {
     5: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls', 'box5'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-controls'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: '',
@@ -1136,7 +1136,7 @@ const ESCENARIOS = {
     },
     6: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'primary' },
-        mostrar: ['esc6-controls', 'three-container'],
+        mostrar: ['esc6-overlay', 'three-container', 'esc6-tabla-section'],
         ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'd-none',
@@ -1150,7 +1150,9 @@ const ESCENARIOS = {
             if (!threeRenderer) initEscena3D();
             threeContainer.style.height = Math.max(300, window.innerHeight * 0.55) + 'px';
             redimensionarThree();
+            actualizarInfoEsc6();
             iniciarPeces3D();
+            initTablaDimVar();
         }
     }
 };
@@ -1729,8 +1731,192 @@ let altoSlider = document.getElementById('alto');
 let largoVal = document.getElementById('largoVal');
 let anchoVal = document.getElementById('anchoVal');
 let altoVal = document.getElementById('altoVal');
+let capValInfo = document.getElementById('capValInfo');
 let btnResetEsc6 = document.getElementById('reset-esc6');
 let esc6Btn = document.getElementById('esc6-btn');
+
+function actualizarInfoEsc6() {
+    let L = Number(largoSlider.value);
+    let W = Number(anchoSlider.value);
+    let H = Number(altoSlider.value);
+    capValInfo.textContent = L * W * H;
+}
+
+// Dimensión variable table
+let dimTabActual = 'ancho';
+let dimTabInputs = [];
+let dimTabSpans = [];
+let dimTabChecks = [];
+let highlightGroups = [];
+
+function initTablaDimVar() {
+    let tbody = document.getElementById('tbodyDim');
+    if (!tbody || dimTabInputs.length > 0) return;
+    for (let i = 0; i < 3; i++) {
+        agregarFilaDimVar();
+    }
+}
+
+function agregarFilaDimVar() {
+    let tbody = document.getElementById('tbodyDim');
+    let tr = document.createElement('tr');
+    let td0 = document.createElement('td');
+    td0.className = 'text-center';
+    let chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'form-check-input m-0';
+    td0.appendChild(chk);
+    let td1 = document.createElement('td');
+    let inp = document.createElement('input');
+    inp.type = 'number';
+    inp.className = 'form-control form-control-sm';
+    inp.placeholder = '';
+    td1.appendChild(inp);
+    let td2 = document.createElement('td');
+    let span = document.createElement('span');
+    span.className = 'cap-val';
+    span.textContent = '—';
+    td2.appendChild(span);
+    let td3 = document.createElement('td');
+    let btnDel = document.createElement('button');
+    btnDel.className = 'btn btn-sm btn-outline-danger py-0 px-1';
+    btnDel.textContent = '✕';
+    btnDel.addEventListener('click', function () {
+        let idx = dimTabInputs.indexOf(inp);
+        if (idx > -1) { dimTabInputs.splice(idx, 1); dimTabSpans.splice(idx, 1); dimTabChecks.splice(idx, 1); }
+        tr.remove();
+        actualizarHighlights();
+    });
+    td3.appendChild(btnDel);
+    tr.appendChild(td0);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tr.appendChild(td3);
+    tbody.appendChild(tr);
+    dimTabInputs.push(inp);
+    dimTabSpans.push(span);
+    dimTabChecks.push(chk);
+    inp.addEventListener('input', function () {
+        let val = Number(this.value);
+        if (isNaN(val) || val <= 0) return;
+
+        let slider, spanEl;
+        if (dimTabActual === 'ancho') { slider = anchoSlider; spanEl = anchoVal; }
+        else if (dimTabActual === 'alto') { slider = altoSlider; spanEl = altoVal; }
+        else { slider = largoSlider; spanEl = largoVal; }
+
+        let min = Number(slider.min), max = Number(slider.max);
+        val = Math.max(min, Math.min(max, val));
+        this.value = val;
+
+        slider.value = val;
+        spanEl.textContent = val;
+        actualizarInfoEsc6();
+        if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+        actualizarTablaDimVar();
+        actualizarHighlights();
+    });
+    chk.addEventListener('change', function () {
+        actualizarHighlights();
+    });
+}
+
+document.getElementById('btnAddFila').addEventListener('click', function () {
+    agregarFilaDimVar();
+    actualizarTablaDimVar();
+});
+
+function actualizarTablaDimVar() {
+    let L = Number(largoSlider.value);
+    let W = Number(anchoSlider.value);
+    let H = Number(altoSlider.value);
+    let fixed = { ancho: L * H, alto: L * W, largo: W * H };
+    let mult = fixed[dimTabActual] || 0;
+    for (let i = 0; i < dimTabInputs.length; i++) {
+        let val = Number(dimTabInputs[i].value);
+        dimTabSpans[i].textContent = isNaN(val) || val <= 0 ? '—' : val * mult;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    let tabs = document.querySelectorAll('#dimTabs .nav-link');
+    tabs.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            tabs.forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            dimTabActual = this.getAttribute('data-tab');
+            document.getElementById('thCabecera').textContent = dimTabActual.charAt(0).toUpperCase() + dimTabActual.slice(1);
+            bloquearSlidersPorTab();
+            actualizarTablaDimVar();
+            actualizarHighlights();
+        });
+    });
+
+    function bloquearSlidersPorTab() {
+        if (dimTabActual !== 'largo') { largoSlider.value = Number(largoSlider.max); largoVal.textContent = largoSlider.max; largoSlider.disabled = true; }
+        if (dimTabActual !== 'ancho') { anchoSlider.value = Number(anchoSlider.max); anchoVal.textContent = anchoSlider.max; anchoSlider.disabled = true; }
+        if (dimTabActual !== 'alto') { altoSlider.value = Number(altoSlider.max); altoVal.textContent = altoSlider.max; altoSlider.disabled = true; }
+        if (dimTabActual === 'largo') { largoSlider.disabled = false; }
+        if (dimTabActual === 'ancho') { anchoSlider.disabled = false; }
+        if (dimTabActual === 'alto') { altoSlider.disabled = false; }
+        actualizarInfoEsc6();
+        if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+    }
+
+    let collapseEl = document.getElementById('esc6-tabla-collapse');
+    collapseEl.addEventListener('shown.bs.collapse', bloquearSlidersPorTab);
+    collapseEl.addEventListener('hidden.bs.collapse', function () {
+        largoSlider.disabled = false;
+        anchoSlider.disabled = false;
+        altoSlider.disabled = false;
+    });
+});
+
+var HIGHLIGHT_COLORS = [0xffdd44, 0x44ddff, 0x44ff88, 0xff66aa, 0xcc88ff, 0xff8844];
+
+function actualizarHighlights() {
+    highlightGroups.forEach(function (g) { threeScene.remove(g); });
+    highlightGroups = [];
+
+    let L = getDimL(), W = getDimW(), H = getDimH();
+    if (!L || !W || !H) return;
+
+    for (let i = 0; i < dimTabChecks.length; i++) {
+        if (!dimTabChecks[i].checked) continue;
+        let val = Number(dimTabInputs[i].value);
+        if (isNaN(val) || val <= 0) continue;
+
+        let boxGeo, pos;
+        if (dimTabActual === 'largo') {
+            let w = Math.min(val, L);
+            boxGeo = new THREE.BoxGeometry(w, H, W);
+            pos = new THREE.Vector3(-L / 2 + w / 2, H / 2, 0);
+        } else if (dimTabActual === 'ancho') {
+            let w = Math.min(val, W);
+            boxGeo = new THREE.BoxGeometry(L, H, w);
+            pos = new THREE.Vector3(0, H / 2, -W / 2 + w / 2);
+        } else {
+            let h = Math.min(val, H);
+            boxGeo = new THREE.BoxGeometry(L, h, W);
+            pos = new THREE.Vector3(0, h / 2, 0);
+        }
+
+        let color = HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length];
+
+        let mat = new THREE.MeshPhongMaterial({ color: color, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false });
+        let mesh = new THREE.Mesh(boxGeo, mat);
+        mesh.position.copy(pos);
+        let edges = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeo), new THREE.LineDashedMaterial({ color: color, dashSize: 0.3, gapSize: 0.2 }));
+        edges.computeLineDistances();
+        edges.position.copy(pos);
+
+        let g = new THREE.Group();
+        g.add(mesh);
+        g.add(edges);
+        threeScene.add(g);
+        highlightGroups.push(g);
+    }
+}
 
 let threeRenderer = null;
 let threeContainer = null;
@@ -1788,6 +1974,42 @@ function initEscena3D() {
     construirTanque3D();
 }
 
+function crearTextSprite(text, color) {
+    let canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 128;
+    let ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 52px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 256, 68);
+    let tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    let mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    let sprite = new THREE.Sprite(mat);
+    sprite.scale.set(5, 1.25, 1);
+    return sprite;
+}
+
+function crearLineaCota(p1, p2, tickDir, color, texto) {
+    let g = new THREE.Group();
+    let mat = new THREE.LineBasicMaterial({ color });
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([p1, p2]), mat));
+    let t = tickDir.clone().multiplyScalar(0.2);
+    for (let p of [p1, p2]) {
+        g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([p.clone().add(t), p.clone().sub(t)]), mat));
+    }
+    let mid = new THREE.Vector3().copy(p1).add(p2).multiplyScalar(0.5);
+    let sprite = crearTextSprite(texto, color);
+    sprite.position.copy(mid);
+    sprite.position.y += 1.0;
+    g.add(sprite);
+    return g;
+}
+
 function construirTanque3D() {
     if (tankGroup) { threeScene.remove(tankGroup); tankGroup = null; }
     let L = Math.max(1, getDimL());
@@ -1807,17 +2029,37 @@ function construirTanque3D() {
     edges.position.y = H / 2;
     tankGroup.add(edges);
 
-    let waterMat = new THREE.MeshPhongMaterial({ color: 0x4a90d9, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
+    let waterMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
     let waterVol = new THREE.Mesh(new THREE.BoxGeometry(L * 0.96, H * 0.96, W * 0.96), waterMat);
     waterVol.position.y = H / 2;
     tankGroup.add(waterVol);
 
-    let surfMat = new THREE.MeshPhongMaterial({ color: 0x5da8e8, transparent: true, opacity: 0.55, side: THREE.DoubleSide, shininess: 30, specular: 0x4488cc });
+    let surfMat = new THREE.MeshPhongMaterial({ color: 0x3399ff, transparent: true, opacity: 0.85, side: THREE.DoubleSide, shininess: 30, specular: 0x4488cc });
     waterSurfaceGeo = new THREE.PlaneGeometry(L * 0.96, W * 0.96, 40, 40);
     waterSurfaceGeo.rotateX(-Math.PI / 2);
     waterSurface = new THREE.Mesh(waterSurfaceGeo, surfMat);
     waterSurface.position.y = H * 0.98;
     tankGroup.add(waterSurface);
+
+    // Cotas
+    let off = 0.6;
+    tankGroup.add(crearLineaCota(
+        new THREE.Vector3(-L / 2, 0, W / 2 + off),
+        new THREE.Vector3(L / 2, 0, W / 2 + off),
+        new THREE.Vector3(0, 0, 1), 0xff6666, 'Largo: ' + L
+    ));
+    tankGroup.add(crearLineaCota(
+        new THREE.Vector3(L / 2 + off, 0, W / 2),
+        new THREE.Vector3(L / 2 + off, 0, -W / 2),
+        new THREE.Vector3(1, 0, 0), 0x66ff66, 'Ancho: ' + W
+    ));
+    tankGroup.add(crearLineaCota(
+        new THREE.Vector3(L / 2 + off, 0, W / 2 + off),
+        new THREE.Vector3(L / 2 + off, H, W / 2 + off),
+        new THREE.Vector3(1, 0, 0), 0xffdd66, 'Alto: ' + H
+    ));
+
+    actualizarHighlights();
 
     threeScene.add(tankGroup);
     threeControls.target.set(0, H / 2, 0);
@@ -1867,7 +2109,7 @@ function crearPez3D(L, W, H) {
     let tailShape = new THREE.Shape();
     tailShape.moveTo(0, 0); tailShape.lineTo(-0.5, -0.3); tailShape.lineTo(-0.5, 0.3); tailShape.closePath();
     let tail = new THREE.Mesh(new THREE.ShapeGeometry(tailShape), new THREE.MeshPhongMaterial({ color: 0x2C3E50, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
-    tail.position.x = -1.2;
+    tail.position.x = -0.7;
     group.add(tail);
 
     // Eyes (black)
@@ -1959,19 +2201,33 @@ function redimensionarThree() {
 esc6Btn.addEventListener('click', function () { cambiarEscenario(6); });
 largoSlider.addEventListener('input', function () {
     largoVal.textContent = this.value;
+    actualizarInfoEsc6();
+    actualizarTablaDimVar();
     if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
 });
 anchoSlider.addEventListener('input', function () {
     anchoVal.textContent = this.value;
+    actualizarInfoEsc6();
+    actualizarTablaDimVar();
     if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
 });
 altoSlider.addEventListener('input', function () {
     altoVal.textContent = this.value;
+    actualizarInfoEsc6();
+    actualizarTablaDimVar();
     if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
 });
 btnResetEsc6.addEventListener('click', function () {
     largoSlider.value = 19; anchoSlider.value = 18; altoSlider.value = 21;
     largoVal.textContent = 19; anchoVal.textContent = 18; altoVal.textContent = 21;
+    // Limpiar tabla
+    highlightGroups.forEach(function (g) { threeScene.remove(g); });
+    highlightGroups = [];
+    dimTabInputs = []; dimTabSpans = []; dimTabChecks = [];
+    document.getElementById('tbodyDim').innerHTML = '';
+    for (let i = 0; i < 3; i++) { agregarFilaDimVar(); }
+    actualizarInfoEsc6();
+    actualizarTablaDimVar();
     if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
 });
 window.addEventListener('resize', redimensionarThree);

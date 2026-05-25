@@ -31,7 +31,52 @@
         <div class="row">
             <div class="col-12 col-sm-6" id="contenedorCanvas">
                 <canvas id="canvas">Esto solo si no esta implementado</canvas>
-                <div id="three-container" style="display:none; width:100%; height:100%; min-height:300px;"></div>
+                <div id="three-container" style="display:none; width:100%; height:100%; min-height:300px;">
+                    <div id="esc6-overlay" style="display:none;">
+                        <div id="esc6-info">
+                            Capacidad: <span id="capValInfo">7182</span>
+                        </div>
+                        <div class="esc6-sliders">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <p class="mb-1">Largo: <span id="largoVal">19</span></p>
+                                    <input type="range" min="1" max="19" value="19" id="largo" class="w-100">
+                                </div>
+                                <div class="col">
+                                    <p class="mb-1">Ancho: <span id="anchoVal">18</span></p>
+                                    <input type="range" min="1" max="18" value="18" id="ancho" class="w-100">
+                                </div>
+                                <div class="col">
+                                    <p class="mb-1">Alto: <span id="altoVal">21</span></p>
+                                    <input type="range" min="1" max="21" value="21" id="alto" class="w-100">
+                                </div>
+                                <div class="col-auto">
+                                    <button id="reset-esc6" class="btn btn-light btn-sm">Reiniciar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="esc6-tabla-section" style="display:none;">
+                    <button class="btn btn-sm btn-secondary w-100 text-start" data-bs-toggle="collapse" data-bs-target="#esc6-tabla-collapse">
+                        ▶ Dimensiones variables
+                    </button>
+                    <div id="esc6-tabla-collapse" class="collapse">
+                        <div class="card card-body p-2">
+                            <ul class="nav nav-pills nav-justified mb-2" id="dimTabs">
+                                <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
+                                <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
+                                <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
+                            </ul>
+                            <table class="table table-sm table-bordered mb-0" id="tablaDim">
+                                <thead><tr><th style="width:32px"></th><th id="thCabecera">Ancho</th><th>Capacidad</th><th style="width:34px"></th></tr></thead>
+                                <tbody id="tbodyDim"></tbody>
+                            </table>
+                            <button id="btnAddFila" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Escenario 1 Controls -->
                 <div id="esc1-controls">
@@ -96,30 +141,6 @@
                         <div class="col pb-1">
                             <div class="d-flex justify-content-center">
                                 <button id="reset-esc2" class="btn btn-secondary btn-sm">Reiniciar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Escenario 6 Controls -->
-                <div id="esc6-controls" style="display:none;">
-                    <div class="row">
-                        <div class="col-md py-1">
-                            <p class="mb-1">Largo: <span id="largoVal">19</span></p>
-                            <input type="range" min="0" max="19" value="19" id="largo" class="w-100">
-                        </div>
-                        <div class="col-md py-1">
-                            <p class="mb-1">Ancho: <span id="anchoVal">18</span></p>
-                            <input type="range" min="0" max="18" value="18" id="ancho" class="w-100">
-                        </div>
-                        <div class="col-md py-1">
-                            <p class="mb-1">Alto: <span id="altoVal">21</span></p>
-                            <input type="range" min="0" max="21" value="21" id="alto" class="w-100">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col pb-1">
-                            <div class="d-flex justify-content-center">
-                                <button id="reset-esc6" class="btn btn-secondary btn-sm">Reiniciar</button>
                             </div>
                         </div>
                     </div>
