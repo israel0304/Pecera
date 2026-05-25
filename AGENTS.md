@@ -65,13 +65,17 @@ Open `index.html` in any browser. No build or server required.
 
 ### Dimensiones 3D (Escenario 6)
 - 3D fish tank using Three.js with real-time dimension controls
-- Sliders: Largo (0–19, default 19), Ancho (0–18, default 18), Alto (0–21, default 21)
+- Sliders: Largo (1–19, default 19), Ancho (1–18, default 18), Alto (1–21, default 21)
 - Semi-transparent glass walls with wireframe edges
 - Water volume with animated wave surface (sine/cosine vertex animation)
-- 3D fish with custom geometry (body + tail), multiple colors, swimming within the tank
+- 3D fish with custom geometry (body + tail), two-tone neon vertex colors (cyan stripe + red belly), swimming within the tank
 - Free camera via OrbitControls (rotate, zoom, pan — touch compatible)
 - Local libraries: `js/three.min.js`, `js/OrbitControls.js`
 - Secret code `"dimensiones"` to navigate to this scenario
+- **Dimensiones variables collapse:** table with tabs (Ancho/Alto/Largo), rows with input + capacity (L), checkbox per row shows semi-transparent highlight volume in tank, different color per row (yellow/cyan/green/pink/purple/orange), dashed edges
+- **Capacidad Dinámica collapse:** accordion-locked with Dimensiones variables, two-column comparison table (Valor₁/Valor₂), capacity in liters, difference equation (▲/▼), checkbox per row shows paired highlight volumes in tank
+- Slider locking: when either collapse is open, only the slider matching the active tab is enabled; the other two are set to maximum and disabled
+- "Reiniciar" button resets both tables to default rows
 
 ## Navigation & Secret Codes
 

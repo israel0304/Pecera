@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.8.0 (no publicado)
+
+### Features
+- **Capacidad Dinámica collapse** — tabla comparativa con dos valores por fila, cálculo de capacidad en litros, ecuación de diferencia con ▲/▼
+- Acordeón entre "Dimensiones variables" y "Capacidad Dinámica" mediante `data-bs-parent`
+- Checkbox en primera columna de ambas tablas para activar/desactivar highlights en el tanque 3D
+- Highlights por pares de colores en Capacidad Dinámica (un color por valor, distintos por fila)
+- Bloqueo de sliders al abrir cualquier collapse y al cambiar de tab (solo el slider del tab activo queda habilitado; los otros se fijan al máximo)
+- Al escribir en Valor₁ de Capacidad Dinámica se actualiza el slider con el valor máximo de todas las filas
+- Botón Reiniciar limpia ambas tablas (restaura 3 filas en Dimensiones variables, 2 en Capacidad Dinámica)
+- Capacidad mostrada en litros con 3 decimales (tanto en badge como en tablas)
+- Superficie del agua más visible (color 0x3399ff, opacity 0.85) + volumen de agua restaurado
+- Cola de pez 3D reposicionada más cerca del cuerpo (x: -1.2 → -0.7)
+
+### Fix
+- Error CSS huérfano: selector faltante en `#esc6-tabla-section .form-control`
+- Scope de `bloquearSlidersPorTab` movida a nivel global para que ambos collapses puedan usarla
+
+### Documentation
+- Actualización de README.md, AGENTS.md y CHANGELOG.md
+
 ## 1.7.0 (no publicado)
 
 ### Features
