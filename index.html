@@ -29,7 +29,7 @@
 
         <!-- Canvas & Graph -->
         <div class="row">
-            <div class="col-12 col-sm-6" id="contenedorCanvas">
+            <div class="col-12 col-sm-6 col-md-7" id="contenedorCanvas">
                 <canvas id="canvas">Esto solo si no esta implementado</canvas>
                 <div id="three-container" style="display:none; width:100%; height:100%; min-height:300px;">
                     <div id="esc6-overlay" style="display:none;">
@@ -53,56 +53,6 @@
                                 <div class="col-auto">
                                     <button id="reset-esc6" class="btn btn-light btn-sm">Reiniciar</button>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="esc6-collapse-group">
-                    <div id="esc6-tabla-section" style="display:none;">
-                        <button class="btn btn-sm btn-secondary w-100 text-start" data-bs-toggle="collapse" data-bs-target="#esc6-tabla-collapse">
-                            ▶ Dimensiones variables
-                        </button>
-                        <div id="esc6-tabla-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
-                            <div class="card card-body p-2">
-                                <ul class="nav nav-pills nav-justified mb-2" id="dimTabs">
-                                    <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
-                                    <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
-                                    <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
-                                </ul>
-                                <table class="table table-sm table-bordered mb-0" id="tablaDim">
-                                    <thead><tr><th style="width:24px"></th><th id="thCabecera">Ancho</th><th>Capacidad</th><th style="width:34px"></th></tr></thead>
-                                    <tbody id="tbodyDim"></tbody>
-                                </table>
-                                <button id="btnAddFila" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="esc6-cap-dinamica-section" style="display:none;">
-                        <button class="btn btn-sm btn-secondary w-100 text-start" data-bs-toggle="collapse" data-bs-target="#esc6-cap-dinamica-collapse">
-                            ▶ Capacidad Dinámica
-                        </button>
-                        <div id="esc6-cap-dinamica-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
-                            <div class="card card-body p-2">
-                                <ul class="nav nav-pills nav-justified mb-2" id="capDinaTabs">
-                                    <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
-                                    <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
-                                    <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
-                                </ul>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered mb-0" id="tablaCapDina">
-                                        <thead><tr>
-                                            <th style="width:24px"></th>
-                                            <th id="thCDVal1">Ancho₁</th>
-                                            <th id="thCDVal2">Ancho₂</th>
-                                            <th>Capacidad 1</th>
-                                            <th>Capacidad 2</th>
-                                            <th>Δ Capacidad</th>
-                                        </tr></thead>
-                                        <tbody id="tbodyCapDina"></tbody>
-                                    </table>
-                                </div>
-                                <button id="btnAddFilaCapDina" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
                             </div>
                         </div>
                     </div>
@@ -171,6 +121,57 @@
                         <div class="col pb-1">
                             <div class="d-flex justify-content-center">
                                 <button id="reset-esc2" class="btn btn-secondary btn-sm">Reiniciar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-5" id="contenedorCollapses" style="display:none;">
+                <div id="esc6-collapse-group">
+                    <div id="esc6-tabla-section" style="display:none;">
+                        <button class="btn btn-sm btn-secondary w-100 text-start" data-bs-toggle="collapse" data-bs-target="#esc6-tabla-collapse">
+                            ▶ Dimensiones variables
+                        </button>
+                        <div id="esc6-tabla-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
+                            <div class="card card-body p-2">
+                                <ul class="nav nav-pills nav-justified mb-2" id="dimTabs">
+                                    <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
+                                    <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
+                                    <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
+                                </ul>
+                                <table class="table table-sm table-bordered mb-0" id="tablaDim">
+                                    <thead><tr><th style="width:24px"></th><th id="thCabecera">Ancho</th><th>Capacidad</th><th style="width:34px"></th></tr></thead>
+                                    <tbody id="tbodyDim"></tbody>
+                                </table>
+                                <button id="btnAddFila" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="esc6-cap-dinamica-section" style="display:none;">
+                        <button class="btn btn-sm btn-secondary w-100 text-start" data-bs-toggle="collapse" data-bs-target="#esc6-cap-dinamica-collapse">
+                            ▶ Capacidad Dinámica
+                        </button>
+                        <div id="esc6-cap-dinamica-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
+                            <div class="card card-body p-2">
+                                <ul class="nav nav-pills nav-justified mb-2" id="capDinaTabs">
+                                    <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
+                                    <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
+                                    <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
+                                </ul>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0" id="tablaCapDina">
+                                        <thead><tr>
+                                            <th style="width:24px"></th>
+                                            <th id="thCDVal1">Ancho₁</th>
+                                            <th id="thCDVal2">Ancho₂</th>
+                                            <th>Capacidad 1</th>
+                                            <th>Capacidad 2</th>
+                                            <th>Δ Capacidad</th>
+                                        </tr></thead>
+                                        <tbody id="tbodyCapDina"></tbody>
+                                    </table>
+                                </div>
+                                <button id="btnAddFilaCapDina" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
                             </div>
                         </div>
                     </div>

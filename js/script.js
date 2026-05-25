@@ -1019,7 +1019,7 @@ const ESCENARIOS = {
     1: {
         btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'litros',
@@ -1039,7 +1039,7 @@ const ESCENARIOS = {
     2: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
         graficaClass: 'd-none',
         codigo: 'grafica',
@@ -1058,7 +1058,7 @@ const ESCENARIOS = {
     3: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'estanque',
@@ -1078,7 +1078,7 @@ const ESCENARIOS = {
     4: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls', 'box4'],
-        ocultar: ['esc1-controls', 'box', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
+        ocultar: ['esc1-controls', 'box', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'pendiente',
@@ -1104,7 +1104,7 @@ const ESCENARIOS = {
     5: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls', 'box5'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: '',
@@ -1136,9 +1136,9 @@ const ESCENARIOS = {
     },
     6: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'primary' },
-        mostrar: ['esc6-overlay', 'three-container', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
+        mostrar: ['esc6-overlay', 'three-container', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5'],
-        canvasClass: 'col-12 col-sm-6',
+        canvasClass: 'col-12 col-sm-6 col-md-7',
         graficaClass: 'd-none',
         codigo: 'dimensiones',
         alEntrar: function () {
