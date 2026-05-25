@@ -480,11 +480,9 @@ function actualizar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (escenarioActual === 1 || escenarioActual === 3) {
         pecera.aparecer();
-
         for (i = 0; i < burbujas.length; i++) {
             burbujas[i].draw();
         }
-
         for (i = 0; i < peces.length; i++) {
             let pez = peces[i];
             pez.velMax = 0.5;
@@ -500,7 +498,6 @@ function actualizar() {
                 }
             }
             pez.aparecer();
-
             if (pecera.temperatura < 22) {
                 pez.salud = 'enfermo';
                 pez.nadar();
@@ -508,7 +505,6 @@ function actualizar() {
                 pez.salud = 'sano';
                 pez.nadar();
             }
-
             if (pecera.temperatura > 28) {
                 pez.nadar();
                 pez.morir();
@@ -516,8 +512,15 @@ function actualizar() {
                 pez.nadar();
             }
         }
-    } else {
+    } else if (escenarioActual === 2 || escenarioActual === 4 || escenarioActual === 5) {
         actualizarEscenario2();
+    }
+
+    if (escenarioActual === 6 && threeRenderer) {
+        threeControls.update();
+        animarOlas();
+        animarPeces3D();
+        threeRenderer.render(threeScene, threeCamera);
     }
 
     requestAnimationFrame(actualizar);
@@ -1014,9 +1017,9 @@ function recrearCurva5(m) {
 
 const ESCENARIOS = {
     1: {
-        btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary' },
-        mostrar: ['esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5'],
+        btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
+        mostrar: ['canvas', 'esc1-controls', 'box'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-controls'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'litros',
@@ -1034,9 +1037,9 @@ const ESCENARIOS = {
         }
     },
     2: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary' },
-        mostrar: ['esc2-controls'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'box5'],
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
+        mostrar: ['canvas', 'esc2-controls'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-controls'],
         canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
         graficaClass: 'd-none',
         codigo: 'grafica',
@@ -1053,9 +1056,9 @@ const ESCENARIOS = {
         }
     },
     3: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary' },
-        mostrar: ['esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5'],
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
+        mostrar: ['canvas', 'esc1-controls', 'box'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-controls'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'estanque',
@@ -1073,9 +1076,9 @@ const ESCENARIOS = {
         }
     },
     4: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary' },
-        mostrar: ['esc2-controls', 'box4'],
-        ocultar: ['esc1-controls', 'box', 'box5'],
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
+        mostrar: ['canvas', 'esc2-controls', 'box4'],
+        ocultar: ['esc1-controls', 'box', 'box5', 'three-container', 'esc6-controls'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'pendiente',
@@ -1099,9 +1102,9 @@ const ESCENARIOS = {
         }
     },
     5: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary' },
-        mostrar: ['esc2-controls', 'box5'],
-        ocultar: ['esc1-controls', 'box', 'box4'],
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary', 'esc6-btn': 'secondary' },
+        mostrar: ['canvas', 'esc2-controls', 'box5'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-controls'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: '',
@@ -1129,6 +1132,25 @@ const ESCENARIOS = {
             actualizarDisplayEsc2();
             initPecesEstanque();
             sincronizarAlturaGrafica5();
+        }
+    },
+    6: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'primary' },
+        mostrar: ['esc6-controls', 'three-container'],
+        ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'd-none',
+        codigo: 'dimensiones',
+        alEntrar: function () {
+            laSection.style.display = 'none';
+            if (checkLA.checked) checkLA.checked = false;
+            dataLA.style.display = 'none';
+            botonLA.disabled = true;
+            boton3.disabled = false;
+            if (!threeRenderer) initEscena3D();
+            threeContainer.style.height = Math.max(300, window.innerHeight * 0.55) + 'px';
+            redimensionarThree();
+            iniciarPeces3D();
         }
     }
 };
@@ -1159,6 +1181,12 @@ function cambiarEscenario(n) {
     contenedorGrafica.className = cfg.graficaClass;
     if (!cfg.graficaClass.includes('d-none')) {
         contenedorGrafica.style.display = 'flex';
+    }
+
+    // Cleanup esc6 Three.js
+    if (n !== 6 && threeRenderer) {
+        threeContainer.style.display = 'none';
+        limpiarPeces3D();
     }
 
     document.getElementById('btnAtras').disabled = n === getOrden()[0];
@@ -1607,7 +1635,7 @@ document.getElementById('checkFranjas').addEventListener('change', function () {
 });
 
 function getOrden() {
-    return [1, 3, 2, 4, 5];
+    return [1, 3, 2, 4, 5, 6];
 }
 
 function getSiguiente(n) {
@@ -1691,4 +1719,261 @@ canvas.addEventListener('touchstart', function (e) {
 }, { passive: true });
 canvas.addEventListener('touchend', function () { cursorX = cursorY = null; });
 
-cambiarEscenario(1);
+// ============================================
+// ESCENARIO 6: Dimensiones 3D (Three.js)
+// ============================================
+
+let largoSlider = document.getElementById('largo');
+let anchoSlider = document.getElementById('ancho');
+let altoSlider = document.getElementById('alto');
+let largoVal = document.getElementById('largoVal');
+let anchoVal = document.getElementById('anchoVal');
+let altoVal = document.getElementById('altoVal');
+let btnResetEsc6 = document.getElementById('reset-esc6');
+let esc6Btn = document.getElementById('esc6-btn');
+
+let threeRenderer = null;
+let threeContainer = null;
+let threeScene = null;
+let threeCamera = null;
+let threeControls = null;
+let tankGroup = null;
+let waterSurface = null;
+let waterSurfaceGeo = null;
+let peces3D = [];
+let clock = new THREE.Clock();
+
+function getDimL() { return Number(largoSlider.value) || 1; }
+function getDimW() { return Number(anchoSlider.value) || 1; }
+function getDimH() { return Number(altoSlider.value) || 1; }
+
+function initEscena3D() {
+    threeContainer = document.getElementById('three-container');
+    if (!threeContainer) return;
+
+    threeScene = new THREE.Scene();
+    threeScene.background = new THREE.Color(0x87CEEB);
+
+    let w = threeContainer.clientWidth || 600;
+    let h = threeContainer.clientHeight || 400;
+    threeCamera = new THREE.PerspectiveCamera(40, w / h, 0.1, 500);
+    threeCamera.position.set(Math.max(getDimL(), getDimW(), getDimH()) * 1.8, getDimH() * 1.2, Math.max(getDimL(), getDimW(), getDimH()) * 1.8);
+
+    threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+    threeRenderer.setSize(w, h);
+    threeRenderer.setPixelRatio(window.devicePixelRatio);
+    threeContainer.appendChild(threeRenderer.domElement);
+
+    threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+    threeControls.enableDamping = true;
+    threeControls.dampingFactor = 0.08;
+    threeControls.target.set(0, getDimH() / 2, 0);
+
+    let ambient = new THREE.AmbientLight(0x404060, 0.6);
+    threeScene.add(ambient);
+    let dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight.position.set(20, 40, 20);
+    threeScene.add(dirLight);
+    let fillLight = new THREE.DirectionalLight(0x88aaff, 0.3);
+    fillLight.position.set(-20, 10, -20);
+    threeScene.add(fillLight);
+
+    let groundGeo = new THREE.PlaneGeometry(80, 80);
+    let groundMat = new THREE.MeshStandardMaterial({ color: 0xd4e8f0, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+    let ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.1;
+    threeScene.add(ground);
+
+    construirTanque3D();
+}
+
+function construirTanque3D() {
+    if (tankGroup) { threeScene.remove(tankGroup); tankGroup = null; }
+    let L = Math.max(1, getDimL());
+    let W = Math.max(1, getDimW());
+    let H = Math.max(1, getDimH());
+    tankGroup = new THREE.Group();
+
+    let wallMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false });
+    let wallGeo = new THREE.BoxGeometry(L, H, W);
+    let walls = new THREE.Mesh(wallGeo, wallMat);
+    walls.position.y = H / 2;
+    tankGroup.add(walls);
+
+    let edgeMat = new THREE.LineBasicMaterial({ color: 0x4a90d9 });
+    let edgeGeo = new THREE.EdgesGeometry(wallGeo);
+    let edges = new THREE.LineSegments(edgeGeo, edgeMat);
+    edges.position.y = H / 2;
+    tankGroup.add(edges);
+
+    let waterMat = new THREE.MeshPhongMaterial({ color: 0x4a90d9, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
+    let waterVol = new THREE.Mesh(new THREE.BoxGeometry(L * 0.96, H * 0.96, W * 0.96), waterMat);
+    waterVol.position.y = H / 2;
+    tankGroup.add(waterVol);
+
+    let surfMat = new THREE.MeshPhongMaterial({ color: 0x5da8e8, transparent: true, opacity: 0.55, side: THREE.DoubleSide, shininess: 30, specular: 0x4488cc });
+    waterSurfaceGeo = new THREE.PlaneGeometry(L * 0.96, W * 0.96, 40, 40);
+    waterSurfaceGeo.rotateX(-Math.PI / 2);
+    waterSurface = new THREE.Mesh(waterSurfaceGeo, surfMat);
+    waterSurface.position.y = H * 0.98;
+    tankGroup.add(waterSurface);
+
+    threeScene.add(tankGroup);
+    threeControls.target.set(0, H / 2, 0);
+}
+
+function iniciarPeces3D() {
+    limpiarPeces3D();
+    let L = Math.max(1, getDimL());
+    let W = Math.max(1, getDimW());
+    let H = Math.max(1, getDimH());
+    let numPeces = Math.min(10, Math.max(3, Math.floor((L * W * H) / 50)));
+    for (let i = 0; i < numPeces; i++) {
+        peces3D.push(crearPez3D(L, W, H));
+    }
+}
+
+function crearPez3D(L, W, H) {
+    let group = new THREE.Group();
+
+    // Body with vertex colors for two-tone neon pattern
+    let bodyGeo = new THREE.SphereGeometry(0.5, 14, 10);
+    bodyGeo.scale(1.8, 0.6, 0.7);
+
+    let pos = bodyGeo.attributes.position;
+    let cArr = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+        let y = pos.getY(i);
+        let zAbs = Math.abs(pos.getZ(i));
+        if (y > 0.05 && y < 0.2 && zAbs > 0.08) {
+            // Cyan stripe on upper flanks
+            cArr[i * 3] = 0; cArr[i * 3 + 1] = 0.83; cArr[i * 3 + 2] = 1;
+        } else if (y < -0.05 && zAbs > 0.08) {
+            // Red belly
+            cArr[i * 3] = 1; cArr[i * 3 + 1] = 0.27; cArr[i * 3 + 2] = 0.27;
+        } else {
+            // Dark body base
+            cArr[i * 3] = 0.17; cArr[i * 3 + 1] = 0.24; cArr[i * 3 + 2] = 0.31;
+        }
+    }
+    bodyGeo.setAttribute('color', new THREE.BufferAttribute(cArr, 3));
+
+    let body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 25 }));
+    body.position.x = 0.3;
+    group.add(body);
+
+    // Tail (dark translucent)
+    let tailShape = new THREE.Shape();
+    tailShape.moveTo(0, 0); tailShape.lineTo(-0.5, -0.3); tailShape.lineTo(-0.5, 0.3); tailShape.closePath();
+    let tail = new THREE.Mesh(new THREE.ShapeGeometry(tailShape), new THREE.MeshPhongMaterial({ color: 0x2C3E50, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
+    tail.position.x = -1.2;
+    group.add(tail);
+
+    // Eyes (black)
+    let eyeMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
+    let eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), eyeMat);
+    eye.position.set(0.9, 0.1, 0.3);
+    group.add(eye);
+    let eye2 = eye.clone();
+    eye2.position.z = -0.3;
+    group.add(eye2);
+
+    let margin = 1;
+    group.position.set(
+        (Math.random() - 0.5) * (L - margin * 2),
+        Math.random() * (H - margin * 2) + margin,
+        (Math.random() - 0.5) * (W - margin * 2)
+    );
+    group.rotation.y = Math.random() * Math.PI * 2;
+
+    threeScene.add(group);
+    return {
+        mesh: group,
+        speed: 0.5 + Math.random() * 0.8,
+        target: new THREE.Vector3(
+            (Math.random() - 0.5) * (L - margin * 2),
+            Math.random() * (H - margin * 2) + margin,
+            (Math.random() - 0.5) * (W - margin * 2)
+        ),
+        phase: Math.random() * Math.PI * 2
+    };
+}
+
+function animarPeces3D() {
+    let L = Math.max(1, getDimL());
+    let W = Math.max(1, getDimW());
+    let H = Math.max(1, getDimH());
+    let margin = 1;
+    let time = clock.getElapsedTime();
+    for (let p of peces3D) {
+        let pos = p.mesh.position;
+        let dir = new THREE.Vector3().copy(p.target).sub(pos);
+        let dist = dir.length();
+        if (dist < 0.5) {
+            p.target.set(
+                (Math.random() - 0.5) * (L - margin * 2),
+                Math.random() * (H - margin * 2) + margin,
+                (Math.random() - 0.5) * (W - margin * 2)
+            );
+        }
+        dir.normalize();
+        pos.x += dir.x * p.speed * 0.05;
+        pos.y += dir.y * p.speed * 0.04;
+        pos.z += dir.z * p.speed * 0.05;
+        pos.x = Math.max(-L / 2 + margin, Math.min(L / 2 - margin, pos.x));
+        pos.y = Math.max(margin, Math.min(H - margin, pos.y));
+        pos.z = Math.max(-W / 2 + margin, Math.min(W / 2 - margin, pos.z));
+        if (dist > 0.1) p.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+        let tail = p.mesh.children[1];
+        if (tail) tail.rotation.y = Math.sin(time * 3 + p.phase) * 0.3;
+    }
+}
+
+function animarOlas() {
+    if (!waterSurfaceGeo) return;
+    let pos = waterSurfaceGeo.attributes.position;
+    let time = clock.getElapsedTime();
+    for (let i = 0; i < pos.count; i++) {
+        let x = pos.getX(i), z = pos.getZ(i);
+        pos.setY(i, Math.sin(x * 0.5 + time * 1.2) * 0.25 + Math.cos(z * 0.4 + time * 0.9) * 0.20 + Math.sin((x + z) * 0.3 + time * 0.7) * 0.12);
+    }
+    pos.needsUpdate = true;
+}
+
+function limpiarPeces3D() {
+    for (let p of peces3D) { threeScene.remove(p.mesh); }
+    peces3D = [];
+}
+
+function redimensionarThree() {
+    if (!threeRenderer || !threeContainer) return;
+    let w = threeContainer.clientWidth, h = threeContainer.clientHeight;
+    if (w === 0 || h === 0) return;
+    threeCamera.aspect = w / h;
+    threeCamera.updateProjectionMatrix();
+    threeRenderer.setSize(w, h);
+}
+
+// Event listeners
+esc6Btn.addEventListener('click', function () { cambiarEscenario(6); });
+largoSlider.addEventListener('input', function () {
+    largoVal.textContent = this.value;
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+});
+anchoSlider.addEventListener('input', function () {
+    anchoVal.textContent = this.value;
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+});
+altoSlider.addEventListener('input', function () {
+    altoVal.textContent = this.value;
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+});
+btnResetEsc6.addEventListener('click', function () {
+    largoSlider.value = 19; anchoSlider.value = 18; altoSlider.value = 21;
+    largoVal.textContent = 19; anchoVal.textContent = 18; altoVal.textContent = 21;
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+});
+window.addEventListener('resize', redimensionarThree);
+
+cambiarEscenario(6);

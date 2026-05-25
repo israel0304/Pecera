@@ -39,6 +39,18 @@ body {
     min-height: 300px;
 }
 
+#three-container {
+    width: 100%;
+    min-height: 300px;
+    touch-action: none;
+}
+
+#three-container canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+}
+
 #box2, #box4, #box5 {
     width: 100%;
     height: auto;

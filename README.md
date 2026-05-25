@@ -72,6 +72,18 @@ Estanque Sustentable con una gráfica JSXGraph donde la **pendiente m** de la re
 - Franjas de colores (activables con código secreto `"franjas"`) que muestran zonas de voltaje: azul (2–4V), verde (4–6V), amarillo (6–8V), rojo (8–10V) y banda verde horizontal de rango óptimo
 - La recta se redibuja al cambiar m o al arrastrar el glider
 
+### Dimensiones 3D
+Pecera 3D interactiva usando Three.js con controles de largo, ancho y alto en tiempo real. Incluye agua con superficie animada (ondas) y peces tridimensionales nadando dentro del tanque.
+
+- **Sliders:** Largo (0–19), Ancho (0–18), Alto (0–21), paso 1
+- Tanque con paredes semitransparentes y bordes visibles
+- Superficie de agua con ondas animadas (seno/coseno)
+- Peces 3D con geometría personalizada (cuerpo + cola), múltiples colores
+- Cámara libre con OrbitControls (rotar, zoom, pan — compatible táctil)
+- Requiere código secreto `"dimensiones"` para navegar al escenario
+
+**Controles:** sliders de largo, ancho, alto, botón reiniciar
+
 ## Navegación
 
 La navegación entre escenarios se hace con los botones "← Atrás" y "Continuar →".
@@ -84,8 +96,9 @@ El escenario inicial al cargar la página es **Estanque Sustentable**.
 | Pecera + Litros | Estanque Sustentable | `estanque` |
 | Estanque Sustentable | Estanque + Gráfica | `grafica` |
 | Estanque + Gráfica | Estanque + Pendiente Variable | `pendiente` |
+| Estanque + Pendiente Variable | Dimensiones 3D | `dimensiones` |
 
-> Retroceder nunca requiere código. El orden de navegación es: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable.
+> Retroceder nunca requiere código. El orden de navegación es: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → Dimensiones 3D.
 >
 > En el Escenario 5, el checkbox "Mostrar franjas" requiere el código `"franjas"` (solo una vez por sesión) para activar las bandas de voltaje en la gráfica.
 
@@ -105,6 +118,7 @@ El escenario inicial al cargar la página es **Estanque Sustentable**.
 - **HTML5 Canvas** — renderizado de escenarios (buffer fijo 1600×800)
 - **JSXGraph** — gráficos de saturación de oxígeno, curvas I vs V
 - **Bootstrap** — interfaz de usuario responsive
+- **Three.js** — renderizado 3D del tanque interactivo
 - **JavaScript vanilla** — sin frameworks ni librerías externas
 
 ## Estructura del proyecto
@@ -112,7 +126,9 @@ El escenario inicial al cargar la página es **Estanque Sustentable**.
 ```
 Pecera/
 ├── index.html         # Punto de entrada (escenarios, controles, canvas, gráficos)
-├── js/script.js       # Lógica principal (clases, animación, eventos)
+├── js/script.js       # Lógica principal (clases, animación, eventos, escenario 3D)
+├── js/three.min.js    # Three.js para escenario Dimensiones 3D
+├── js/OrbitControls.js # Controles de cámara 3D
 ├── css/
 │   ├── style.css      # Estilos
 │   ├── bootstrap.min.css
@@ -142,6 +158,7 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.4.0 | Pecera + Litros — cálculo LA, toggle SO/LA, curva naranja, código secreto |
 | v1.5.0 | Estanque + Gráfica/Pendiente — ejes custom, grid, zoom, franjas, glider |
 | v1.6.0 | Ajustes de precisión — sliders step 0.01, rango óptimo 4–6V, glider con 2 decimales, menos burbujas en baja corriente |
+| v1.7.0 | Dimensiones 3D — Three.js, tanque 3D interactivo, ondas en agua, peces 3D |
 
 ## Historial de cambios
 

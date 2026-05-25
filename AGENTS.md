@@ -7,7 +7,9 @@ Open `index.html` in any browser. No build or server required.
 ## Project Structure
 
 - `index.html` - Entry point with scenario tabs, controls, canvas, and JSXGraph container
-- `js/script.js` - Main logic: `Pez`, `Burbuja`, `Pecera`, `Grafica`, `ParticulaAgua` classes
+- `js/script.js` - Main logic: `Pez`, `Burbuja`, `Pecera`, `Grafica`, `ParticulaAgua`, and Three.js 3D scene classes
+- `js/three.min.js` - Three.js library for 3D fish tank (Escenario 6)
+- `js/OrbitControls.js` - Camera controls for 3D scene
 - `css/style.css` - Styling
 - `img/` - Fish, tank, solar panel, and pump images
 
@@ -61,9 +63,19 @@ Open `index.html` in any browser. No build or server required.
   - Checkbox in HTML controls, code prompted once via modal
   - Implemented as `curve` with `closedCurve: true` (no vertices, no touch interference)
 
+### Dimensiones 3D (Escenario 6)
+- 3D fish tank using Three.js with real-time dimension controls
+- Sliders: Largo (0–19, default 19), Ancho (0–18, default 18), Alto (0–21, default 21)
+- Semi-transparent glass walls with wireframe edges
+- Water volume with animated wave surface (sine/cosine vertex animation)
+- 3D fish with custom geometry (body + tail), multiple colors, swimming within the tank
+- Free camera via OrbitControls (rotate, zoom, pan — touch compatible)
+- Local libraries: `js/three.min.js`, `js/OrbitControls.js`
+- Secret code `"dimensiones"` to navigate to this scenario
+
 ## Navigation & Secret Codes
 
-Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable
+Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → Dimensiones 3D
 
 | From | To | Code |
 |------|----|------|
@@ -71,6 +83,7 @@ Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanq
 | Pecera + Litros | Estanque Sustentable | `estanque` |
 | Estanque Sustentable | Estanque + Gráfica | `grafica` |
 | Estanque + Gráfica | Estanque + Pendiente Variable | `pendiente` |
+| Estanque + Pendiente Variable | Dimensiones 3D | `dimensiones` |
 | Escenario 5 (franjas) | Unlock colored bands | `franjas` |
 
 - Going back never requires a code

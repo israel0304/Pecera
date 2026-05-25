@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.7.0 (no publicado)
+
+### Features
+- Escenario Dimensiones 3D: pecera 3D interactiva con Three.js
+- Sliders de largo (0–19), ancho (0–18) y alto (0–21) modifican el tanque en tiempo real
+- Agua con superficie animada (ondas seno/coseno en vértices)
+- Peces 3D nadando dentro del tanque (geometría personalizada, colores variados)
+- Cámara libre con OrbitControls (rotar, zoom, pan — compatible táctil)
+- Librerías Three.js y OrbitControls descargadas localmente (`js/three.min.js`, `js/OrbitControls.js`)
+- Código secreto `"dimensiones"` para navegación
+
+### Documentation
+- Actualización de README.md, AGENTS.md y CHANGELOG.md
+
 ## 1.6.0 (no publicado)
 
 ### Features
