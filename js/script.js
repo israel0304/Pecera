@@ -478,6 +478,9 @@ function enfermar() {
 
 function actualizar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(panX, panY);
+    ctx.scale(zoomScale, zoomScale);
     if (escenarioActual === 1 || escenarioActual === 3) {
         pecera.aparecer();
         for (i = 0; i < burbujas.length; i++) {
@@ -515,6 +518,7 @@ function actualizar() {
     } else if (escenarioActual === 2 || escenarioActual === 4 || escenarioActual === 5) {
         actualizarEscenario2();
     }
+    ctx.restore();
 
     if (escenarioActual === 6 && threeRenderer) {
         threeControls.update();
@@ -551,6 +555,7 @@ function reiniciar() {
 
     grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
     grafica.puntos = [];
+    restablecerZoom();
 }
 
 
@@ -717,6 +722,7 @@ function reiniciar3() {
     }
     grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
     grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
+    restablecerZoom();
 }
 
 function pressIntro(e) {
@@ -1194,6 +1200,7 @@ function cambiarEscenario(n) {
 
     document.getElementById('btnAtras').disabled = n === getOrden()[0];
 
+    restablecerZoom();
     cfg.alEntrar();
 }
 
@@ -1592,6 +1599,7 @@ btnResetEsc2.addEventListener('click', function () {
         glider5.setPosition(JXG.COORDS_BY_USER, [5, 1.5]);
         board5.update();
     }
+    restablecerZoom();
 });
 
 mSlider.addEventListener('input', function () {
@@ -1737,29 +1745,126 @@ document.getElementById('codigoInput').addEventListener('keydown', function (e) 
     if (e.key === 'Enter') document.getElementById('confirmarCodigo').click();
 });
 
-canvas.addEventListener('mousemove', function (e) {
+let zoomScale = 1, panX = 0, panY = 0;
+const ZOOM_MIN = 0.3, ZOOM_MAX = 5;
+
+function screenToBuffer(clientX, clientY) {
     let rect = canvas.getBoundingClientRect();
-    cursorX = (e.clientX - rect.left) * (canvas.width / rect.width);
-    cursorY = (e.clientY - rect.top) * (canvas.height / rect.height);
-});
-canvas.addEventListener('mouseenter', function (e) {
-    let rect = canvas.getBoundingClientRect();
-    cursorX = (e.clientX - rect.left) * (canvas.width / rect.width);
-    cursorY = (e.clientY - rect.top) * (canvas.height / rect.height);
-});
-canvas.addEventListener('mouseleave', function () { cursorX = cursorY = null; });
-canvas.addEventListener('touchmove', function (e) {
+    let rawX = (clientX - rect.left) * (canvas.width / rect.width);
+    let rawY = (clientY - rect.top) * (canvas.height / rect.height);
+    return { x: (rawX - panX) / zoomScale, y: (rawY - panY) / zoomScale };
+}
+
+canvas.addEventListener('wheel', function (e) {
     e.preventDefault();
     let rect = canvas.getBoundingClientRect();
-    cursorX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width);
-    cursorY = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height);
+    let mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    let my = (e.clientY - rect.top) * (canvas.height / rect.height);
+    let delta = -e.deltaY * 0.001;
+    let newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomScale * (1 + delta)));
+    panX = mx - (mx - panX) * (newScale / zoomScale);
+    panY = my - (my - panY) * (newScale / zoomScale);
+    zoomScale = newScale;
+});
+
+function restablecerZoom() {
+    zoomScale = 1;
+    panX = 0;
+    panY = 0;
+    lastTouchDist = null;
+    lastTouchMidX = lastTouchMidY = null;
+    lastMouseX = lastMouseY = null;
+    isMouseDown = false;
+}
+
+let lastTouchDist = null, lastTouchMidX = null, lastTouchMidY = null;
+let isMouseDown = false, lastMouseX = null, lastMouseY = null;
+
+canvas.addEventListener('mousedown', function (e) {
+    if (e.button === 0) {
+        isMouseDown = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    }
+});
+canvas.addEventListener('mouseup', function () {
+    isMouseDown = false;
+    lastMouseX = lastMouseY = null;
+});
+canvas.addEventListener('mousemove', function (e) {
+    if (isMouseDown) {
+        let rect = canvas.getBoundingClientRect();
+        let scale = canvas.width / rect.width;
+        let dx = (e.clientX - lastMouseX) * scale / zoomScale;
+        let dy = (e.clientY - lastMouseY) * scale / zoomScale;
+        panX += dx;
+        panY += dy;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        cursorX = cursorY = null;
+        return;
+    }
+    let p = screenToBuffer(e.clientX, e.clientY);
+    cursorX = p.x; cursorY = p.y;
+});
+canvas.addEventListener('mouseenter', function (e) {
+    let p = screenToBuffer(e.clientX, e.clientY);
+    cursorX = p.x; cursorY = p.y;
+});
+canvas.addEventListener('mouseleave', function () {
+    isMouseDown = false;
+    lastMouseX = lastMouseY = null;
+    cursorX = cursorY = null;
+});
+canvas.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+        let dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        let rect = canvas.getBoundingClientRect();
+        let midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        let midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        let scale = canvas.width / rect.width;
+        if (lastTouchMidX !== null && lastTouchMidY !== null) {
+            panX += (midX - lastTouchMidX) * scale / zoomScale;
+            panY += (midY - lastTouchMidY) * scale / zoomScale;
+        }
+        lastTouchMidX = midX;
+        lastTouchMidY = midY;
+        if (lastTouchDist !== null) {
+            let newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomScale * (dist / lastTouchDist)));
+            let cx = (midX - rect.left) * scale;
+            let cy = (midY - rect.top) * scale;
+            panX = cx - (cx - panX) * (newScale / zoomScale);
+            panY = cy - (cy - panY) * (newScale / zoomScale);
+            zoomScale = newScale;
+        }
+        lastTouchDist = dist;
+        return;
+    }
+    let p = screenToBuffer(e.touches[0].clientX, e.touches[0].clientY);
+    cursorX = p.x; cursorY = p.y;
 }, { passive: false });
 canvas.addEventListener('touchstart', function (e) {
-    let rect = canvas.getBoundingClientRect();
-    cursorX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width);
-    cursorY = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height);
+    if (e.touches.length === 2) {
+        lastTouchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        lastTouchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        lastTouchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        return;
+    }
+    let p = screenToBuffer(e.touches[0].clientX, e.touches[0].clientY);
+    cursorX = p.x; cursorY = p.y;
 }, { passive: true });
-canvas.addEventListener('touchend', function () { cursorX = cursorY = null; });
+canvas.addEventListener('touchend', function () {
+    lastTouchDist = null;
+    lastTouchMidX = lastTouchMidY = null;
+    cursorX = cursorY = null;
+});
 
 // ============================================
 // ESCENARIO 6: Dimensiones 3D (Three.js)
