@@ -1019,7 +1019,7 @@ const ESCENARIOS = {
     1: {
         btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'litros',
@@ -1039,7 +1039,7 @@ const ESCENARIOS = {
     2: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
         canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
         graficaClass: 'd-none',
         codigo: 'grafica',
@@ -1058,7 +1058,7 @@ const ESCENARIOS = {
     3: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'estanque',
@@ -1078,7 +1078,7 @@ const ESCENARIOS = {
     4: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls', 'box4'],
-        ocultar: ['esc1-controls', 'box', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
+        ocultar: ['esc1-controls', 'box', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'pendiente',
@@ -1104,7 +1104,7 @@ const ESCENARIOS = {
     5: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary', 'esc6-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls', 'box5'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-overlay', 'esc6-tabla-section'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: '',
@@ -1136,7 +1136,7 @@ const ESCENARIOS = {
     },
     6: {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'primary' },
-        mostrar: ['esc6-overlay', 'three-container', 'esc6-tabla-section'],
+        mostrar: ['esc6-overlay', 'three-container', 'esc6-tabla-section', 'esc6-cap-dinamica-section'],
         ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'd-none',
@@ -1153,6 +1153,7 @@ const ESCENARIOS = {
             actualizarInfoEsc6();
             iniciarPeces3D();
             initTablaDimVar();
+            initTablaCapDina();
         }
     }
 };
@@ -1826,6 +1827,26 @@ document.getElementById('btnAddFila').addEventListener('click', function () {
     actualizarTablaDimVar();
 });
 
+document.getElementById('btnAddFilaCapDina').addEventListener('click', function () {
+    agregarFilaCapDina();
+    actualizarTablaCapDina();
+    actualizarHighlightsCapDina();
+});
+
+let capDinaTabs = document.querySelectorAll('#capDinaTabs .nav-link');
+capDinaTabs.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        capDinaTabs.forEach(function (b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        capDinaActual = this.getAttribute('data-tab');
+        var name = capDinaActual.charAt(0).toUpperCase() + capDinaActual.slice(1);
+        document.getElementById('thCDVal1').textContent = name + '\u2081';
+        document.getElementById('thCDVal2').textContent = name + '\u2082';
+        actualizarTablaCapDina();
+        actualizarHighlightsCapDina();
+    });
+});
+
 function actualizarTablaDimVar() {
     let L = Number(largoSlider.value);
     let W = Number(anchoSlider.value);
@@ -1915,6 +1936,192 @@ function actualizarHighlights() {
         g.add(edges);
         threeScene.add(g);
         highlightGroups.push(g);
+    }
+}
+
+var CAPDINA_COLORS = [[0x44aaff, 0xff6644], [0x66dd88, 0xcc44ff], [0xffcc44, 0x44ffcc], [0xff66aa, 0x66aaff]];
+var capDinaHighlightGroups = [];
+
+function actualizarHighlightsCapDina() {
+    capDinaHighlightGroups.forEach(function (g) { threeScene.remove(g); });
+    capDinaHighlightGroups = [];
+
+    let L = getDimL(), W = getDimW(), H = getDimH();
+    if (!L || !W || !H) return;
+
+    for (let i = 0; i < capDinaVal1.length; i++) {
+        if (!capDinaChecks[i].checked) continue;
+        let v1 = Number(capDinaVal1[i].value);
+        let v2 = Number(capDinaVal2[i].value);
+        if (isNaN(v1) || v1 <= 0 || isNaN(v2) || v2 <= 0) continue;
+
+        var cols = CAPDINA_COLORS[i % CAPDINA_COLORS.length];
+
+        function makeHighlight(val, color) {
+            var clamped = Math.min(val, (capDinaActual === 'largo') ? L : (capDinaActual === 'ancho') ? W : H);
+            var boxGeo, pos;
+            if (capDinaActual === 'largo') {
+                boxGeo = new THREE.BoxGeometry(clamped, H, W);
+                pos = new THREE.Vector3(-L / 2 + clamped / 2, H / 2, 0);
+            } else if (capDinaActual === 'ancho') {
+                boxGeo = new THREE.BoxGeometry(L, H, clamped);
+                pos = new THREE.Vector3(0, H / 2, -W / 2 + clamped / 2);
+            } else {
+                boxGeo = new THREE.BoxGeometry(L, clamped, W);
+                pos = new THREE.Vector3(0, clamped / 2, 0);
+            }
+            var mat = new THREE.MeshPhongMaterial({ color: color, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false });
+            var mesh = new THREE.Mesh(boxGeo, mat);
+            mesh.position.copy(pos);
+            var edges = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeo), new THREE.LineDashedMaterial({ color: color, dashSize: 0.3, gapSize: 0.2 }));
+            edges.computeLineDistances();
+            edges.position.copy(pos);
+            var g = new THREE.Group();
+            g.add(mesh);
+            g.add(edges);
+            threeScene.add(g);
+            capDinaHighlightGroups.push(g);
+        }
+
+        makeHighlight(v1, cols[0]);
+        makeHighlight(v2, cols[1]);
+    }
+}
+
+// Capacidad Dinámica table
+let capDinaActual = 'ancho';
+let capDinaVal1 = [];
+let capDinaVal2 = [];
+let capDinaCap1 = [];
+let capDinaCap2 = [];
+let capDinaDiff = [];
+let capDinaChecks = [];
+
+function initTablaCapDina() {
+    let tbody = document.getElementById('tbodyCapDina');
+    if (!tbody || capDinaVal1.length > 0) return;
+    for (let i = 0; i < 2; i++) {
+        agregarFilaCapDina();
+    }
+}
+
+function agregarFilaCapDina() {
+    let tbody = document.getElementById('tbodyCapDina');
+    let tr = document.createElement('tr');
+
+    let td0 = document.createElement('td');
+    td0.className = 'text-center';
+    let chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'form-check-input m-0';
+    td0.appendChild(chk);
+
+    let tdVal1 = document.createElement('td');
+    let inp1 = document.createElement('input');
+    inp1.type = 'number';
+    inp1.className = 'form-control form-control-sm';
+    inp1.placeholder = '';
+    tdVal1.appendChild(inp1);
+
+    let tdVal2 = document.createElement('td');
+    let inp2 = document.createElement('input');
+    inp2.type = 'number';
+    inp2.className = 'form-control form-control-sm';
+    inp2.placeholder = '';
+    tdVal2.appendChild(inp2);
+
+    let tdCap1 = document.createElement('td');
+    let span1 = document.createElement('span');
+    span1.textContent = '—';
+    tdCap1.appendChild(span1);
+
+    let tdCap2 = document.createElement('td');
+    let span2 = document.createElement('span');
+    span2.textContent = '—';
+    tdCap2.appendChild(span2);
+
+    let tdDiff = document.createElement('td');
+    let spanDiff = document.createElement('span');
+    spanDiff.textContent = '—';
+    tdDiff.appendChild(spanDiff);
+
+    let tdDel = document.createElement('td');
+    let btnDel = document.createElement('button');
+    btnDel.className = 'btn btn-sm btn-outline-danger py-0 px-1';
+    btnDel.textContent = '✕';
+    btnDel.addEventListener('click', function () {
+        let idx = capDinaVal1.indexOf(inp1);
+        if (idx > -1) {
+            capDinaVal1.splice(idx, 1);
+            capDinaVal2.splice(idx, 1);
+            capDinaCap1.splice(idx, 1);
+            capDinaCap2.splice(idx, 1);
+            capDinaDiff.splice(idx, 1);
+            capDinaChecks.splice(idx, 1);
+        }
+        tr.remove();
+        actualizarHighlightsCapDina();
+    });
+    tdDel.appendChild(btnDel);
+
+    tr.appendChild(td0);
+    tr.appendChild(tdVal1);
+    tr.appendChild(tdVal2);
+    tr.appendChild(tdCap1);
+    tr.appendChild(tdCap2);
+    tr.appendChild(tdDiff);
+    tr.appendChild(tdDel);
+    tbody.appendChild(tr);
+
+    capDinaVal1.push(inp1);
+    capDinaVal2.push(inp2);
+    capDinaCap1.push(span1);
+    capDinaCap2.push(span2);
+    capDinaDiff.push(spanDiff);
+    capDinaChecks.push(chk);
+
+    function onInput() {
+        actualizarTablaCapDina();
+        actualizarHighlightsCapDina();
+    }
+    inp1.addEventListener('input', onInput);
+    inp2.addEventListener('input', onInput);
+    chk.addEventListener('change', function () {
+        actualizarHighlightsCapDina();
+    });
+}
+
+function actualizarTablaCapDina() {
+    let L = Number(largoSlider.value);
+    let W = Number(anchoSlider.value);
+    let H = Number(altoSlider.value);
+    let fixed = { ancho: L * H, alto: L * W, largo: W * H };
+    let mult = fixed[capDinaActual] || 0;
+
+    for (let i = 0; i < capDinaVal1.length; i++) {
+        let v1 = Number(capDinaVal1[i].value);
+        let v2 = Number(capDinaVal2[i].value);
+
+        if (isNaN(v1) || v1 <= 0 || isNaN(v2) || v2 <= 0) {
+            capDinaCap1[i].textContent = '—';
+            capDinaCap2[i].textContent = '—';
+            capDinaDiff[i].textContent = '—';
+            continue;
+        }
+
+        let c1 = v1 * mult / 1000;
+        let c2 = v2 * mult / 1000;
+        capDinaCap1[i].textContent = c1.toFixed(3) + ' L';
+        capDinaCap2[i].textContent = c2.toFixed(3) + ' L';
+
+        let diff = c2 - c1;
+        if (diff > 0.001) {
+            capDinaDiff[i].textContent = 'Δ Cap₂ - Cap₁ = ' + diff.toFixed(3) + ' L';
+        } else if (diff < -0.001) {
+            capDinaDiff[i].textContent = '▼ Cap₁ - Cap₂ = ' + (-diff).toFixed(3) + ' L';
+        } else {
+            capDinaDiff[i].textContent = '—';
+        }
     }
 }
 
@@ -2060,6 +2267,7 @@ function construirTanque3D() {
     ));
 
     actualizarHighlights();
+    actualizarHighlightsCapDina();
 
     threeScene.add(tankGroup);
     threeControls.target.set(0, H / 2, 0);
