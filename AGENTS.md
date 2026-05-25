@@ -96,7 +96,19 @@ Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanq
 - The `"franjas"` code is for the checkbox in escenario 5 (one-time per session modal)
 - The starting scenario (Escenario 1) is unlocked by default
 
-## Fish Behavior
+## Canvas Zoom & Pan (Escenarios 1–5)
+
+- **Mouse wheel:** zoom towards cursor position (range 0.3x–5x)
+- **Click & drag:** pan the canvas (hold left button and move)
+- **Touch pinch (2 fingers):** zoom towards the midpoint of the touch points
+- **Touch drag (2 fingers):** pan the canvas horizontally and vertically
+- **Reset:** clicking "Reiniciar" or switching scenarios restores zoom to 1x
+- **Fish cursor:** cursor position is correctly mapped to the zoomed/ panned canvas so fish flee behavior works at any zoom level
+- Implemented via `ctx.save()/translate()/scale()/restore()` in the `actualizar()` render loop, with no changes to existing drawing code
+- Fish flee cursor/touch within 200px radius (`velMax=4`, `dir.mul(5)`)
+- Fish flee pump when `V > 6` (`velMax=3`)
+- Random direction change every ~2 seconds
+- Position clamped to water front face bounds via `chocar()`
 - Fish flee cursor/touch within 200px radius (`velMax=4`, `dir.mul(5)`)
 - Fish flee pump when `V > 6` (`velMax=3`)
 - Random direction change every ~2 seconds

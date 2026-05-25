@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.10.0 (no publicado)
+
+### Features
+- **Zoom en canvas 2D** — scroll del mouse para zoom (0.3x–5x) hacia la posición del cursor en escenarios 1–5
+- **Pan con clic sostenido** — arrastrar con el botón izquierdo del mouse para desplazar el canvas
+- **Pinch táctil (2 dedos)** — zoom con pellizco hacia el punto medio
+- **Pan táctil (2 dedos)** — desplazar el canvas horizontal y verticalmente con dos dedos
+- **Coordenadas de cursor corregidas** — `screenToBuffer()` convierte coordenadas de pantalla a buffer considerando zoom/pan, para que los peces huyan correctamente del cursor/touch a cualquier nivel de zoom
+- **Reinicio de zoom** — los botones "Reiniciar" y el cambio de escenario restauran zoom a 1x mediante `restablecerZoom()`
+
+### Internal
+- Nuevas variables: `zoomScale`, `panX`, `panY` con constantes `ZOOM_MIN`/`ZOOM_MAX`
+- Función `restablecerZoom()` centralizada para resetear zoom + pan + estado táctil/mouse
+- `ctx.save()` + `ctx.translate()` + `ctx.scale()` + `ctx.restore()` envuelven el renderizado 2D en `actualizar()`
+- Seguimiento de `isMouseDown`/`lastMouseX`/`lastMouseY` para paneo con mouse
+- Seguimiento de `lastTouchDist`/`lastTouchMidX`/`lastTouchMidY` para pinch y paneo táctil
+- Sin cambios en el código de dibujo existente (transformaciones aplicadas externamente)
+
+### Documentation
+- Actualización de README.md, AGENTS.md y CHANGELOG.md
+
 ## 1.9.0 (no publicado)
 
 ### Features

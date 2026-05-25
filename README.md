@@ -51,7 +51,17 @@ Simula un sistema de bombeo de agua con energía solar. El estanque se renderiza
 - Las burbujas desaparecen al alcanzar `y = h * 0.6`
 - El sol se ubica en la esquina superior izquierda; su brillo y tamaño escalan con `V / 12`
 - Cable blanco discontinuo conecta panel solar con bomba
-- El escenario inicia por defecto al cargar la página
+
+### Zoom y Paneo (Escenarios 1–5)
+
+Los escenarios de canvas (Pecera, Litros, Estanques) soportan zoom y paneo interactivo:
+
+- **Zoom con scroll** — rueda del mouse para acercar/alejar (0.3x–5x), centrado en la posición del cursor
+- **Paneo con clic sostenido** — arrastrar con el botón izquierdo para desplazar la vista
+- **Zoom táctil** — pellizco con dos dedos
+- **Paneo táctil** — arrastrar con dos dedos en cualquier dirección
+- **Reinicio** — clicking "Reiniciar" o cambiando de escenario restaura el zoom a 1x
+- Los peces huyen correctamente del cursor/pinch a cualquier nivel de zoom (coordenadas mapeadas via `screenToBuffer()`)
 
 ### Estanque + Gráfica (Escenario 4)
 Estanque Sustentable con una gráfica JSXGraph que muestra la curva I vs V (recta con pendiente 1/R). Incluye un **glider** arrastrable sobre la curva que sincroniza el slider de voltaje.
@@ -167,6 +177,7 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.7.0 | Dimensiones 3D — Three.js, tanque 3D interactivo, ondas en agua, peces 3D |
 | v1.8.0 | Capacidad Dinámica — tabla comparativa acordeón, highlights por pares, bloqueo de sliders, checkboxes, capacidad en litros, cola de pez ajustada |
 | v1.9.0 | Códigos insensibles a acentos/puntuación, navegación hacia atrás protegida, collapses en columna derecha, `dimensiones` movido a escenario 5 |
+| v1.10.0 | Zoom y paneo en canvas 2D (scroll + clic sostenido, pinch + arrastre táctil 2 dedos), coordenadas de cursor corregidas con zoom |
 
 ## Historial de cambios
 
