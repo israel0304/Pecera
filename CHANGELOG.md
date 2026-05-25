@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.9.0 (no publicado)
+
+### Features
+- **Códigos indistintos** — ahora ignoran acentos, signos de puntuación y mayúsculas/minúsculas (función `normalizarCodigo` con descomposición NFD)
+- **Navegación hacia atrás protegida** — cada escenario requiere su código la primera vez, incluso retrocediendo con "← Atrás" o clic directo en botones anteriores
+- **Botones del btn-group protegidos** — hacer clic en cualquier escenario pide el código si no está desbloqueado
+- `dimensiones` movido de escenario 6 a escenario 5 — ahora protege la transición 5→6 como estaba documentado
+- Collapses de escenario 6 movidos a columna derecha (`contenedorCollapses`, `col-md-5`) usando Bootstrap grid, apilados en mobile
+
+### Internal
+- Reemplazado `codigosIngresados` (basado en transiciones) por `escenariosDesbloqueados` (basado en destinos, `Set`)
+- `navegarA(destino)` ahora verifica si el destino está desbloqueado; si no, obtiene el código de `getAnterior(destino)`
+
+### Documentation
+- Actualización de README.md, AGENTS.md y CHANGELOG.md
+
 ## 1.8.0 (no publicado)
 
 ### Features

@@ -80,7 +80,7 @@ Pecera 3D interactiva usando Three.js con controles de largo, ancho y alto en ti
 - Volumen de agua + superficie con ondas animadas (seno/coseno)
 - Peces 3D con geometría personalizada (cuerpo + cola), coloración neón en dos tonos
 - Cámara libre con OrbitControls (rotar, zoom, pan — compatible táctil)
-- Requiere código secreto `"dimensiones"` para navegar al escenario
+- Los collapses (Dimensiones variables / Capacidad Dinámica) aparecen en una columna derecha en PC (`col-md-5`), apilados en mobile
 - **Dimensiones variables:** tabla con tabs (Ancho/Alto/Largo), checkbox por fila muestra volumen highlight en el tanque (colores distintos, bordes punteados)
 - **Capacidad Dinámica:** colapso tipo acordeón con tabla comparativa (Valor₁/Valor₂), capacidades en litros, ecuación de diferencia (▲/▼), checkbox para highlights por pares
 - Bloqueo de sliders: al abrir cualquiera de los dos collapses, solo el slider del tab activo está habilitado; los otros dos se fijan al máximo
@@ -90,9 +90,11 @@ Pecera 3D interactiva usando Three.js con controles de largo, ancho y alto en ti
 
 ## Navegación
 
-La navegación entre escenarios se hace con los botones "← Atrás" y "Continuar →".
-Avanzar requiere ingresar un código secreto; retroceder no.
-El escenario inicial al cargar la página es **Estanque Sustentable**.
+La navegación entre escenarios se hace con los botones "← Atrás" y "Continuar →", o haciendo clic directo en los botones del grupo superior.
+Cada escenario requiere su código secreto la **primera vez** que se visita, sin importar la dirección (adelante, atrás o clic directo).
+Una vez ingresado, el escenario queda desbloqueado por el resto de la sesión.
+Los códigos no distinguen mayúsculas, acentos ni signos de puntuación (ej: `"Dimensiónes!"` funciona como `"dimensiones"`).
+El escenario inicial (Pecera) está desbloqueado por defecto.
 
 | Desde | Hacia | Código |
 |-------|-------|--------|
@@ -102,7 +104,7 @@ El escenario inicial al cargar la página es **Estanque Sustentable**.
 | Estanque + Gráfica | Estanque + Pendiente Variable | `pendiente` |
 | Estanque + Pendiente Variable | Dimensiones 3D | `dimensiones` |
 
-> Retroceder nunca requiere código. El orden de navegación es: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → Dimensiones 3D.
+> El orden de navegación es: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → Dimensiones 3D.
 >
 > En el Escenario 5, el checkbox "Mostrar franjas" requiere el código `"franjas"` (solo una vez por sesión) para activar las bandas de voltaje en la gráfica.
 
@@ -164,6 +166,7 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.6.0 | Ajustes de precisión — sliders step 0.01, rango óptimo 4–6V, glider con 2 decimales, menos burbujas en baja corriente |
 | v1.7.0 | Dimensiones 3D — Three.js, tanque 3D interactivo, ondas en agua, peces 3D |
 | v1.8.0 | Capacidad Dinámica — tabla comparativa acordeón, highlights por pares, bloqueo de sliders, checkboxes, capacidad en litros, cola de pez ajustada |
+| v1.9.0 | Códigos insensibles a acentos/puntuación, navegación hacia atrás protegida, collapses en columna derecha, `dimensiones` movido a escenario 5 |
 
 ## Historial de cambios
 

@@ -71,7 +71,7 @@ Open `index.html` in any browser. No build or server required.
 - 3D fish with custom geometry (body + tail), two-tone neon vertex colors (cyan stripe + red belly), swimming within the tank
 - Free camera via OrbitControls (rotate, zoom, pan — touch compatible)
 - Local libraries: `js/three.min.js`, `js/OrbitControls.js`
-- Secret code `"dimensiones"` to navigate to this scenario
+- Collapses (Dimensiones variables / Capacidad Dinámica) appear in a right-side column on PC (`col-md-5`), stacked on mobile
 - **Dimensiones variables collapse:** table with tabs (Ancho/Alto/Largo), rows with input + capacity (L), checkbox per row shows semi-transparent highlight volume in tank, different color per row (yellow/cyan/green/pink/purple/orange), dashed edges
 - **Capacidad Dinámica collapse:** accordion-locked with Dimensiones variables, two-column comparison table (Valor₁/Valor₂), capacity in liters, difference equation (▲/▼), checkbox per row shows paired highlight volumes in tank
 - Slider locking: when either collapse is open, only the slider matching the active tab is enabled; the other two are set to maximum and disabled
@@ -90,8 +90,11 @@ Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanq
 | Estanque + Pendiente Variable | Dimensiones 3D | `dimensiones` |
 | Escenario 5 (franjas) | Unlock colored bands | `franjas` |
 
-- Going back never requires a code
+- Every scenario requires its code the **first time** it is visited, regardless of direction (forward, backward, or direct button click)
+- Once unlocked, a scenario is freely accessible for the rest of the session
+- Codes are case-insensitive and ignore accents and punctuation (e.g., `"Dimensiónes!"` matches `"dimensiones"`)
 - The `"franjas"` code is for the checkbox in escenario 5 (one-time per session modal)
+- The starting scenario (Escenario 1) is unlocked by default
 
 ## Fish Behavior
 - Fish flee cursor/touch within 200px radius (`velMax=4`, `dir.mul(5)`)
