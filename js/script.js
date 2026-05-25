@@ -1842,6 +1842,7 @@ capDinaTabs.forEach(function (btn) {
         var name = capDinaActual.charAt(0).toUpperCase() + capDinaActual.slice(1);
         document.getElementById('thCDVal1').textContent = name + '\u2081';
         document.getElementById('thCDVal2').textContent = name + '\u2082';
+        bloquearSlidersPorTab(capDinaActual);
         actualizarTablaCapDina();
         actualizarHighlightsCapDina();
     });
@@ -1859,6 +1860,18 @@ function actualizarTablaDimVar() {
     }
 }
 
+function bloquearSlidersPorTab(tab) {
+    tab = tab || dimTabActual;
+    if (tab !== 'largo') { largoSlider.value = Number(largoSlider.max); largoVal.textContent = largoSlider.max; largoSlider.disabled = true; }
+    if (tab !== 'ancho') { anchoSlider.value = Number(anchoSlider.max); anchoVal.textContent = anchoSlider.max; anchoSlider.disabled = true; }
+    if (tab !== 'alto') { altoSlider.value = Number(altoSlider.max); altoVal.textContent = altoSlider.max; altoSlider.disabled = true; }
+    if (tab === 'largo') { largoSlider.disabled = false; }
+    if (tab === 'ancho') { anchoSlider.disabled = false; }
+    if (tab === 'alto') { altoSlider.disabled = false; }
+    actualizarInfoEsc6();
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     let tabs = document.querySelectorAll('#dimTabs .nav-link');
     tabs.forEach(function (btn) {
@@ -1873,20 +1886,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    function bloquearSlidersPorTab() {
-        if (dimTabActual !== 'largo') { largoSlider.value = Number(largoSlider.max); largoVal.textContent = largoSlider.max; largoSlider.disabled = true; }
-        if (dimTabActual !== 'ancho') { anchoSlider.value = Number(anchoSlider.max); anchoVal.textContent = anchoSlider.max; anchoSlider.disabled = true; }
-        if (dimTabActual !== 'alto') { altoSlider.value = Number(altoSlider.max); altoVal.textContent = altoSlider.max; altoSlider.disabled = true; }
-        if (dimTabActual === 'largo') { largoSlider.disabled = false; }
-        if (dimTabActual === 'ancho') { anchoSlider.disabled = false; }
-        if (dimTabActual === 'alto') { altoSlider.disabled = false; }
-        actualizarInfoEsc6();
-        if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
-    }
-
     let collapseEl = document.getElementById('esc6-tabla-collapse');
     collapseEl.addEventListener('shown.bs.collapse', bloquearSlidersPorTab);
     collapseEl.addEventListener('hidden.bs.collapse', function () {
+        largoSlider.disabled = false;
+        anchoSlider.disabled = false;
+        altoSlider.disabled = false;
+    });
+
+    let collapseCapDinaEl = document.getElementById('esc6-cap-dinamica-collapse');
+    collapseCapDinaEl.addEventListener('shown.bs.collapse', function () {
+        bloquearSlidersPorTab(capDinaActual);
+    });
+    collapseCapDinaEl.addEventListener('hidden.bs.collapse', function () {
         largoSlider.disabled = false;
         anchoSlider.disabled = false;
         altoSlider.disabled = false;
@@ -2081,6 +2093,25 @@ function agregarFilaCapDina() {
     capDinaChecks.push(chk);
 
     function onInput() {
+        let maxVal = 0;
+        for (let j = 0; j < capDinaVal1.length; j++) {
+            let a = Number(capDinaVal1[j].value);
+            let b = Number(capDinaVal2[j].value);
+            if (!isNaN(a) && a > maxVal) maxVal = a;
+            if (!isNaN(b) && b > maxVal) maxVal = b;
+        }
+        if (maxVal > 0) {
+            let slider, spanEl;
+            if (capDinaActual === 'ancho') { slider = anchoSlider; spanEl = anchoVal; }
+            else if (capDinaActual === 'alto') { slider = altoSlider; spanEl = altoVal; }
+            else { slider = largoSlider; spanEl = largoVal; }
+            let min = Number(slider.min), max = Number(slider.max);
+            maxVal = Math.max(min, Math.min(max, maxVal));
+            slider.value = maxVal;
+            spanEl.textContent = maxVal;
+            actualizarInfoEsc6();
+            if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+        }
         actualizarTablaCapDina();
         actualizarHighlightsCapDina();
     }
@@ -2428,12 +2459,18 @@ altoSlider.addEventListener('input', function () {
 btnResetEsc6.addEventListener('click', function () {
     largoSlider.value = 19; anchoSlider.value = 18; altoSlider.value = 21;
     largoVal.textContent = 19; anchoVal.textContent = 18; altoVal.textContent = 21;
-    // Limpiar tabla
+    // Limpiar tabla Dimensiones variables
     highlightGroups.forEach(function (g) { threeScene.remove(g); });
     highlightGroups = [];
     dimTabInputs = []; dimTabSpans = []; dimTabChecks = [];
     document.getElementById('tbodyDim').innerHTML = '';
     for (let i = 0; i < 3; i++) { agregarFilaDimVar(); }
+    // Limpiar tabla Capacidad Dinámica
+    capDinaHighlightGroups.forEach(function (g) { threeScene.remove(g); });
+    capDinaHighlightGroups = [];
+    capDinaVal1 = []; capDinaVal2 = []; capDinaCap1 = []; capDinaCap2 = []; capDinaDiff = []; capDinaChecks = [];
+    document.getElementById('tbodyCapDina').innerHTML = '';
+    for (let i = 0; i < 2; i++) { agregarFilaCapDina(); }
     actualizarInfoEsc6();
     actualizarTablaDimVar();
     if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
