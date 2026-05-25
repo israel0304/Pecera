@@ -172,6 +172,10 @@ body {
     min-width: 100px;
     white-space: nowrap;
 }
+#tablaDim td:nth-child(2),
+#tablaCapDina td:nth-child(2) {
+    width: 90px;
+}
 
 #box2, #box4, #box5 {
     width: 100%;

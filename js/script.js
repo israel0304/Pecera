@@ -1753,7 +1753,7 @@ let highlightGroups = [];
 function initTablaDimVar() {
     let tbody = document.getElementById('tbodyDim');
     if (!tbody || dimTabInputs.length > 0) return;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
         agregarFilaDimVar();
     }
 }
@@ -1887,7 +1887,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     let collapseEl = document.getElementById('esc6-tabla-collapse');
-    collapseEl.addEventListener('shown.bs.collapse', bloquearSlidersPorTab);
+    collapseEl.addEventListener('shown.bs.collapse', function () {
+        bloquearSlidersPorTab();
+    });
     collapseEl.addEventListener('hidden.bs.collapse', function () {
         largoSlider.disabled = false;
         anchoSlider.disabled = false;
@@ -2464,7 +2466,7 @@ btnResetEsc6.addEventListener('click', function () {
     highlightGroups = [];
     dimTabInputs = []; dimTabSpans = []; dimTabChecks = [];
     document.getElementById('tbodyDim').innerHTML = '';
-    for (let i = 0; i < 3; i++) { agregarFilaDimVar(); }
+    for (let i = 0; i < 2; i++) { agregarFilaDimVar(); }
     // Limpiar tabla Capacidad Dinámica
     capDinaHighlightGroups.forEach(function (g) { threeScene.remove(g); });
     capDinaHighlightGroups = [];
