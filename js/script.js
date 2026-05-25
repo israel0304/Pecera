@@ -1551,11 +1551,11 @@ function actualizarEscenario2() {
 }
 
 // Event listeners for escenario 2
-esc1Btn.addEventListener('click', function () { cambiarEscenario(1); });
-esc3Btn.addEventListener('click', function () { cambiarEscenario(3); });
-esc2Btn.addEventListener('click', function () { cambiarEscenario(2); });
-esc4Btn.addEventListener('click', function () { cambiarEscenario(4); });
-esc5Btn.addEventListener('click', function () { cambiarEscenario(5); });
+esc1Btn.addEventListener('click', function () { navegarA(1); });
+esc3Btn.addEventListener('click', function () { navegarA(3); });
+esc2Btn.addEventListener('click', function () { navegarA(2); });
+esc4Btn.addEventListener('click', function () { navegarA(4); });
+esc5Btn.addEventListener('click', function () { navegarA(5); });
 checkLA.addEventListener('change', checklitros_fn);
 botonLA.addEventListener('click', crearPuntoLA);
 
@@ -1609,7 +1609,7 @@ mSlider.addEventListener('input', function () {
 
 document.getElementById('confirmarFranjasCode').addEventListener('click', function () {
     let code = document.getElementById('franjasModalInput').value.trim().toLowerCase();
-    if (code === 'franjas') {
+    if (normalizarCodigo(code) === normalizarCodigo('franjas')) {
         franjasUnlocked = true;
         document.getElementById('checkFranjas').disabled = false;
         document.getElementById('checkFranjas').checked = true;
@@ -1651,18 +1651,31 @@ function getAnterior(n) {
     return o[(o.indexOf(n) - 1 + o.length) % o.length];
 }
 
-let codigosIngresados = {};
+function normalizarCodigo(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+let escenariosDesbloqueados = new Set();
 
 function navegar(dir) {
     let cfg = ESCENARIOS[escenarioActual];
     if (!cfg) return;
     if (dir === -1 && escenarioActual === getOrden()[0]) return;
     let destino = dir === 1 ? getSiguiente(escenarioActual) : getAnterior(escenarioActual);
-    let dirKey = escenarioActual + 'a' + destino;
-    if (dir === -1 || !cfg.codigo || codigosIngresados[dirKey]) {
+
+    if (escenariosDesbloqueados.has(destino)) {
         cambiarEscenario(destino);
         return;
     }
+
+    let ant = getAnterior(destino);
+    let cfgAnt = ESCENARIOS[ant];
+    if (!cfgAnt || !cfgAnt.codigo) {
+        cambiarEscenario(destino);
+        return;
+    }
+
+    pendingDestino = destino;
     document.getElementById('codigoInput').value = '';
     document.getElementById('codigoError').style.display = 'none';
     new bootstrap.Modal(document.getElementById('codigoModal')).show();
@@ -1676,19 +1689,41 @@ async function obtenerCodigos() {
     return map;
 }
 
+let pendingDestino = null;
+
+function navegarA(destino) {
+    if (escenariosDesbloqueados.has(destino)) {
+        cambiarEscenario(destino);
+        return;
+    }
+
+    let ant = getAnterior(destino);
+    let cfgAnt = ESCENARIOS[ant];
+    if (!cfgAnt || !cfgAnt.codigo) {
+        cambiarEscenario(destino);
+        return;
+    }
+
+    pendingDestino = destino;
+    document.getElementById('codigoInput').value = '';
+    document.getElementById('codigoError').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('codigoModal')).show();
+}
+
 document.getElementById('btnContinuar').addEventListener('click', function () { navegar(1); });
 document.getElementById('btnAtras').addEventListener('click', function () { navegar(-1); });
 
 document.getElementById('confirmarCodigo').addEventListener('click', async function () {
     let codigo = document.getElementById('codigoInput').value.trim();
-    let cfg = ESCENARIOS[escenarioActual];
-    let destino = getSiguiente(escenarioActual);
-    let dir = escenarioActual + 'a' + destino;
     let codigos = await obtenerCodigos();
-    if (codigo.toLowerCase() === codigos[dir]) {
-        codigosIngresados[dir] = true;
+    let destino = pendingDestino !== null ? pendingDestino : getSiguiente(escenarioActual);
+    let ant = getAnterior(destino);
+    let dir = ant + 'a' + destino;
+    if (normalizarCodigo(codigo) === normalizarCodigo(codigos[dir])) {
+        escenariosDesbloqueados.add(destino);
         bootstrap.Modal.getInstance(document.getElementById('codigoModal')).hide();
         cambiarEscenario(destino);
+        pendingDestino = null;
     } else {
         document.getElementById('codigoError').style.display = 'block';
     }
@@ -2443,7 +2478,7 @@ function redimensionarThree() {
 }
 
 // Event listeners
-esc6Btn.addEventListener('click', function () { cambiarEscenario(6); });
+esc6Btn.addEventListener('click', function () { navegarA(6); });
 largoSlider.addEventListener('input', function () {
     largoVal.textContent = this.value;
     actualizarInfoEsc6();
@@ -2483,4 +2518,5 @@ btnResetEsc6.addEventListener('click', function () {
 });
 window.addEventListener('resize', redimensionarThree);
 
+escenariosDesbloqueados.add(1);
 cambiarEscenario(1);
