@@ -42,6 +42,8 @@ Open `index.html` in any browser. No build or server required.
 - Vibration: ±3px sinusoidal offset on pump image position
 - Bubbles (`ParticulaAgua`): spawned from pump location, size/speed scale with voltage, fewer in low current
 - Canvas buffer: fixed 1600×800, CSS `width: 100%` for retina sharpness
+- Fish flee pump when `V > 6` (`velMax=3`)
+- Fish flee cursor/touch within 200px radius (`velMax=4`)
 
 ### Estanque + Gráfica (Escenario 4)
 - Same as Estanque Sustentable with added JSXGraph plotting I vs V curve
@@ -62,6 +64,40 @@ Open `index.html` in any browser. No build or server required.
   - Verde fuerte horizontal: rango óptimo (y=1–2)
   - Checkbox in HTML controls, code prompted once via modal
   - Implemented as `curve` with `closedCurve: true` (no vertices, no touch interference)
+- **Fish flee**: `V > 6` **or** `I > 2` (`velMax=3`) — since current depends on slope m, fish flee when I exceeds 2 regardless of voltage
+
+### Incremento de Capacidad (Escenario 7)
+- Fixed dimensions: L=19, A=18, H=21 (cm/units)
+- Three tabs: Ancho, Alto, Largo — each uses the other two fixed dimensions as the capacity factor
+- **Capacity factor** = product of the two fixed dimensions / 1000:
+  - Ancho: L×H/1000 = 19×21/1000 = **0.399**
+  - Alto: L×A/1000 = 19×18/1000 = **0.342**
+  - Largo: A×H/1000 = 18×21/1000 = **0.378**
+- **Cap₁ = Val₁ × factor**, **Cap₂ = Val₂ × factor** (displayed with 3 decimals)
+- **Vertical table** (label | value) with 6 rows: Val₁, Val₂, Cap₁, Cap₂, Δ Ancho, Δ Cap
+- All inputs start blank; inputs are borderless and fill 100% of cell width
+- **Validación**: user types answers in Δ inputs, clicks "Validar" button per input
+  - Each button validates only its corresponding Δ (ΔVal or ΔCap)
+  - Tolerance: ±0.01
+  - On correct: shows Bootstrap modal + JSXGraph label with the value (`Δ {dim} = X.XX` or `Δ Capacidad = X.XX`)
+- **Reiniciar** button clears all inputs, resets graph
+
+#### JSXGraph elements
+- **Reference line**: through (V₁, Cap₁) and (V₂, Cap₂) — dynamic slope, gray, strokeWidth 2
+- **Horizontal segment**: (V₁, Cap₁) → (V₂, Cap₁), blue, strokeWidth 3
+- **Vertical segment**: (V₂, Cap₁) → (V₂, Cap₂), red, strokeWidth 2.5
+- **Three red dots**: at (V₁, Cap₁), (V₂, Cap₁), (V₂, Cap₂) — size 3, no labels
+- **No grid** on the graph
+- Axes with ticks every 2 units
+- Zoom via mouse wheel or navigation (0.5x–5x)
+
+#### Fish inclusion (optional)
+- Checkbox "Incluir peces" enables Cantidad and Tamaño (cm) inputs
+- **LA = cantidad × tamaño × 3**
+- **Orange point** on graph at `(x, LA)` where `x` is on the reference line
+  - `x = V₁ + (LA - Cap₁) / pendiente`
+- Point label shows `(x, LA)` with 3 decimals
+- **Blue dashed infinite line** at `y = LA` (horizontal reference, extends infinitely)
 
 ### Dimensiones 3D (Escenario 6)
 - 3D fish tank using Three.js with real-time dimension controls
@@ -79,15 +115,16 @@ Open `index.html` in any browser. No build or server required.
 
 ## Navigation & Secret Codes
 
-Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → Dimensiones 3D
+Navigation order: Pecera → Pecera + Litros → Dimensiones 3D → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → Incremento de Capacidad
 
 | From | To | Code |
 |------|----|------|
 | Pecera | Pecera + Litros | `litros` |
-| Pecera + Litros | Estanque Sustentable | `estanque` |
+| Pecera + Litros | Dimensiones 3D | `dimensiones` |
+| Dimensiones 3D | Estanque Sustentable | `estanque` |
 | Estanque Sustentable | Estanque + Gráfica | `grafica` |
 | Estanque + Gráfica | Estanque + Pendiente Variable | `pendiente` |
-| Estanque + Pendiente Variable | Dimensiones 3D | `dimensiones` |
+| Estanque + Pendiente Variable | Incremento de Capacidad | `incremento` |
 | Escenario 5 (franjas) | Unlock colored bands | `franjas` |
 
 - Every scenario requires its code the **first time** it is visited, regardless of direction (forward, backward, or direct button click)
@@ -95,6 +132,10 @@ Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanq
 - Codes are case-insensitive and ignore accents and punctuation (e.g., `"Dimensiónes!"` matches `"dimensiones"`)
 - The `"franjas"` code is for the checkbox in escenario 5 (one-time per session modal)
 - The starting scenario (Escenario 1) is unlocked by default
+- Navigation order is defined by `getOrden()` — see script.js for current order
+
+## Mobile Behavior
+- **Tabs**: buttons show abbreviated text on `<576px` (Pecera, P+L, 3D, Estanque, E+G, E+P, Inc.Cap) via `d-none/d-sm-none` spans
 
 ## Canvas Zoom & Pan (Escenarios 1–5)
 
@@ -103,13 +144,5 @@ Navigation order: Pecera → Pecera + Litros → Estanque Sustentable → Estanq
 - **Touch pinch (2 fingers):** zoom towards the midpoint of the touch points
 - **Touch drag (2 fingers):** pan the canvas horizontally and vertically
 - **Reset:** clicking "Reiniciar" or switching scenarios restores zoom to 1x
-- **Fish cursor:** cursor position is correctly mapped to the zoomed/ panned canvas so fish flee behavior works at any zoom level
+- **Fish cursor:** cursor position is correctly mapped to the zoomed/panned canvas so fish flee behavior works at any zoom level
 - Implemented via `ctx.save()/translate()/scale()/restore()` in the `actualizar()` render loop, with no changes to existing drawing code
-- Fish flee cursor/touch within 200px radius (`velMax=4`, `dir.mul(5)`)
-- Fish flee pump when `V > 6` (`velMax=3`)
-- Random direction change every ~2 seconds
-- Position clamped to water front face bounds via `chocar()`
-- Fish flee cursor/touch within 200px radius (`velMax=4`, `dir.mul(5)`)
-- Fish flee pump when `V > 6` (`velMax=3`)
-- Random direction change every ~2 seconds
-- Position clamped to water front face bounds via `chocar()`

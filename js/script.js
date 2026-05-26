@@ -2921,4 +2921,4 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 });
 
 escenariosDesbloqueados.add(1);
-cambiarEscenario(7);
+cambiarEscenario(1);
