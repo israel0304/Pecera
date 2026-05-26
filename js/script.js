@@ -761,6 +761,10 @@ let laSection = document.getElementById('la-section');
 let R = 5;
 
 function getCorriente(V) {
+    if (escenarioActual === 5) {
+        let m = Number(mSlider.value);
+        return m * V;
+    }
     return V / R;
 }
 
@@ -1067,7 +1071,7 @@ const ESCENARIOS = {
         ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
-        codigo: 'estanque',
+        codigo: 'capacidad',
         alEntrar: function () {
             laSection.style.display = '';
             if (checkLA.checked) checkLA.checked = false;
@@ -1146,7 +1150,7 @@ const ESCENARIOS = {
         ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5'],
         canvasClass: 'col-12 col-sm-6 col-md-7',
         graficaClass: 'd-none',
-        codigo: '',
+        codigo: 'estanque',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -1238,7 +1242,11 @@ function actualizarEscenario2() {
     let I = getCorriente(V);
 
     // Pump state tracking
-    pumpBroken = (V > 10);
+    if (escenarioActual === 5) {
+        pumpBroken = (V > 10 || I >= 4);
+    } else {
+        pumpBroken = (V > 10);
+    }
 
     // Sky - darker when low V, brighter when high V
     let brightness = 0.3 + 0.7 * (V / 12);
@@ -1468,15 +1476,25 @@ function actualizarEscenario2() {
     if (pumpBroken) {
         statusText = 'Corriente alta - Bomba descompuesta';
         statusColor = '#E74C3C';
-    } else if (V > 6) {
-        statusText = 'Corriente alta - Sobrecalentamiento';
-        statusColor = '#E67E22';
-    } else if (V >= 4) {
-        statusText = 'Rango optimo - Funcionando bien';
-        statusColor = '#2ECC71';
     } else {
-        statusText = 'Corriente alta - Baja oxigenacion';
-        statusColor = '#E74C3C';
+        let isOverheat, isOptimal;
+        if (escenarioActual === 5) {
+            isOverheat = (V > 6 || I > 2);
+            isOptimal = (V >= 4 && V <= 6 && I >= 1 && I <= 2);
+        } else {
+            isOverheat = (V > 6);
+            isOptimal = (V >= 4 && V <= 6);
+        }
+        if (isOverheat) {
+            statusText = 'Corriente alta - Sobrecalentamiento';
+            statusColor = '#E67E22';
+        } else if (isOptimal) {
+            statusText = 'Rango optimo - Funcionando bien';
+            statusColor = '#2ECC71';
+        } else {
+            statusText = 'Corriente baja - Baja oxigenacion';
+            statusColor = '#E74C3C';
+        }
     }
     ctx.fillStyle = statusColor;
     ctx.font = `bold ${Math.round(fs3)}px Arial`;
@@ -1500,7 +1518,8 @@ function actualizarEscenario2() {
     ctx.setLineDash([]);
 
     // Red glow when overheated
-    if (V > 6 && !pumpBroken) {
+    let overheat = (escenarioActual === 5) ? (V > 6 || I > 2) : (V > 6);
+    if (overheat && !pumpBroken) {
         ctx.save();
         let pulse = 0.45 + Math.sin(Date.now() * 0.004) * 0.2;
         let grad = ctx.createRadialGradient(pumpX, pumpY + pumpH * 0.5, 0, pumpX, pumpY + pumpH * 0.5, pumpW * 0.35);
@@ -1516,7 +1535,7 @@ function actualizarEscenario2() {
 
     // Pump vibration (only when overheated and not broken)
     let vibX = 0, vibY = 0;
-    if (V > 6 && !pumpBroken) {
+    if (overheat && !pumpBroken) {
         let t = Date.now() * 0.02;
         vibX = Math.sin(t * 1.3) * 3;
         vibY = Math.cos(t * 1.7) * 3;
@@ -1540,7 +1559,14 @@ function actualizarEscenario2() {
     // Bubbles (only if V > 0 and pump not broken)
     if (V > 0 && !pumpBroken) {
         let bubbleY = pumpY + pumpH * 0.3;
-        if (V < 4) {
+        let oneBubble;
+        if (escenarioActual === 5) {
+            let isOptimal = (V >= 4 && V <= 6 && I >= 1 && I <= 2);
+            oneBubble = !overheat && !isOptimal;
+        } else {
+            oneBubble = (V < 4);
+        }
+        if (oneBubble) {
             particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
         } else {
             particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
@@ -1606,6 +1632,7 @@ mSlider.addEventListener('input', function () {
     let m = Number(mSlider.value);
     mVal.textContent = m.toFixed(1);
     if (escenarioActual === 5) {
+        actualizarDisplayEsc2();
         recrearCurva5(m);
         let V = Number(voltSlider.value);
         if (glider5) {
@@ -1646,7 +1673,7 @@ document.getElementById('checkFranjas').addEventListener('change', function () {
 });
 
 function getOrden() {
-    return [1, 3, 2, 4, 5, 6];
+    return [1, 3, 6, 2, 4, 5];
 }
 
 function getSiguiente(n) {
