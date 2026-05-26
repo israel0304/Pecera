@@ -31,12 +31,18 @@ body {
 
 #contenedorGrafica {
     display: flex;
+    min-height: 250px;
 }
 
 #box {
     width: 100%;
     flex: 1;
     min-height: 300px;
+}
+
+#box4, #box5, #box7 {
+    width: 100%;
+    flex: 1;
 }
 
 #three-container {
@@ -212,25 +218,124 @@ input[type="range"] {
         row-gap: 4px;
     }
 
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+    }
+
     .btn-group .btn-sm {
-        font-size: 0.7rem;
-        padding: 6px 8px;
+        font-size: 0.65rem;
+        padding: 6px 6px;
+        flex: 1 0 auto;
+        min-width: 0;
+        white-space: nowrap;
     }
 
     #box {
-        max-height: 250px;
-        min-height: 150px;
-        overflow-x: hidden;
-    }
-
-    #box4, #box5 {
         max-height: 200px;
         min-height: 120px;
         overflow-x: hidden;
     }
 
+    #box4, #box5, #box7 {
+        max-height: 180px;
+        min-height: 100px;
+        overflow-x: hidden;
+    }
+
     #contenedorGrafica {
         overflow-x: hidden;
+    }
+
+    /* Stack canvas and graph vertically with better spacing */
+    #contenedorCanvas {
+        margin-bottom: 8px;
+    }
+
+    /* More compact controls on mobile */
+    #esc1-controls p,
+    #esc2-controls p {
+        font-size: 0.8125rem;
+        margin-bottom: 2px;
+    }
+
+    #esc1-controls input[type="range"],
+    #esc2-controls input[type="range"] {
+        min-height: 36px;
+    }
+
+    /* Esc7 table scrollable gracefully */
+    #esc7-controls .table {
+        font-size: 0.8125rem;
+    }
+    #esc7-controls .table input[type="number"] {
+        font-size: 0.8125rem;
+        height: 32px;
+    }
+
+    /* Navigation bar compact */
+    #navWrap {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+    #navWrap .btn {
+        font-size: 0.875rem;
+        padding: 8px 16px;
+        min-height: 40px;
+        max-width: none;
+        flex: 1;
+    }
+
+    /* Esc6 overlay sliders narrower on mobile */
+    .esc6-sliders .row {
+        flex-wrap: nowrap;
+        gap: 2px;
+    }
+    .esc6-sliders .row .col {
+        padding: 0 1px;
+        min-width: 0;
+    }
+    .esc6-sliders p {
+        font-size: 9px;
+    }
+    .esc6-sliders input[type="range"] {
+        min-height: 16px;
+        height: 16px;
+    }
+}
+
+/* ── Small phones (<=400px) ── */
+@media (max-width: 400px) {
+    .btn-group .btn-sm {
+        font-size: 0.55rem;
+        padding: 4px 4px;
+    }
+
+    #box {
+        min-height: 100px;
+    }
+
+    #navWrap .btn {
+        font-size: 0.75rem;
+        padding: 6px 10px;
+        min-height: 36px;
+    }
+}
+
+/* ── Tablet improvements ── */
+@media (min-width: 577px) and (max-width: 768px) {
+    .btn-group .btn-sm {
+        font-size: 0.7rem;
+        padding: 6px 10px;
+    }
+
+    #box {
+        min-height: 200px;
+    }
+
+    #box4, #box5, #box7 {
+        min-height: 160px;
     }
 }
 
@@ -260,18 +365,28 @@ input[type="range"] {
 }
 
 #navWrap {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     width: 100%;
-    padding: 10px 0;
+    padding: 10px 16px;
     position: sticky;
     bottom: 0;
     display: flex;
     justify-content: center;
     gap: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    z-index: 50;
 }
 
 #navWrap .btn {
     max-width: 250px;
     flex: 1;
+    border-radius: 8px;
+}
+
+#navWrap .btn-lg {
+    padding: 10px 24px;
+    font-size: 1rem;
 }
  

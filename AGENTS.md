@@ -7,11 +7,14 @@ Open `index.html` in any browser. No build or server required.
 ## Project Structure
 
 - `index.html` - Entry point with scenario tabs, controls, canvas, and JSXGraph container
+- `landing.html` - Landing page with Three.js 3D neon tetra hero, features, screenshots
 - `js/script.js` - Main logic: `Pez`, `Burbuja`, `Pecera`, `Grafica`, `ParticulaAgua`, and Three.js 3D scene classes
-- `js/three.min.js` - Three.js library for 3D fish tank (Escenario 6)
+- `js/landing.js` - Three.js interactive neon tetra for landing page (aurora particles, glow, mouse follow)
+- `js/three.min.js` - Three.js library for 3D fish tank (Escenario 6) and landing page
 - `js/OrbitControls.js` - Camera controls for 3D scene
-- `css/style.css` - Styling
-- `img/` - Fish, tank, solar panel, and pump images
+- `css/style.css` - Styling for simulator
+- `css/landing.css` - Neon theme, glassmorphism, bento grid for landing page
+- `img/` - Fish, tank, solar panel, pump images, and phone screenshots
 
 ## Key Behavior
 
@@ -89,7 +92,7 @@ Open `index.html` in any browser. No build or server required.
 - **Three red dots**: at (V₁, Cap₁), (V₂, Cap₁), (V₂, Cap₂) — size 3, no labels
 - **No grid** on the graph
 - Axes with ticks every 2 units
-- Zoom via mouse wheel or navigation (0.5x–5x)
+- Zoom via mouse wheel or navigation (no min/max limits)
 
 #### Fish inclusion (optional)
 - Checkbox "Incluir peces" enables Cantidad and Tamaño (cm) inputs
@@ -115,16 +118,17 @@ Open `index.html` in any browser. No build or server required.
 
 ## Navigation & Secret Codes
 
-Navigation order: Pecera → Pecera + Litros → Dimensiones 3D → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → Incremento de Capacidad
+Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → Incremento de Capacidad (7) → Estanque Sustentable (2) → Estanque + Gráfica (4) → Estanque + Pendiente Variable (5) → back to Pecera
 
-| From | To | Code |
-|------|----|------|
-| Pecera | Pecera + Litros | `litros` |
-| Pecera + Litros | Dimensiones 3D | `dimensiones` |
-| Dimensiones 3D | Estanque Sustentable | `estanque` |
-| Estanque Sustentable | Estanque + Gráfica | `grafica` |
-| Estanque + Gráfica | Estanque + Pendiente Variable | `pendiente` |
-| Estanque + Pendiente Variable | Incremento de Capacidad | `incremento` |
+| From | To | Code (from ESCENARIOS) |
+|------|----|------------------------|
+| 1 (Pecera) | 3 (Pecera + Litros) | `litros` |
+| 3 (Pecera + Litros) | 6 (Dim. 3D) | `capacidad` |
+| 6 (Dim. 3D) | 7 (Inc. Capacidad) | `incremento` |
+| 7 (Inc. Capacidad) | 2 (Estanque) | `estanque` |
+| 2 (Estanque) | 4 (Estanque + Gráfica) | `grafica` |
+| 4 (E. + Gráfica) | 5 (E. + Pendiente) | `pendiente` |
+| 5 (E. + Pendiente) | 1 (Pecera, bypassed) | `incremento` |
 | Escenario 5 (franjas) | Unlock colored bands | `franjas` |
 
 - Every scenario requires its code the **first time** it is visited, regardless of direction (forward, backward, or direct button click)

@@ -1339,7 +1339,7 @@ const ESCENARIOS = {
         ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5', 'box7', 'esc7-controls'],
         canvasClass: 'col-12 col-sm-6 col-md-7',
         graficaClass: 'd-none',
-        codigo: 'estanque',
+        codigo: 'incremento',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -1361,7 +1361,7 @@ const ESCENARIOS = {
         ocultar: ['esc1-controls', 'esc2-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses', 'canvas'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
-        codigo: 'incremento',
+        codigo: 'estanque',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -1881,7 +1881,7 @@ document.getElementById('checkFranjas').addEventListener('change', function () {
 });
 
 function getOrden() {
-    return [1, 3, 6, 2, 4, 5, 7];
+    return [1, 3, 6, 7, 2, 4, 5];
 }
 
 function getSiguiente(n) {
