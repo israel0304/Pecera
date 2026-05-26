@@ -17,12 +17,34 @@
         <div class="row mb-1">
             <div class="col-md">
                 <div class="btn-group" role="group">
-                    <button type="button" id="esc1-btn" class="btn btn-primary btn-sm">Pecera</button>
-                    <button type="button" id="esc3-btn" class="btn btn-secondary btn-sm">Pecera + Litros</button>
-                    <button type="button" id="esc6-btn" class="btn btn-secondary btn-sm">Dimensiones</button>
-                    <button type="button" id="esc2-btn" class="btn btn-secondary btn-sm">Estanque Sustentable</button>
-                    <button type="button" id="esc4-btn" class="btn btn-secondary btn-sm">Estanque + Gráfica</button>
-                    <button type="button" id="esc5-btn" class="btn btn-secondary btn-sm">Estanque + Pendiente Variable</button>
+                    <button type="button" id="esc1-btn" class="btn btn-primary btn-sm">
+                        <span class="d-none d-sm-inline">Pecera</span>
+                        <span class="d-inline d-sm-none">Pecera</span>
+                    </button>
+                    <button type="button" id="esc3-btn" class="btn btn-secondary btn-sm">
+                        <span class="d-none d-sm-inline">Pecera + Litros</span>
+                        <span class="d-inline d-sm-none">Pecera + Lit.</span>
+                    </button>
+                    <button type="button" id="esc6-btn" class="btn btn-secondary btn-sm">
+                        <span class="d-none d-sm-inline">Dimensiones</span>
+                        <span class="d-inline d-sm-none">Dim</span>
+                    </button>
+                    <button type="button" id="esc2-btn" class="btn btn-secondary btn-sm">
+                        <span class="d-none d-sm-inline">Estanque Sustentable</span>
+                        <span class="d-inline d-sm-none">Estanque Sustentable</span>
+                    </button>
+                    <button type="button" id="esc4-btn" class="btn btn-secondary btn-sm">
+                        <span class="d-none d-sm-inline">Estanque + Gráfica</span>
+                        <span class="d-inline d-sm-none">Est. + Graf.</span>
+                    </button>
+                    <button type="button" id="esc5-btn" class="btn btn-secondary btn-sm">
+                        <span class="d-none d-sm-inline">Estanque + Pendiente Variable</span>
+                        <span class="d-inline d-sm-none">Est. + Pen.</span>
+                    </button>
+                    <button type="button" id="esc7-btn" class="btn btn-secondary btn-sm">
+                        <span class="d-none d-sm-inline">Incremento Capacidad</span>
+                        <span class="d-inline d-sm-none">Inc. Cap.</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -52,6 +74,87 @@
                                 </div>
                                 <div class="col-auto">
                                     <button id="reset-esc6" class="btn btn-light btn-sm">Reiniciar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Escenario 7 Controls -->
+                <div id="esc7-controls" style="display:none;">
+                    <ul class="nav nav-pills nav-justified mb-2" id="esc7Tabs">
+                        <li class="nav-item"><button class="nav-link active" data-dim="ancho">Ancho</button></li>
+                        <li class="nav-item"><button class="nav-link" data-dim="alto">Alto</button></li>
+                        <li class="nav-item"><button class="nav-link" data-dim="largo">Largo</button></li>
+                    </ul>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-1" style="width:auto;min-width:280px">
+                            <tbody>
+                                <tr>
+                                    <th id="esc7Th1" class="text-nowrap" style="width:1%">Ancho₁</th>
+                                    <td style="width:99%"><input type="number" id="esc7Val1" class="form-control form-control-sm" step="0.1"></td>
+                                </tr>
+                                <tr>
+                                    <th id="esc7Th2" class="text-nowrap">Ancho₂</th>
+                                    <td><input type="number" id="esc7Val2" class="form-control form-control-sm" step="0.1"></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-nowrap">Cap₁</th>
+                                    <td id="esc7Cap1" class="fw-bold">0.000</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-nowrap">Cap₂</th>
+                                    <td id="esc7Cap2" class="fw-bold">0.000</td>
+                                </tr>
+                                <tr>
+                                    <th id="esc7ThDelta" class="text-nowrap">Δ Ancho</th>
+                                    <td>
+                                        <div class="d-flex gap-1 justify-content-between align-items-center">
+                                            <input type="number" id="esc7DeltaVal" class="form-control form-control-sm" placeholder="?" step="0.01" style="min-width:60px">
+                                            <button type="button" id="esc7BtnVal" class="btn btn-success btn-sm">Validar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-nowrap">Δ Capacidad</th>
+                                    <td>
+                                        <div class="d-flex gap-1 justify-content-between align-items-center">
+                                            <input type="number" id="esc7DeltaCap" class="form-control form-control-sm" placeholder="?" step="0.01" style="min-width:60px">
+                                            <button type="button" id="esc7BtnCap" class="btn btn-success btn-sm">Validar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-check mb-1">
+                        <input type="checkbox" id="esc7IncluirPeces" class="form-check-input">
+                        <label class="form-check-label" for="esc7IncluirPeces">Incluir peces</label>
+                    </div>
+                    <div id="esc7FishSection" style="display:none">
+                        <table class="table table-sm table-bordered mb-1" style="width:auto;min-width:200px">
+                            <tbody>
+                                <tr><th class="text-nowrap">Cantidad</th><td><input type="number" id="esc7FishCount" class="form-control form-control-sm" step="1" min="1"></td></tr>
+                                <tr><th class="text-nowrap">Tamaño (cm)</th><td><input type="number" id="esc7FishSize" class="form-control form-control-sm" step="0.5" min="1"></td></tr>
+                                <tr><th class="text-nowrap">LA</th><td id="esc7FishLA" class="fw-bold">0.00</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-1">
+                        <button type="button" id="esc7BtnReset" class="btn btn-secondary btn-sm">Reiniciar</button>
+                    </div>
+                    <div id="esc7CorrectoModal" class="modal fade" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">¡Correcto!</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="text-success fw-bold mb-0">¡Has acertado el incremento!</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
                                 </div>
                             </div>
                         </div>
@@ -181,6 +284,7 @@
                 <div id="box" class="jxgbox flex-grow-1"></div>
                 <div id="box4" class="jxgbox flex-grow-1" style="display:none;"></div>
                 <div id="box5" class="jxgbox flex-grow-1" style="display:none;"></div>
+                <div id="box7" class="jxgbox flex-grow-1" style="display:none;"></div>
             </div>
         </div>
     </div>

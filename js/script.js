@@ -37,6 +37,7 @@ window.addEventListener('resize', function () {
     redimensionarCanvas();
     sincronizarAlturaGrafica();
     sincronizarAlturaGrafica5();
+    sincronizarAlturaGrafica7();
 });
 
 // event listeers
@@ -821,6 +822,7 @@ let label5 = null;
 let mSlider = document.getElementById('mSlider');
 let mVal = document.getElementById('mVal');
 let esc5Btn = document.getElementById('esc5-btn');
+let esc7Btn = document.getElementById('esc7-btn');
 let bandaAzul = null;
 let bandaVerde = null;
 let bandaAmarilla = null;
@@ -916,6 +918,183 @@ function sincronizarAlturaGrafica5() {
         let box5 = document.getElementById('box5');
         box5.style.height = h + 'px';
         board5.resizeContainer(box5.clientWidth, h);
+    }
+}
+
+function getEsc7Factor(dim) {
+    if (dim === 'ancho') return FIXED_LARGO * FIXED_ALTO / 1000;
+    if (dim === 'alto') return FIXED_LARGO * FIXED_ANCHO / 1000;
+    if (dim === 'largo') return FIXED_ANCHO * FIXED_ALTO / 1000;
+    return 0;
+}
+
+function sincronizarAlturaGrafica7() {
+    if (escenarioActual === 7 && board7) {
+        let h = contenedorCanvas.clientHeight;
+        let box7 = document.getElementById('box7');
+        box7.style.height = h + 'px';
+        board7.resizeContainer(box7.clientWidth, h);
+    }
+}
+
+function initBoard7() {
+    if (board7) return;
+    board7 = JXG.JSXGraph.initBoard('box7', {
+        boundingbox: [-2, 15, 15, -2],
+        axis: false,
+        showCopyright: false,
+        showNavigation: true,
+        zoom: { wheel: true, min: 0.5, max: 5 },
+    });
+    board7.create('axis', [[-5, 0], [55, 0]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: { majorHeight: 20, drawLabels: true, insertTicks: false, ticksDistance: 2, minorTicks: 0 }
+    });
+    board7.create('axis', [[0, -2], [0, 20]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: { majorHeight: 20, drawLabels: true, insertTicks: false, ticksDistance: 2, minorTicks: 0 }
+    });
+
+
+    // Reference line through (v1, c1) and (v2, c2)
+    ref7Pt1 = board7.create('point', [0, 0], { fixed: true, visible: false });
+    ref7Pt2 = board7.create('point', [1, 0.3], { fixed: true, visible: false });
+    refLine7 = board7.create('line', [ref7Pt1, ref7Pt2], {
+        strokeColor: '#888', strokeWidth: 2
+    });
+
+    // Points (both visible)
+    p1_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#E74C3C', fillColor: '#E74C3C', size: 3, label: {visible: false} });
+    p2_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#E74C3C', fillColor: '#E74C3C', size: 3, label: {visible: false} });
+    p4_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#E74C3C', fillColor: '#E74C3C', size: 3, label: {visible: false} });
+
+    // Horizontal segment from (v1, c1) to (v2, c1)
+    segHoriz7 = board7.create('segment', [p1_7, p4_7], {
+        strokeColor: '#2980B9', strokeWidth: 3
+    });
+
+    // Vertical segment from (v2, c1) to (v2, c2)
+    vert7 = board7.create('segment', [p4_7, p2_7], {
+        strokeColor: '#E74C3C', strokeWidth: 2.5
+    });
+
+    // Labels (hidden by default, shown on correct answer)
+    labelDeltaVal = board7.create('text', [0, 0, ''], { visible: false, fontSize: 13, strokeColor: '#2980B9', highlight: false, fixed: true });
+    labelDeltaCap = board7.create('text', [0, 0, ''], { visible: false, fontSize: 13, strokeColor: '#E74C3C', highlight: false, fixed: true });
+
+    // Fish point + horizontal line (hidden by default)
+    fishPoint7 = board7.create('point', [0, 0], {
+        fixed: true, visible: false,
+        strokecolor: '#FF8C00', fillColor: '#FF8C00', size: 4
+    });
+    fishLineH7p1 = board7.create('point', [0, 0], { fixed: true, visible: false });
+    fishLineH7p2 = board7.create('point', [0, 0], { fixed: true, visible: false });
+    fishLineH7 = board7.create('line', [fishLineH7p1, fishLineH7p2], {
+        strokeColor: '#2980B9', strokeWidth: 1.5, dash: 1, visible: false
+    });
+}
+
+function actualizarGraficaEsc7(v1, v2, c1, c2) {
+    if (!board7) return;
+    if (p1_7) p1_7.setPosition(JXG.COORDS_BY_USER, [v1, c1]);
+    if (p2_7) p2_7.setPosition(JXG.COORDS_BY_USER, [v2, c2]);
+    if (p4_7) p4_7.setPosition(JXG.COORDS_BY_USER, [v2, c1]);
+    if (ref7Pt1) ref7Pt1.setPosition(JXG.COORDS_BY_USER, [v1, c1]);
+    if (ref7Pt2) ref7Pt2.setPosition(JXG.COORDS_BY_USER, [v2, c2]);
+    board7.update();
+}
+
+function actualizarEsc7() {
+    let v1 = Number(esc7Val1.value);
+    let v2 = Number(esc7Val2.value);
+    let factor = getEsc7Factor(esc7DimActual);
+    let c1 = v1 * factor;
+    let c2 = v2 * factor;
+    esc7Cap1.textContent = c1.toFixed(3);
+    esc7Cap2.textContent = c2.toFixed(3);
+
+    if (labelDeltaVal) labelDeltaVal.setAttribute({visible: false});
+    if (labelDeltaCap) labelDeltaCap.setAttribute({visible: false});
+
+    actualizarGraficaEsc7(v1, v2, c1, c2);
+
+    if (fishPoint7 && fishPoint7.getAttribute && fishPoint7.getAttribute('visible')) {
+        verificarFish7();
+    }
+}
+
+function verificarFish7() {
+    let on = esc7IncluirPeces.checked;
+    document.getElementById('esc7FishSection').style.display = on ? '' : 'none';
+    if (!on) {
+        if (fishPoint7) fishPoint7.setAttribute({visible: false});
+        if (fishLineH7) fishLineH7.setAttribute({visible: false});
+        return;
+    }
+    let count = Number(esc7FishCount.value) || 0;
+    let size = Number(esc7FishSize.value) || 0;
+    let LA = count * size * 3;
+    esc7FishLA.textContent = LA.toFixed(2);
+    if (LA > 0 && fishPoint7) {
+        let v1 = Number(esc7Val1.value) || 0;
+        let v2 = Number(esc7Val2.value) || 0;
+        if (v1 !== 0 && v2 !== 0 && v1 !== v2) {
+            let factor = getEsc7Factor(esc7DimActual);
+            let c1 = v1 * factor, c2 = v2 * factor;
+            let pend = (c2 - c1) / (v2 - v1);
+            let x = v1 + (LA - c1) / pend;
+            fishPoint7.setPosition(JXG.COORDS_BY_USER, [x, LA]);
+            fishPoint7.setAttribute({visible: true});
+            fishPoint7.setLabel('(' + x.toFixed(3) + ', ' + LA.toFixed(3) + ')');
+            if (fishLineH7p1 && fishLineH7p2 && fishLineH7) {
+                fishLineH7p1.setPosition(JXG.COORDS_BY_USER, [0, LA]);
+                fishLineH7p2.setPosition(JXG.COORDS_BY_USER, [15, LA]);
+                fishLineH7.setAttribute({visible: true});
+            }
+            board7.update();
+        }
+    } else {
+        if (fishPoint7) fishPoint7.setAttribute({visible: false});
+        if (fishLineH7) fishLineH7.setAttribute({visible: false});
+    }
+}
+
+function verificarEsc7(tipo) {
+    let v1 = Number(esc7Val1.value);
+    let v2 = Number(esc7Val2.value);
+    let factor = getEsc7Factor(esc7DimActual);
+    let c1 = v1 * factor;
+    let c2 = v2 * factor;
+
+    let realDeltaVal = v2 - v1;
+    let realDeltaCap = c2 - c1;
+    let userDeltaVal = Number(esc7DeltaVal.value);
+    let userDeltaCap = Number(esc7DeltaCap.value);
+    let tolerance = 0.01;
+
+    let correctVal = !isNaN(userDeltaVal) && Math.abs(userDeltaVal - realDeltaVal) < tolerance;
+    let correctCap = !isNaN(userDeltaCap) && Math.abs(userDeltaCap - realDeltaCap) < tolerance;
+
+    if (tipo === 'val' && correctVal) {
+        let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
+        if (labelDeltaVal) {
+            labelDeltaVal.setPosition(JXG.COORDS_BY_USER, [(v1 + v2) / 2, c1 - 0.8]);
+            labelDeltaVal.setText('Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3));
+            labelDeltaVal.setAttribute({visible: true});
+        }
+        let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
+        modal.show();
+    }
+    if (tipo === 'cap' && correctCap) {
+        if (labelDeltaCap) {
+            labelDeltaCap.setPosition(JXG.COORDS_BY_USER, [v2 + 0.2, (c1 + c2) / 2]);
+            labelDeltaCap.setText('Δ Capacidad = ' + realDeltaCap.toFixed(3));
+            labelDeltaCap.setAttribute({visible: true});
+        }
+        let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
+        modal.show();
     }
 }
 
@@ -1027,9 +1206,9 @@ function recrearCurva5(m) {
 
 const ESCENARIOS = {
     1: {
-        btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
+        btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
         mostrar: ['canvas', 'esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'litros',
@@ -1047,9 +1226,9 @@ const ESCENARIOS = {
         }
     },
     2: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
         graficaClass: 'd-none',
         codigo: 'grafica',
@@ -1066,9 +1245,9 @@ const ESCENARIOS = {
         }
     },
     3: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
         mostrar: ['canvas', 'esc1-controls', 'box'],
-        ocultar: ['esc2-controls', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'capacidad',
@@ -1086,9 +1265,9 @@ const ESCENARIOS = {
         }
     },
     4: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary' },
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls', 'box4'],
-        ocultar: ['esc1-controls', 'box', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        ocultar: ['esc1-controls', 'box', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'pendiente',
@@ -1112,12 +1291,12 @@ const ESCENARIOS = {
         }
     },
     5: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary', 'esc6-btn': 'secondary' },
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls', 'box5'],
-        ocultar: ['esc1-controls', 'box', 'box4', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
         canvasClass: 'col-12 col-sm-6',
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
-        codigo: 'capacidad',
+        codigo: 'incremento',
         alEntrar: function () {
             laSection.style.display = 'none';
             if (checkLA.checked) checkLA.checked = false;
@@ -1145,9 +1324,9 @@ const ESCENARIOS = {
         }
     },
     6: {
-        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'primary' },
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'primary', 'esc7-btn': 'secondary' },
         mostrar: ['esc6-overlay', 'three-container', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
-        ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5'],
+        ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5', 'box7', 'esc7-controls'],
         canvasClass: 'col-12 col-sm-6 col-md-7',
         graficaClass: 'd-none',
         codigo: 'estanque',
@@ -1164,6 +1343,24 @@ const ESCENARIOS = {
             iniciarPeces3D();
             initTablaDimVar();
             initTablaCapDina();
+        }
+    },
+    7: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'primary' },
+        mostrar: ['esc7-controls', 'box7'],
+        ocultar: ['esc1-controls', 'esc2-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses', 'canvas'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'incremento',
+        alEntrar: function () {
+            laSection.style.display = 'none';
+            if (checkLA.checked) checkLA.checked = false;
+            dataLA.style.display = 'none';
+            botonLA.disabled = true;
+            boton3.disabled = false;
+            initBoard7();
+            actualizarEsc7();
+            sincronizarAlturaGrafica7();
         }
     }
 };
@@ -1399,7 +1596,7 @@ function actualizarEscenario2() {
                 fleeing = true;
             }
         }
-        if (!fleeing && V > 5 && !pumpBroken) {
+        if (!fleeing && (V > 6 || I > 2) && !pumpBroken) {
             let pumpPos = new Vector(pumpX, pumpY);
             let away = Vector.res(pez.posicion, pumpPos);
             away.norm();
@@ -1589,6 +1786,7 @@ esc3Btn.addEventListener('click', function () { navegarA(3); });
 esc2Btn.addEventListener('click', function () { navegarA(2); });
 esc4Btn.addEventListener('click', function () { navegarA(4); });
 esc5Btn.addEventListener('click', function () { navegarA(5); });
+esc7Btn.addEventListener('click', function () { navegarA(7); });
 checkLA.addEventListener('change', checklitros_fn);
 botonLA.addEventListener('click', crearPuntoLA);
 
@@ -1673,7 +1871,7 @@ document.getElementById('checkFranjas').addEventListener('change', function () {
 });
 
 function getOrden() {
-    return [1, 3, 6, 2, 4, 5];
+    return [1, 3, 6, 2, 4, 5, 7];
 }
 
 function getSiguiente(n) {
@@ -1906,6 +2104,31 @@ let altoVal = document.getElementById('altoVal');
 let capValInfo = document.getElementById('capValInfo');
 let btnResetEsc6 = document.getElementById('reset-esc6');
 let esc6Btn = document.getElementById('esc6-btn');
+
+// Escenario 7 variables
+const FIXED_LARGO = 19;
+const FIXED_ANCHO = 18;
+const FIXED_ALTO = 21;
+let esc7DimActual = 'ancho';
+let esc7Val1 = document.getElementById('esc7Val1');
+let esc7Val2 = document.getElementById('esc7Val2');
+let esc7Cap1 = document.getElementById('esc7Cap1');
+let esc7Cap2 = document.getElementById('esc7Cap2');
+let esc7DeltaVal = document.getElementById('esc7DeltaVal');
+let esc7DeltaCap = document.getElementById('esc7DeltaCap');
+let esc7BtnVal = document.getElementById('esc7BtnVal');
+let esc7BtnCap = document.getElementById('esc7BtnCap');
+let esc7BtnReset = document.getElementById('esc7BtnReset');
+let esc7IncluirPeces = document.getElementById('esc7IncluirPeces');
+let esc7FishCount = document.getElementById('esc7FishCount');
+let esc7FishSize = document.getElementById('esc7FishSize');
+let esc7FishLA = document.getElementById('esc7FishLA');
+let board7 = null;
+let p1_7 = null, p2_7 = null, p4_7 = null;
+let ref7Pt1 = null, ref7Pt2 = null;
+let segHoriz7 = null, vert7 = null, refLine7 = null;
+let labelDeltaVal = null, labelDeltaCap = null;
+let fishPoint7 = null, fishLineH7 = null, fishLineH7p1 = null, fishLineH7p2 = null;
 
 function actualizarInfoEsc6() {
     let L = Number(largoSlider.value);
@@ -2650,5 +2873,52 @@ btnResetEsc6.addEventListener('click', function () {
 });
 window.addEventListener('resize', redimensionarThree);
 
+// Escenario 7 event listeners
+esc7Val1.addEventListener('input', actualizarEsc7);
+esc7Val2.addEventListener('input', actualizarEsc7);
+esc7BtnVal.addEventListener('click', function() { verificarEsc7('val'); });
+esc7BtnCap.addEventListener('click', function() { verificarEsc7('cap'); });
+esc7BtnReset.addEventListener('click', function () {
+    esc7Val1.value = '';
+    esc7Val2.value = '';
+    esc7DeltaVal.value = '';
+    esc7DeltaCap.value = '';
+    if (labelDeltaVal) labelDeltaVal.setAttribute({visible: false});
+    if (labelDeltaCap) labelDeltaCap.setAttribute({visible: false});
+    esc7IncluirPeces.checked = false;
+    esc7FishCount.value = '';
+    esc7FishSize.value = '';
+    document.getElementById('esc7FishSection').style.display = 'none';
+    if (fishPoint7) fishPoint7.setAttribute({visible: false});
+    if (fishLineH7) fishLineH7.setAttribute({visible: false});
+    actualizarEsc7();
+});
+esc7IncluirPeces.addEventListener('change', verificarFish7);
+esc7FishCount.addEventListener('input', verificarFish7);
+esc7FishSize.addEventListener('input', verificarFish7);
+
+document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+        document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (t) { t.classList.remove('active'); });
+        this.classList.add('active');
+        esc7DimActual = this.getAttribute('data-dim');
+
+        let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
+        document.getElementById('esc7Th1').textContent = dimLabel + '₁';
+        document.getElementById('esc7Th2').textContent = dimLabel + '₂';
+        document.getElementById('esc7ThDelta').textContent = 'Δ ' + dimLabel;
+
+        esc7DeltaVal.value = '';
+        esc7DeltaCap.value = '';
+        esc7IncluirPeces.checked = false;
+        esc7FishCount.value = '';
+        esc7FishSize.value = '';
+        document.getElementById('esc7FishSection').style.display = 'none';
+        if (fishPoint7) fishPoint7.setAttribute({visible: false});
+        if (fishLineH7) fishLineH7.setAttribute({visible: false});
+        actualizarEsc7();
+    });
+});
+
 escenariosDesbloqueados.add(1);
-cambiarEscenario(1);
+cambiarEscenario(7);

@@ -182,6 +182,12 @@ body {
     height: auto;
 }
 
+#esc7-controls .table input[type="number"] {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
 .btn-group .btn-sm {
     font-size: 0.8rem;
 }
