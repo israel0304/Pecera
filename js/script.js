@@ -856,7 +856,7 @@ function initBoard4() {
         ticks: {
             majorHeight: 20,
             drawLabels: true,
-            insertTicks: false,
+            insertTicks: true,
             ticksDistance: 2,
             minorTicks: 0
         }
@@ -867,7 +867,7 @@ function initBoard4() {
         ticks: {
             majorHeight: 20,
             drawLabels: true,
-            insertTicks: false,
+            insertTicks: true,
             ticksDistance: 2,
             minorTicks: 0
         }
@@ -944,17 +944,17 @@ function initBoard7() {
         axis: false,
         showCopyright: false,
         showNavigation: true,
-        zoom: { wheel: true, min: 0.5, max: 5 },
+        zoom: { wheel: true },
     });
     board7.create('axis', [[-5, 0], [55, 0]], {
         strokeColor: '#333',
         strokeWidth: 1,
-        ticks: { majorHeight: 20, drawLabels: true, insertTicks: false, ticksDistance: 2, minorTicks: 0 }
+        ticks: { majorHeight: 20, drawLabels: true, insertTicks: true, ticksDistance: 2, minorTicks: 0 }
     });
     board7.create('axis', [[0, -2], [0, 20]], {
         strokeColor: '#333',
         strokeWidth: 1,
-        ticks: { majorHeight: 20, drawLabels: true, insertTicks: false, ticksDistance: 2, minorTicks: 0 }
+        ticks: { majorHeight: 20, drawLabels: true, insertTicks: true, ticksDistance: 2, minorTicks: 0 }
     });
 
 
@@ -998,11 +998,18 @@ function initBoard7() {
 
 function actualizarGraficaEsc7(v1, v2, c1, c2) {
     if (!board7) return;
+    let show = v2 > v1;
     if (p1_7) p1_7.setPosition(JXG.COORDS_BY_USER, [v1, c1]);
     if (p2_7) p2_7.setPosition(JXG.COORDS_BY_USER, [v2, c2]);
     if (p4_7) p4_7.setPosition(JXG.COORDS_BY_USER, [v2, c1]);
     if (ref7Pt1) ref7Pt1.setPosition(JXG.COORDS_BY_USER, [v1, c1]);
     if (ref7Pt2) ref7Pt2.setPosition(JXG.COORDS_BY_USER, [v2, c2]);
+    if (p1_7) p1_7.setAttribute({visible: show});
+    if (p2_7) p2_7.setAttribute({visible: show});
+    if (p4_7) p4_7.setAttribute({visible: show});
+    if (segHoriz7) segHoriz7.setAttribute({visible: show});
+    if (vert7) vert7.setAttribute({visible: show});
+    if (refLine7) refLine7.setAttribute({visible: show});
     board7.update();
 }
 
@@ -1020,7 +1027,10 @@ function actualizarEsc7() {
 
     actualizarGraficaEsc7(v1, v2, c1, c2);
 
-    if (fishPoint7 && fishPoint7.getAttribute && fishPoint7.getAttribute('visible')) {
+    if (v2 <= v1) {
+        if (fishPoint7) fishPoint7.setAttribute({visible: false});
+        if (fishLineH7) fishLineH7.setAttribute({visible: false});
+    } else if (fishPoint7 && fishPoint7.getAttribute && fishPoint7.getAttribute('visible')) {
         verificarFish7();
     }
 }
@@ -1040,7 +1050,7 @@ function verificarFish7() {
     if (LA > 0 && fishPoint7) {
         let v1 = Number(esc7Val1.value) || 0;
         let v2 = Number(esc7Val2.value) || 0;
-        if (v1 !== 0 && v2 !== 0 && v1 !== v2) {
+        if (v2 > v1) {
             let factor = getEsc7Factor(esc7DimActual);
             let c1 = v1 * factor, c2 = v2 * factor;
             let pend = (c2 - c1) / (v2 - v1);
@@ -1114,7 +1124,7 @@ function initBoard5() {
         ticks: {
             majorHeight: 20,
             drawLabels: true,
-            insertTicks: false,
+            insertTicks: true,
             ticksDistance: 2,
             minorTicks: 0
         }
@@ -1125,7 +1135,7 @@ function initBoard5() {
         ticks: {
             majorHeight: 20,
             drawLabels: true,
-            insertTicks: false,
+            insertTicks: true,
             ticksDistance: 2,
             minorTicks: 0
         }
