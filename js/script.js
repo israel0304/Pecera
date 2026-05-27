@@ -471,7 +471,7 @@ function mostrarToast(mensaje, tipo, duracion) {
     let container = document.getElementById('toastContainer');
     if (!container) return;
     let toast = document.createElement('div');
-    toast.className = 'toast toast--' + tipo;
+    toast.className = 'custom-toast custom-toast--' + tipo;
     toast.textContent = mensaje;
     container.appendChild(toast);
     setTimeout(function () {
@@ -1080,6 +1080,7 @@ function actualizarEsc7() {
     if (labelDeltaVal) labelDeltaVal.setAttribute({visible: false});
     if (labelDeltaCap) labelDeltaCap.setAttribute({visible: false});
 
+    validarEsc7Valores();
     actualizarGraficaEsc7(v1, v2, c1, c2);
 
     if (v2 <= v1) {
@@ -1087,6 +1088,19 @@ function actualizarEsc7() {
         if (fishLineH7) fishLineH7.setAttribute({visible: false});
     } else if (fishPoint7 && fishPoint7.getAttribute && fishPoint7.getAttribute('visible')) {
         verificarFish7();
+    }
+
+    if (esc7BtnVal.disabled) {
+        esc7BtnVal.innerHTML = 'Validar';
+        esc7BtnVal.disabled = false;
+        esc7BtnVal.classList.replace('btn-outline-success', 'btn-success');
+        esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+    }
+    if (esc7BtnCap.disabled) {
+        esc7BtnCap.innerHTML = 'Validar';
+        esc7BtnCap.disabled = false;
+        esc7BtnCap.classList.replace('btn-outline-success', 'btn-success');
+        esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
     }
 }
 
@@ -1142,7 +1156,7 @@ function aplicarColoresEsc7(dim) {
     if (board7) board7.update();
 }
 
-function verificarEsc7(tipo) {
+function verificarEsc7(tipo, silent) {
     let v1 = Number(esc7Val1.value);
     let v2 = Number(esc7Val2.value);
     let factor = getEsc7Factor(esc7DimActual);
@@ -1153,7 +1167,7 @@ function verificarEsc7(tipo) {
     let realDeltaCap = c2 - c1;
     let userDeltaVal = Number(esc7DeltaVal.value);
     let userDeltaCap = Number(esc7DeltaCap.value);
-    let tolerance = 0.01;
+    let tolerance = 0.001;
 
     let correctVal = !isNaN(userDeltaVal) && Math.abs(userDeltaVal - realDeltaVal) < tolerance;
     let correctCap = !isNaN(userDeltaCap) && Math.abs(userDeltaCap - realDeltaCap) < tolerance;
@@ -1163,40 +1177,57 @@ function verificarEsc7(tipo) {
 
     if (tipo === 'val') {
         if (correctVal) {
-            let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
-            esc7DeltaVal.classList.add('esc7-input--success');
-            esc7BtnVal.innerHTML = '✓ Validado';
-            esc7BtnVal.disabled = true;
-            esc7BtnVal.classList.replace('btn-success', 'btn-outline-success');
-            if (labelDeltaVal) {
-                labelDeltaVal.setPosition(JXG.COORDS_BY_USER, [(v1 + v2) / 2, c1 - 0.8]);
-                labelDeltaVal.setText('Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3));
-                labelDeltaVal.setAttribute({visible: true});
+            if (!silent) {
+                let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
+                esc7DeltaVal.classList.add('esc7-input--success');
+                esc7BtnVal.innerHTML = '✓ Validado';
+                esc7BtnVal.disabled = true;
+                esc7BtnVal.classList.replace('btn-success', 'btn-outline-success');
+                if (labelDeltaVal) {
+                    labelDeltaVal.setPosition(JXG.COORDS_BY_USER, [(v1 + v2) / 2, c1 - 0.8]);
+                    labelDeltaVal.setText('Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3));
+                    labelDeltaVal.setAttribute({visible: true});
+                }
+                document.getElementById('esc7CorrectoMsg').textContent = 'Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3);
+                let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
+                modal.show();
             }
-            document.getElementById('esc7CorrectoMsg').textContent = 'Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3);
-            let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
-            modal.show();
         } else if (!isNaN(userDeltaVal)) {
             esc7DeltaVal.classList.add('esc7-input--error');
         }
     }
     if (tipo === 'cap') {
         if (correctCap) {
-            esc7DeltaCap.classList.add('esc7-input--success');
-            esc7BtnCap.innerHTML = '✓ Validado';
-            esc7BtnCap.disabled = true;
-            esc7BtnCap.classList.replace('btn-success', 'btn-outline-success');
-            if (labelDeltaCap) {
-                labelDeltaCap.setPosition(JXG.COORDS_BY_USER, [v2 + 0.2, (c1 + c2) / 2]);
-                labelDeltaCap.setText('Δ Capacidad = ' + realDeltaCap.toFixed(3));
-                labelDeltaCap.setAttribute({visible: true});
+            if (!silent) {
+                esc7DeltaCap.classList.add('esc7-input--success');
+                esc7BtnCap.innerHTML = '✓ Validado';
+                esc7BtnCap.disabled = true;
+                esc7BtnCap.classList.replace('btn-success', 'btn-outline-success');
+                if (labelDeltaCap) {
+                    labelDeltaCap.setPosition(JXG.COORDS_BY_USER, [v2 + 0.2, (c1 + c2) / 2]);
+                    labelDeltaCap.setText('Δ Capacidad = ' + realDeltaCap.toFixed(3));
+                    labelDeltaCap.setAttribute({visible: true});
+                }
+                document.getElementById('esc7CorrectoMsg').textContent = 'Δ Capacidad = ' + realDeltaCap.toFixed(3);
+                let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
+                modal.show();
             }
-            document.getElementById('esc7CorrectoMsg').textContent = 'Δ Capacidad = ' + realDeltaCap.toFixed(3);
-            let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
-            modal.show();
         } else if (!isNaN(userDeltaCap)) {
             esc7DeltaCap.classList.add('esc7-input--error');
         }
+    }
+}
+
+function validarEsc7Valores() {
+    let s1 = esc7Val1.value;
+    let s2 = esc7Val2.value;
+    if (s1 === '' || s2 === '') return;
+    let v1 = Number(s1);
+    let v2 = Number(s2);
+    if (isNaN(v1) || isNaN(v2)) return;
+    let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
+    if (v1 > v2) {
+        mostrarToast('Procura que ' + dimLabel + '₁ no sea más grande que ' + dimLabel + '₂', 'warning', 4000);
     }
 }
 
@@ -3171,8 +3202,64 @@ window.addEventListener('resize', redimensionarThree);
 // Escenario 7 event listeners
 esc7Val1.addEventListener('input', actualizarEsc7);
 esc7Val2.addEventListener('input', actualizarEsc7);
+esc7Val1.addEventListener('blur', function () {
+    let v = Number(esc7Val1.value);
+    if (esc7Val1.value !== '' && (isNaN(v) || v < 0)) {
+        esc7Val1.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    validarEsc7Valores();
+});
+esc7Val2.addEventListener('blur', function () {
+    let v = Number(esc7Val2.value);
+    if (esc7Val2.value !== '' && (isNaN(v) || v < 0)) {
+        esc7Val2.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    validarEsc7Valores();
+});
 esc7BtnVal.addEventListener('click', function() { verificarEsc7('val'); });
 esc7BtnCap.addEventListener('click', function() { verificarEsc7('cap'); });
+esc7DeltaVal.addEventListener('blur', function () {
+    let v = Number(esc7DeltaVal.value);
+    if (esc7DeltaVal.value !== '' && (isNaN(v) || v < 0)) {
+        esc7DeltaVal.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    verificarEsc7('val', true);
+});
+esc7DeltaCap.addEventListener('blur', function () {
+    let v = Number(esc7DeltaCap.value);
+    if (esc7DeltaCap.value !== '' && (isNaN(v) || v < 0)) {
+        esc7DeltaCap.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    verificarEsc7('cap', true);
+});
+esc7DeltaVal.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') verificarEsc7('val');
+});
+esc7DeltaCap.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') verificarEsc7('cap');
+});
+esc7DeltaVal.addEventListener('input', function () {
+    esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+    if (esc7BtnVal.disabled) {
+        esc7BtnVal.innerHTML = 'Validar';
+        esc7BtnVal.disabled = false;
+        esc7BtnVal.classList.replace('btn-outline-success', 'btn-success');
+        if (labelDeltaVal) labelDeltaVal.setAttribute({visible: false});
+    }
+});
+esc7DeltaCap.addEventListener('input', function () {
+    esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+    if (esc7BtnCap.disabled) {
+        esc7BtnCap.innerHTML = 'Validar';
+        esc7BtnCap.disabled = false;
+        esc7BtnCap.classList.replace('btn-outline-success', 'btn-success');
+        if (labelDeltaCap) labelDeltaCap.setAttribute({visible: false});
+    }
+});
 esc7BtnReset.addEventListener('click', function () {
     esc7Val1.value = '';
     esc7Val2.value = '';
@@ -3201,6 +3288,22 @@ esc7BtnReset.addEventListener('click', function () {
 esc7IncluirPeces.addEventListener('change', verificarFish7);
 esc7FishCount.addEventListener('input', verificarFish7);
 esc7FishSize.addEventListener('input', verificarFish7);
+esc7FishCount.addEventListener('blur', function () {
+    let v = Number(esc7FishCount.value);
+    if (esc7FishCount.value !== '' && (isNaN(v) || v < 0)) {
+        esc7FishCount.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    verificarFish7();
+});
+esc7FishSize.addEventListener('blur', function () {
+    let v = Number(esc7FishSize.value);
+    if (esc7FishSize.value !== '' && (isNaN(v) || v < 0)) {
+        esc7FishSize.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    verificarFish7();
+});
 
 document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
     tab.addEventListener('click', function () {

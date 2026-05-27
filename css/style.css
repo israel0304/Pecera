@@ -584,7 +584,7 @@ input[type="range"]::-moz-range-thumb {
 /* ── Toast container ── */
 #toastContainer {
     position: fixed;
-    bottom: 80px;
+    top: 16px;
     right: 16px;
     z-index: 9999;
     display: flex;
@@ -593,7 +593,7 @@ input[type="range"]::-moz-range-thumb {
     pointer-events: none;
 }
 
-.toast {
+.custom-toast {
     min-width: 280px;
     max-width: 400px;
     padding: 12px 20px;
@@ -608,27 +608,27 @@ input[type="range"]::-moz-range-thumb {
     gap: 10px;
     border-left: 4px solid;
 }
-.toast--success {
+.custom-toast--success {
     background: var(--md-success-light);
     color: var(--md-success);
     border-left-color: var(--md-success);
 }
-.toast--error {
+.custom-toast--error {
     background: var(--md-error-light);
     color: var(--md-error);
     border-left-color: var(--md-error);
 }
-.toast--warning {
+.custom-toast--warning {
     background: var(--md-accent-light);
     color: #e65100;
     border-left-color: var(--md-accent);
 }
-.toast--info {
+.custom-toast--info {
     background: var(--md-primary-surface);
     color: var(--md-primary);
     border-left-color: var(--md-primary);
 }
-.toast--dismissing {
+.custom-toast--dismissing {
     animation: toastFadeOut 0.3s ease forwards;
 }
 
