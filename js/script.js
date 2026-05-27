@@ -1362,7 +1362,7 @@ const ESCENARIOS = {
         btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
         mostrar: ['canvas', 'esc2-controls'],
         ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
-        canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-10 offset-lg-1',
+        canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-7 offset-lg-2',
         graficaClass: 'd-none',
         codigo: 'grafica',
         alEntrar: function () {
