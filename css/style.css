@@ -519,10 +519,66 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ── Esc7 ── */
+#esc7-controls {
+    padding: 12px;
+    border-radius: var(--md-radius);
+    transition: background var(--md-transition);
+}
+#esc7-controls.dim-ancho { background: #e9d7fb; }
+#esc7-controls.dim-alto { background: #e6f5ff; }
+#esc7-controls.dim-largo { background: #ffe8f0; }
 #esc7-controls .table input[type="number"] {
     border: none;
     box-shadow: none;
     background: transparent;
+}
+#esc7Tabs .nav-link {
+    background: #fff;
+    color: var(--md-on-surface);
+    border: 1px solid var(--md-border);
+    border-bottom: none;
+    border-radius: var(--md-radius-sm) var(--md-radius-sm) 0 0;
+    box-shadow: var(--md-shadow-sm);
+    margin: 0 2px;
+}
+#esc7Tabs .nav-link:hover {
+    background: var(--md-surface-variant);
+    box-shadow: var(--md-shadow-md);
+}
+#esc7Tabs .nav-link.active {
+    box-shadow: none;
+}
+#esc7Tabs .nav-link.active[data-dim="ancho"] {
+    background: #e9d7fb !important;
+    color: #352B3D;
+}
+#esc7Tabs .nav-link.active[data-dim="alto"] {
+    background: #e6f5ff !important;
+    color: #1a1a2e;
+}
+#esc7Tabs .nav-link.active[data-dim="largo"] {
+    background: #ffe8f0 !important;
+    color: #1a1a2e;
+}
+.esc7-table-wrap {
+    padding: 0;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+#esc7-controls.dim-ancho .table-responsive { background: #f3ecfd; }
+#esc7-controls.dim-alto .table-responsive { background: #f0f9ff; }
+#esc7-controls.dim-largo .table-responsive { background: #fff4f7; }
+#esc7-controls.dim-ancho #esc7FishSection .table-responsive { background: #f3ecfd; }
+#esc7-controls.dim-alto #esc7FishSection .table-responsive { background: #f0f9ff; }
+#esc7-controls.dim-largo #esc7FishSection .table-responsive { background: #fff4f7; }
+.esc7-input--success {
+    border-color: var(--md-success) !important;
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12) !important;
+}
+.esc7-input--error {
+    border-color: var(--md-error) !important;
+    animation: shake 0.4s ease;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.12) !important;
 }
 
 /* ── Toast container ── */

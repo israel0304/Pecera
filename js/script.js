@@ -962,6 +962,36 @@ function sincronizarAlturaGrafica7() {
     }
 }
 
+var ESC7_COLORS = {
+    ancho: {
+        refLine: '#454545',
+        segHoriz: '#9957de',
+        segVert: '#454545',
+        labelDeltaVal: '#9957de',
+        labelDeltaCap: '#454545',
+        fishPoint: '#2027d3',
+        fishLine: '#2027d3',
+    },
+    alto: {
+        refLine: '#21a6ff',
+        segHoriz: '#3fd840',
+        segVert: '#9d9d9d',
+        labelDeltaVal: '#3fd840',
+        labelDeltaCap: '#9d9d9d',
+        fishPoint: '#2027d3',
+        fishLine: '#2027d3',
+    },
+    largo: {
+        refLine: '#fd214d',
+        segHoriz: '#FEB347',
+        segVert: '#fee44f',
+        labelDeltaVal: '#FEB347',
+        labelDeltaCap: '#fee44f',
+        fishPoint: '#2027d3',
+        fishLine: '#2027d3',
+    }
+};
+
 function initBoard7() {
     if (board7) return;
     board7 = JXG.JSXGraph.initBoard('box7', {
@@ -991,9 +1021,9 @@ function initBoard7() {
     });
 
     // Points (both visible)
-    p1_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#E74C3C', fillColor: '#E74C3C', size: 3, label: {visible: false} });
-    p2_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#E74C3C', fillColor: '#E74C3C', size: 3, label: {visible: false} });
-    p4_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#E74C3C', fillColor: '#E74C3C', size: 3, label: {visible: false} });
+    p1_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#352B3D', fillColor: '#352B3D', size: 1, label: {visible: false} });
+    p2_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#352B3D', fillColor: '#352B3D', size: 1, label: {visible: false} });
+    p4_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#352B3D', fillColor: '#352B3D', size: 1, label: {visible: false} });
 
     // Horizontal segment from (v1, c1) to (v2, c1)
     segHoriz7 = board7.create('segment', [p1_7, p4_7], {
@@ -1096,6 +1126,22 @@ function verificarFish7() {
     }
 }
 
+function aplicarColoresEsc7(dim) {
+    var c = ESC7_COLORS[dim];
+    if (!c) return;
+    if (refLine7) refLine7.setAttribute({strokeColor: c.refLine});
+    if (segHoriz7) segHoriz7.setAttribute({strokeColor: c.segHoriz});
+    if (vert7) vert7.setAttribute({strokeColor: c.segVert});
+    if (labelDeltaVal) labelDeltaVal.setAttribute({strokeColor: c.labelDeltaVal});
+    if (labelDeltaCap) labelDeltaCap.setAttribute({strokeColor: c.labelDeltaCap});
+    if (fishPoint7) fishPoint7.setAttribute({strokeColor: c.fishPoint, fillColor: c.fishPoint});
+    if (fishLineH7) fishLineH7.setAttribute({strokeColor: c.fishLine});
+    [p1_7, p2_7, p4_7].forEach(function(p) {
+        if (p) p.setAttribute({strokeColor: '#352B3D', fillColor: '#352B3D', size: 1});
+    });
+    if (board7) board7.update();
+}
+
 function verificarEsc7(tipo) {
     let v1 = Number(esc7Val1.value);
     let v2 = Number(esc7Val2.value);
@@ -1112,24 +1158,45 @@ function verificarEsc7(tipo) {
     let correctVal = !isNaN(userDeltaVal) && Math.abs(userDeltaVal - realDeltaVal) < tolerance;
     let correctCap = !isNaN(userDeltaCap) && Math.abs(userDeltaCap - realDeltaCap) < tolerance;
 
-    if (tipo === 'val' && correctVal) {
-        let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
-        if (labelDeltaVal) {
-            labelDeltaVal.setPosition(JXG.COORDS_BY_USER, [(v1 + v2) / 2, c1 - 0.8]);
-            labelDeltaVal.setText('Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3));
-            labelDeltaVal.setAttribute({visible: true});
+    esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+    esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+
+    if (tipo === 'val') {
+        if (correctVal) {
+            let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
+            esc7DeltaVal.classList.add('esc7-input--success');
+            esc7BtnVal.innerHTML = '✓ Validado';
+            esc7BtnVal.disabled = true;
+            esc7BtnVal.classList.replace('btn-success', 'btn-outline-success');
+            if (labelDeltaVal) {
+                labelDeltaVal.setPosition(JXG.COORDS_BY_USER, [(v1 + v2) / 2, c1 - 0.8]);
+                labelDeltaVal.setText('Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3));
+                labelDeltaVal.setAttribute({visible: true});
+            }
+            document.getElementById('esc7CorrectoMsg').textContent = 'Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3);
+            let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
+            modal.show();
+        } else if (!isNaN(userDeltaVal)) {
+            esc7DeltaVal.classList.add('esc7-input--error');
         }
-        let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
-        modal.show();
     }
-    if (tipo === 'cap' && correctCap) {
-        if (labelDeltaCap) {
-            labelDeltaCap.setPosition(JXG.COORDS_BY_USER, [v2 + 0.2, (c1 + c2) / 2]);
-            labelDeltaCap.setText('Δ Capacidad = ' + realDeltaCap.toFixed(3));
-            labelDeltaCap.setAttribute({visible: true});
+    if (tipo === 'cap') {
+        if (correctCap) {
+            esc7DeltaCap.classList.add('esc7-input--success');
+            esc7BtnCap.innerHTML = '✓ Validado';
+            esc7BtnCap.disabled = true;
+            esc7BtnCap.classList.replace('btn-success', 'btn-outline-success');
+            if (labelDeltaCap) {
+                labelDeltaCap.setPosition(JXG.COORDS_BY_USER, [v2 + 0.2, (c1 + c2) / 2]);
+                labelDeltaCap.setText('Δ Capacidad = ' + realDeltaCap.toFixed(3));
+                labelDeltaCap.setAttribute({visible: true});
+            }
+            document.getElementById('esc7CorrectoMsg').textContent = 'Δ Capacidad = ' + realDeltaCap.toFixed(3);
+            let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
+            modal.show();
+        } else if (!isNaN(userDeltaCap)) {
+            esc7DeltaCap.classList.add('esc7-input--error');
         }
-        let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
-        modal.show();
     }
 }
 
@@ -1402,6 +1469,8 @@ const ESCENARIOS = {
             boton3.disabled = false;
             initBoard7();
             actualizarEsc7();
+            aplicarColoresEsc7(esc7DimActual);
+            document.getElementById('esc7-controls').className = 'dim-' + esc7DimActual;
             sincronizarAlturaGrafica7();
         }
     }
@@ -3109,6 +3178,14 @@ esc7BtnReset.addEventListener('click', function () {
     esc7Val2.value = '';
     esc7DeltaVal.value = '';
     esc7DeltaCap.value = '';
+    esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+    esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+    esc7BtnVal.innerHTML = 'Validar';
+    esc7BtnVal.disabled = false;
+    esc7BtnVal.classList.replace('btn-outline-success', 'btn-success');
+    esc7BtnCap.innerHTML = 'Validar';
+    esc7BtnCap.disabled = false;
+    esc7BtnCap.classList.replace('btn-outline-success', 'btn-success');
     if (labelDeltaVal) labelDeltaVal.setAttribute({visible: false});
     if (labelDeltaCap) labelDeltaCap.setAttribute({visible: false});
     esc7IncluirPeces.checked = false;
@@ -3118,6 +3195,8 @@ esc7BtnReset.addEventListener('click', function () {
     if (fishPoint7) fishPoint7.setAttribute({visible: false});
     if (fishLineH7) fishLineH7.setAttribute({visible: false});
     actualizarEsc7();
+    aplicarColoresEsc7(esc7DimActual);
+    document.getElementById('esc7-controls').className = 'dim-' + esc7DimActual;
 });
 esc7IncluirPeces.addEventListener('change', verificarFish7);
 esc7FishCount.addEventListener('input', verificarFish7);
@@ -3136,6 +3215,14 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 
         esc7DeltaVal.value = '';
         esc7DeltaCap.value = '';
+        esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+        esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+        esc7BtnVal.innerHTML = 'Validar';
+        esc7BtnVal.disabled = false;
+        esc7BtnVal.classList.replace('btn-outline-success', 'btn-success');
+        esc7BtnCap.innerHTML = 'Validar';
+        esc7BtnCap.disabled = false;
+        esc7BtnCap.classList.replace('btn-outline-success', 'btn-success');
         esc7IncluirPeces.checked = false;
         esc7FishCount.value = '';
         esc7FishSize.value = '';
@@ -3143,6 +3230,8 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
         if (fishPoint7) fishPoint7.setAttribute({visible: false});
         if (fishLineH7) fishLineH7.setAttribute({visible: false});
         actualizarEsc7();
+        aplicarColoresEsc7(esc7DimActual);
+        document.getElementById('esc7-controls').className = 'dim-' + esc7DimActual;
     });
 });
 
