@@ -51,6 +51,7 @@ Simula un sistema de bombeo de agua con energía solar. El estanque se renderiza
 
 - Las burbujas desaparecen al alcanzar `y = h * 0.6`
 - El sol se ubica en la esquina superior izquierda; su brillo y tamaño escalan con `V / 12`
+- **Cielo dinámico** — Gradiente día/noche según voltaje: noche (0V, azul oscuro + estrellas), amanecer (4–6V, tonos cálidos), día (12V, azul brillante)
 - Cable blanco discontinuo conecta panel solar con bomba
 
 ### Zoom y Paneo (Escenarios 1–5)

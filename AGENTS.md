@@ -74,18 +74,22 @@ Open `index.html` in any browser. No build or server required.
 - Solar panel image (`img/panel_solar.png`) and pump image (`img/bomba_agua.png`)
 - Water level at 50% of canvas height; shore starts at `w * 0.6`
 - Sun brightness, bubble size/speed vary with voltage
+- **Cielo dinámico** — Gradiente interpolado con `lerpC()` entre 3 zonas: noche (0V, azul oscuro + 40 estrellas), amanecer/atardecer (4–6V, tonos cálidos), día (12V, azul brillante). Sol con efecto de recorte sobre el fondo
+- **Burbujas** — `ParticulaAgua` spawn rate controlado por `bubbleFrameCounter` independiente del frame loop, radio 8–16
 - **Pump states:**
   - `V < 4V`: Low current, weak bubbles (1 per frame)
   - `4V ≤ V ≤ 6V`: Optimal range, green status
   - `V > 6V`: Red pulsing glow + pump vibration
   - `V > 10V`: Pump broken — shows `img/bomba_agua_issue.png`, no bubbles, no glow, no vibration
+  - En esc5: también se rompe si `I >= 4` (independientemente del voltaje)
 - Red glow: radial gradient with pulsing alpha (0.45±0.2), radius `pumpW * 0.35`
 - Vibration: ±3px sinusoidal offset on pump image position
-- Bubbles (`ParticulaAgua`): spawned from pump location, size/speed scale with voltage, fewer in low current
+- **Bubbles** (`ParticulaAgua`): spawned from pump location, size/speed scale with voltage, fewer in low current
 - Canvas buffer: fixed 1600×800, CSS `width: 100%` for retina sharpness
 - Estanque canvas uses class `canvas--estanque` → aspect-ratio `3 / 2` (vs `2 / 1` for Pecera)
 - Fish flee pump when `V > 6` (`velMax=3`)
 - Fish flee cursor/touch within 200px radius (`velMax=4`)
+- Fish padding: `paddingIzq` reducido a `canvas.width * 0.07` (peces nadan más cerca del borde izquierdo)
 
 ### Estanque + Gráfica (Escenario 4)
 - Same as Estanque Sustentable with added JSXGraph plotting I vs V curve
@@ -108,6 +112,7 @@ Open `index.html` in any browser. No build or server required.
   - Checkbox in HTML controls, code prompted once via modal
   - Implemented as `curve` with `closedCurve: true` (no vertices, no touch interference)
 - **Fish flee**: `V > 6` **or** `I > 2` (`velMax=3`) — since current depends on slope m, fish flee when I exceeds 2 regardless of voltage
+- **Pump broken**: `V > 10` **or** `I >= 4` (whichever comes first)
 
 ### Incremento de Capacidad (Escenario 7)
 - Fixed dimensions: L=19, A=18, H=21 (cm/units)

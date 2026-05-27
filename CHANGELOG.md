@@ -17,6 +17,10 @@
 - **Canvas `canvas--estanque`** — Clase que cambia aspect-ratio a 3/2 para escenarios de estanque
 - **`getCorriente()` para esc5** — Detecta `escenarioActual === 5` y calcula `I = m × V` en vez de `V/R`
 - **Burbujas más grandes** — Radio aumentado de 3–6 a 8–16
+- **Cielo dinámico día/noche** — Gradiente interpolado con `lerpC()` entre 3 zonas (noche/amanecer/día) según voltaje; 40 estrellas generadas en `initPecesEstanque()`; sol con efecto de recorte sobre el fondo
+- **`bubbleFrameCounter`** — Control independiente de generación de burbujas
+- **`pumpBroken` en esc5** — También se rompe si `I >= 4` (no solo `V > 10`)
+- **`pez.paddingIzq` reducido** — De `canvas.width * 0.15` a `0.07` (peces más cerca del borde)
 - **Navegación reordenada** — Orden `[1, 3, 6, 7, 2, 4, 5]`
 - **Códigos intercambiados** — esc6='incremento', esc7='estanque' para flujo intuitivo
 
