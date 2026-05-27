@@ -1,10 +1,11 @@
 # Pecera — Simulador de Acuario y Estanque Sustentable
 
-Simulador interactivo de pecera y sistema de bombeo solar con visualización en canvas (1600×800 fijo) y gráficos JSXGraph.
+Simulador interactivo de pecera y sistema de bombeo solar con visualización en canvas (1600×800 fijo), gráficos JSXGraph, y tanque 3D con Three.js.
+Incluye una **landing page** (`landing.html`) con un pez neon tetra 3D interactivo como héroe.
 
 ## Cómo ejecutar
 
-Abrir `index.html` en cualquier navegador. No requiere servidor ni build.
+Abrir `landing.html` para la página de presentación, o `index.html` para el simulador directamente. No requiere servidor ni build.
 
 ## Escenarios
 
@@ -98,9 +99,22 @@ Pecera 3D interactiva usando Three.js con controles de largo, ancho y alto en ti
 
 **Controles:** sliders de largo, ancho, alto, botón reiniciar, collapses de tablas dimensionales
 
+### Incremento de Capacidad (Escenario 7)
+
+Herramienta educativa que relaciona dimensiones fijas (L=19, A=18, H=21) con la capacidad del estanque. Tres tabs (Ancho, Alto, Largo) determinan qué dimensión es variable y cuáles son fijas como factor de capacidad.
+
+- **Factor de capacidad** = producto de las dos dimensiones fijas / 1000 (Ancho: 0.399, Alto: 0.342, Largo: 0.378)
+- **Capacidad₁ = Valor₁ × factor**, **Capacidad₂ = Valor₂ × factor** (3 decimales)
+- **Tabla vertical** con 6 filas: Val₁, Val₂, Cap₁, Cap₂, Δ dimensión, Δ capacidad
+- **Validación** por botón individual (ΔVal y ΔCap), tolerancia ±0.01, muestra modal Bootstrap al acertar
+- **Gráfica JSXGraph** con línea de referencia dinámica, segmento horizontal (azul), vertical (rojo), tres puntos rojos, zoom sin límites
+- **Modo peces opcional** — checkbox "Incluir peces" para calcular LA = cantidad × tamaño × 3, punto naranja y línea azul discontinua en la gráfica
+
+**Controles:** tabs Ancho/Alto/Largo, inputs Val₁/Val₂, botones Validar, checkbox peces, Reiniciar
+
 ## Navegación
 
-La navegación entre escenarios se hace con los botones "← Atrás" y "Continuar →", o haciendo clic directo en los botones del grupo superior.
+La navegación entre escenarios se hace con el botón "Siguiente Escenario" en la barra inferior, o haciendo clic directo en los tabs superiores.
 Cada escenario requiere su código secreto la **primera vez** que se visita, sin importar la dirección (adelante, atrás o clic directo).
 Una vez ingresado, el escenario queda desbloqueado por el resto de la sesión.
 Los códigos no distinguen mayúsculas, acentos ni signos de puntuación (ej: `"Dimensiónes!"` funciona como `"dimensiones"`).
@@ -108,15 +122,19 @@ El escenario inicial (Pecera) está desbloqueado por defecto.
 
 | Desde | Hacia | Código |
 |-------|-------|--------|
-| Pecera | Pecera + Litros | `litros` |
-| Pecera + Litros | Estanque Sustentable | `estanque` |
-| Estanque Sustentable | Estanque + Gráfica | `grafica` |
-| Estanque + Gráfica | Estanque + Pendiente Variable | `pendiente` |
-| Estanque + Pendiente Variable | Dimensiones 3D | `dimensiones` |
+| 1 (Pecera) | 3 (Pecera + Litros) | `litros` |
+| 3 (Pecera + Litros) | 6 (Dimensiones 3D) | `capacidad` |
+| 6 (Dimensiones 3D) | 7 (Inc. Capacidad) | `incremento` |
+| 7 (Inc. Capacidad) | 2 (Estanque) | `estanque` |
+| 2 (Estanque) | 4 (Estanque + Gráfica) | `grafica` |
+| 4 (E. + Gráfica) | 5 (E. + Pendiente) | `pendiente` |
+| 5 (E. + Pendiente) | 1 (Pecera, bypassed) | `incremento` |
+| Escenario 5 | Franjas de colores | `franjas` |
 
-> El orden de navegación es: Pecera → Pecera + Litros → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → Dimensiones 3D.
+> El orden de navegación es: Pecera → Pecera + Litros → Dimensiones 3D → Incremento de Capacidad → Estanque Sustentable → Estanque + Gráfica → Estanque + Pendiente Variable → (vuelve a Pecera).
 >
-> En el Escenario 5, el checkbox "Mostrar franjas" requiere el código `"franjas"` (solo una vez por sesión) para activar las bandas de voltaje en la gráfica.
+> El código `"franjas"` activa el checkbox "Mostrar franjas" en el Escenario 5 (solo una vez por sesión).
+> Los códigos entre escenarios se obtienen del escenario **anterior** en el orden de navegación.
 
 ## Clases
 
@@ -141,15 +159,24 @@ El escenario inicial (Pecera) está desbloqueado por defecto.
 
 ```
 Pecera/
-├── index.html         # Punto de entrada (escenarios, controles, canvas, gráficos)
-├── js/script.js       # Lógica principal (clases, animación, eventos, escenario 3D)
-├── js/three.min.js    # Three.js para escenario Dimensiones 3D
-├── js/OrbitControls.js # Controles de cámara 3D
+├── index.html         # Simulador principal (escenarios, controles, canvas, gráficos)
+├── landing.html       # Landing page con Three.js 3D neon tetra interactivo
+├── js/
+│   ├── script.js      # Lógica principal (clases, animación, eventos, escenario 3D)
+│   ├── landing.js     # Three.js interactive neon tetra para landing page
+│   ├── three.min.js   # Three.js para escenario Dimensiones 3D y landing
+│   └── OrbitControls.js # Controles de cámara 3D
 ├── css/
-│   ├── style.css      # Estilos
+│   ├── style.css      # Estilos del simulador (Material Design)
+│   ├── landing.css    # Tema neón, glassmorphism, bento grid para landing page
 │   ├── bootstrap.min.css
 │   └── jsxgraph.css
-├── img/               # Sprites
+├── img/               # Sprites y screenshots
+│   ├── screenshot-pecera.jpg
+│   ├── screenshot-estanque.jpg
+│   ├── screenshot-grafica.jpg
+│   ├── screenshot-3d.jpg
+│   ├── incremento.jpg
 │   ├── pez-neon_todos.png
 │   ├── pecera.png
 │   ├── panel_solar.png
@@ -178,6 +205,7 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.8.0 | Capacidad Dinámica — tabla comparativa acordeón, highlights por pares, bloqueo de sliders, checkboxes, capacidad en litros, cola de pez ajustada |
 | v1.9.0 | Códigos insensibles a acentos/puntuación, navegación hacia atrás protegida, collapses en columna derecha, `dimensiones` movido a escenario 5 |
 | v1.10.0 | Zoom y paneo en canvas 2D (scroll + clic sostenido, pinch + arrastre táctil 2 dedos), coordenadas de cursor corregidas con zoom |
+| v1.11.0 | Landing page con Three.js 3D, Escenario 7 (Incremento de Capacidad), toast notifications, rediseño UI Material Design, tooltips, nav bar inferior, burbujas más grandes, `getCorriente()` para esc5, navegación reordenada |
 
 ## Historial de cambios
 

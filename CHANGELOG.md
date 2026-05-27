@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.11.0 (no publicado)
+
+### Features
+- **Landing page** — `landing.html` con Three.js 3D neon tetra interactivo, partículas bioluminiscentes, glow, mouse/touch follow
+- **Landing page CSS** — Tema neón, glassmorphism, bento grid, phone mockups con screenshots reales
+- **Landing page responsive** — Adaptable a móvil con `overflow-x: hidden`, gaps reducidos, `hide-mobile`
+- **Escenario 7 (Incremento de Capacidad)** — Nuevo escenario que relaciona dimensiones (L=19, A=18, H=21) con capacidad mediante tabs (Ancho/Alto/Largo), tabla vertical con Val₁, Val₂, Cap₁, Cap₂, Δ, y botones Validar con tolerancia ±0.01
+- **Gráfica Esc7** — Línea de referencia, segmentos horizontal/vertical, tres puntos rojos, zoom sin límites, `insertTicks: true`, modo peces opcional con punto naranja y línea azul discontinua
+- **Toast notifications** — `mostrarToast()` reemplaza todos los `alert()` con tipos success/error/warning/info, animación slide-in/out, posicionado en `bottom: 80px; right: 16px`
+- **Rediseño UI Material Design** — Variables CSS `--md-*`, `.card-control` con sombras y bordes redondeados, sliders personalizados con track degradado y thumb de 20px, botones con sombras Material, efecto ripple
+- **Scenario Tabs** — Clases `.scenario-tab--active`/`.scenario-tab--locked` (reemplazan Bootstrap), badges de candado, labels cortos/largos responsive
+- **Tooltips** — Atributo `data-tooltip` con tooltip nativo oscuro sobre inputs/botones
+- **Modal de código secreto** — Estilo Material, `.input--error` con shake animation en código incorrecto
+- **Navigation bar inferior** — `#navWrap` sticky al fondo con `backdrop-filter: blur(12px)`, botón "Siguiente Escenario"
+- **Canvas `canvas--estanque`** — Clase que cambia aspect-ratio a 3/2 para escenarios de estanque
+- **`getCorriente()` para esc5** — Detecta `escenarioActual === 5` y calcula `I = m × V` en vez de `V/R`
+- **Burbujas más grandes** — Radio aumentado de 3–6 a 8–16
+- **Navegación reordenada** — Orden `[1, 3, 6, 7, 2, 4, 5]`
+- **Códigos intercambiados** — esc6='incremento', esc7='estanque' para flujo intuitivo
+
+### Fix
+- Mensajes de voltaje/corriente actualizados para claridad
+- Scroll horizontal en landing page para móvil corregido con `overflow-x: hidden` en `html`
+
+### Internal
+- Splash screen removido de landing page
+- `sincronizarAlturaGrafica7()` añadida al resize listener
+- `contenedorGrafica` añadido para layout de gráficas
+- Código refactorizado para mejor legibilidad
+
+### Documentation
+- Actualización de AGENTS.md con UI/UX v1.11.0, toast, nav, tooltips, modals
+
 ## 1.10.0 (no publicado)
 
 ### Features
