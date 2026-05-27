@@ -387,6 +387,15 @@ input[type="range"]::-moz-range-thumb {
     min-height: 20px;
     height: 10px;
     border-radius: 5px;
+    transition: opacity 0.3s ease;
+}
+.esc6-sliders input[type="range"]:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+.esc6-sliders input[type="range"]:disabled::-webkit-slider-thumb {
+    background: #666;
+    cursor: not-allowed;
 }
 .esc6-sliders .btn {
     min-height: 26px;
@@ -406,8 +415,10 @@ input[type="range"]::-moz-range-thumb {
     min-width: 50px;
     height: 28px;
     font-size: 13px;
-    border-radius: 4px;
-    border: 1px solid var(--md-border);
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    padding: 0 2px;
 }
 #esc6-tabla-section .card {
     border-radius: 0 0 var(--md-radius-sm) var(--md-radius-sm);
@@ -441,6 +452,16 @@ input[type="range"]::-moz-range-thumb {
 #esc6-cap-dinamica-section .nav-pills .nav-link.active {
     background: var(--md-primary) !important;
     color: #fff;
+}
+#esc6-cap-dinamica-section .form-control {
+    width: 100%;
+    min-width: 40px;
+    height: 28px;
+    font-size: 13px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    padding: 0 2px;
 }
 
 #tablaCapDina td:nth-child(4),
@@ -546,44 +567,7 @@ input[type="range"]::-moz-range-thumb {
     transform: translateX(-50%) scale(1);
 }
 
-/* ── Onboarding banner ── */
-.onboarding {
-    background: linear-gradient(135deg, var(--md-primary), var(--md-primary-light));
-    color: #fff;
-    border-radius: var(--md-radius);
-    padding: 32px;
-    text-align: center;
-    margin-bottom: 16px;
-    box-shadow: var(--md-shadow-lg);
-    animation: fadeIn 0.4s ease;
-}
-.onboarding h2 {
-    margin: 0 0 8px;
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-.onboarding p {
-    margin: 0 0 20px;
-    font-size: 0.9375rem;
-    opacity: 0.9;
-    line-height: 1.5;
-}
-.onboarding .btn {
-    background: #fff;
-    color: var(--md-primary);
-    font-weight: 600;
-    padding: 10px 32px;
-    border: none;
-}
-.onboarding .btn:hover {
-    background: rgba(255,255,255,0.9);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
 
 /* ── Modal (secret code) ── */
 .modal-content {
@@ -756,28 +740,8 @@ input[type="range"]::-moz-range-thumb {
     .esc6-sliders p { font-size: 9px; }
     .esc6-sliders input[type="range"] { min-height: 16px; height: 16px; }
 
-    .onboarding { padding: 24px 16px; }
-    .onboarding h2 { font-size: 1.1rem; }
-}
-
-/* ── Small phones (<=400px) ── */
-@media (max-width: 400px) {
-    .scenario-tab {
-        font-size: 0.6rem;
-        padding: 6px 10px;
-        min-height: 34px;
-    }
-    #box { min-height: 100px; }
-    #navWrap .btn {
-        font-size: 0.75rem;
-        padding: 6px 10px;
-        min-height: 36px;
-    }
-}
-
-/* ── Tablet (577px-768px) ── */
-@media (min-width: 577px) and (max-width: 768px) {
-    .scenario-tab { font-size: 0.7rem; padding: 6px 10px; }
     #box { min-height: 200px; }
     #box4, #box5, #box7 { min-height: 160px; }
 }
+
+

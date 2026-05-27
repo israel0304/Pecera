@@ -48,217 +48,50 @@
   bottomLight.position.set(0, -1.5, 0);
   scene.add(bottomLight);
 
-  // ── Create Realistic Fish ──
+  // ── Create Fish (matching escenario 6 crearPez3D) ──
   const fishGroup = new THREE.Group();
 
-  // Body: custom geometry for elongated tetra shape
-  function createBody() {
-    const segments = 24;
-    const rings = 16;
-    const geo = new THREE.BufferGeometry();
-    const positions = [];
-    const normals = [];
-    const uvs = [];
-    const colors = [];
-    const indices = [];
+  // Body with vertex colors for two-tone neon pattern
+  let bodyGeo = new THREE.SphereGeometry(0.5, 14, 10);
+  bodyGeo.scale(1.8, 0.6, 0.7);
 
-    const len = 1.6;
-    const maxR = 0.32;
-
-    for (let j = 0; j <= rings; j++) {
-      const t = j / rings;
-      const theta = t * Math.PI;
-      const sinT = Math.sin(theta);
-      const cosT = Math.cos(theta);
-
-      // Body profile: elongated oval
-      const xPos = -len / 2 + t * len;
-      let r = maxR * Math.sin(theta) * Math.sin(theta);
-      if (r < 0.01) r = 0.01;
-
-      for (let i = 0; i <= segments; i++) {
-        const phi = (i / segments) * Math.PI * 2;
-        const x = xPos;
-        const y = r * Math.sin(phi) * 0.7;
-        const z = r * Math.cos(phi);
-
-        positions.push(x, y, z);
-
-        const nx = xPos > len / 4 ? 0.3 : 0;
-        const ny = y;
-        const nz = z;
-        const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-        normals.push(nx / nLen, ny / nLen, nz / nLen);
-
-        uvs.push(i / segments, j / rings);
-
-        // Vertex colors: neon stripe + red belly
-        const yAbs = Math.abs(y);
-        const zAbs = Math.abs(z);
-        const distFromCenter = Math.sqrt(y * y + z * z) / (maxR || 1);
-
-        if (y > -0.05 && y < 0.15 && zAbs > 0.05 && distFromCenter > 0.4) {
-          // Cyan stripe
-          colors.push(0, 0.95, 1);
-        } else if (y < -0.02 && zAbs > 0.05 && distFromCenter > 0.35) {
-          // Red belly
-          colors.push(1, 0.2, 0.2);
-        } else {
-          // Dark body
-          const bright = 0.12 + distFromCenter * 0.15;
-          colors.push(bright * 1.2, bright * 1.5, bright * 1.8);
-        }
-      }
+  let pos = bodyGeo.attributes.position;
+  let cArr = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    let y = pos.getY(i);
+    let zAbs = Math.abs(pos.getZ(i));
+    if (y > 0.05 && y < 0.2 && zAbs > 0.08) {
+      cArr[i * 3] = 0; cArr[i * 3 + 1] = 0.83; cArr[i * 3 + 2] = 1;
+    } else if (y < -0.05 && zAbs > 0.08) {
+      cArr[i * 3] = 1; cArr[i * 3 + 1] = 0.27; cArr[i * 3 + 2] = 0.27;
+    } else {
+      cArr[i * 3] = 0.17; cArr[i * 3 + 1] = 0.24; cArr[i * 3 + 2] = 0.31;
     }
-
-    for (let j = 0; j < rings; j++) {
-      for (let i = 0; i < segments; i++) {
-        const a = j * (segments + 1) + i;
-        const b = a + segments + 1;
-        indices.push(a, b, a + 1);
-        indices.push(b, b + 1, a + 1);
-      }
-    }
-
-    geo.setIndex(indices);
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    geo.computeVertexNormals();
-
-    return geo;
   }
+  bodyGeo.setAttribute('color', new THREE.BufferAttribute(cArr, 3));
 
-  const bodyMat = new THREE.MeshPhysicalMaterial({
-    vertexColors: true,
-    roughness: 0.35,
-    metalness: 0.3,
-    clearcoat: 0.4,
-    clearcoatRoughness: 0.3,
-    envMapIntensity: 0.6,
-    side: THREE.DoubleSide
-  });
-
-  const body = new THREE.Mesh(createBody(), bodyMat);
-  body.position.x = 0.2;
+  let body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 25 }));
+  body.position.x = 0.3;
   fishGroup.add(body);
 
-  // Tail fin (forked)
-  function createTail() {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0);
-    shape.quadraticCurveTo(-0.3, -0.4, -0.7, -0.35);
-    shape.quadraticCurveTo(-0.5, -0.15, -0.3, 0);
-    shape.quadraticCurveTo(-0.5, 0.15, -0.7, 0.35);
-    shape.quadraticCurveTo(-0.3, 0.4, 0, 0);
-
-    const geo = new THREE.ShapeGeometry(shape);
-    return geo;
-  }
-
-  const tailMat = new THREE.MeshPhysicalMaterial({
-    color: 0x1a2638,
-    transparent: true,
-    opacity: 0.75,
-    roughness: 0.6,
-    metalness: 0.1,
-    side: THREE.DoubleSide
-  });
-  const tail = new THREE.Mesh(createTail(), tailMat);
-  tail.position.x = -0.6;
+  // Tail (dark translucent)
+  let tailShape = new THREE.Shape();
+  tailShape.moveTo(0, 0); tailShape.lineTo(-0.5, -0.3); tailShape.lineTo(-0.5, 0.3); tailShape.closePath();
+  let tail = new THREE.Mesh(new THREE.ShapeGeometry(tailShape), new THREE.MeshPhongMaterial({ color: 0x2C3E50, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
+  tail.position.x = -0.7;
   fishGroup.add(tail);
 
-  // Dorsal fin
-  function createDorsal() {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0);
-    shape.quadraticCurveTo(0.05, 0.25, -0.1, 0.4);
-    shape.quadraticCurveTo(-0.15, 0.3, -0.2, 0.1);
-    shape.quadraticCurveTo(-0.1, 0.05, 0, 0);
-    return new THREE.ShapeGeometry(shape);
-  }
-
-  const finMat = new THREE.MeshPhysicalMaterial({
-    color: 0x1a3050,
-    transparent: true,
-    opacity: 0.5,
-    roughness: 0.8,
-    side: THREE.DoubleSide
-  });
-  const dorsal = new THREE.Mesh(createDorsal(), finMat);
-  dorsal.position.set(0.1, 0.3, 0);
-  fishGroup.add(dorsal);
-
-  // Pectoral fins
-  function createPectoral() {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0);
-    shape.quadraticCurveTo(0.1, -0.12, 0.2, -0.08);
-    shape.quadraticCurveTo(0.1, -0.02, 0, 0);
-    return new THREE.ShapeGeometry(shape);
-  }
-
-  const pMat = new THREE.MeshPhysicalMaterial({
-    color: 0x1a3050,
-    transparent: true,
-    opacity: 0.45,
-    roughness: 0.7,
-    side: THREE.DoubleSide
-  });
-  const pLeft = new THREE.Mesh(createPectoral(), pMat);
-  pLeft.position.set(0.4, -0.05, -0.25);
-  fishGroup.add(pLeft);
-  const pRight = pLeft.clone();
-  pRight.position.z = 0.25;
-  fishGroup.add(pRight);
-
-  // Eyes
-  const eyeMat = new THREE.MeshPhysicalMaterial({
-    color: 0x111111,
-    roughness: 0.1,
-    metalness: 0.8,
-    envMapIntensity: 1
-  });
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), eyeMat);
-  eye.position.set(0.75, 0.08, 0.2);
+  // Eyes (black)
+  let eyeMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
+  let eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), eyeMat);
+  eye.position.set(0.9, 0.1, 0.3);
   fishGroup.add(eye);
-  const eye2 = eye.clone();
-  eye2.position.z = -0.2;
+  let eye2 = eye.clone();
+  eye2.position.z = -0.3;
   fishGroup.add(eye2);
 
-  // Neon glow aura (emissive)
-  const glowMat = new THREE.MeshBasicMaterial({
-    color: 0x00f3ff,
-    transparent: true,
-    opacity: 0.08,
-    side: THREE.DoubleSide
-  });
-  const glowBody = new THREE.Mesh(createBody(), glowMat);
-  glowBody.scale.set(1.15, 1.15, 1.15);
-  glowBody.position.x = 0.2;
-  fishGroup.add(glowBody);
-
-  // Tail glow
-  const tailGlowShape = new THREE.Shape();
-  tailGlowShape.moveTo(0, 0);
-  tailGlowShape.quadraticCurveTo(-0.4, -0.5, -0.9, -0.45);
-  tailGlowShape.quadraticCurveTo(-0.6, -0.2, -0.4, 0);
-  tailGlowShape.quadraticCurveTo(-0.6, 0.2, -0.9, 0.45);
-  tailGlowShape.quadraticCurveTo(-0.4, 0.5, 0, 0);
-  const tailGlowGeo = new THREE.ShapeGeometry(tailGlowShape);
-  const tailGlowMat = new THREE.MeshBasicMaterial({
-    color: 0x00f3ff,
-    transparent: true,
-    opacity: 0.05,
-    side: THREE.DoubleSide
-  });
-  const tailGlow = new THREE.Mesh(tailGlowGeo, tailGlowMat);
-  tailGlow.position.x = -0.6;
-  fishGroup.add(tailGlow);
-
-  // Scale and position the fish
-  fishGroup.scale.set(0.6, 0.6, 0.6);
+  // Scale for hero presentation
+  fishGroup.scale.set(0.4, 0.4, 0.4);
   fishGroup.position.y = 0.2;
 
   scene.add(fishGroup);
@@ -294,13 +127,14 @@
   const particles = new THREE.Points(particleGeo, particleMat);
   scene.add(particles);
 
-  // ── Mouse Tracking ──
+  // ── Mouse & Touch Tracking ──
   let mouseX = 0;
   let mouseY = 0;
   let targetRotY = 0;
   let targetRotX = 0;
   let currentRotY = 0;
   let currentRotX = 0;
+  let touchInit = false;
 
   document.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
@@ -310,16 +144,20 @@
     targetRotX = mouseY * 0.2;
   });
 
-  canvas.addEventListener('touchmove', (e) => {
+  function onTouch(e) {
     if (e.touches.length === 1) {
+      if (!touchInit) touchInit = true;
       const rect = canvas.getBoundingClientRect();
       const t = e.touches[0];
       mouseX = ((t.clientX - rect.left) / rect.width) * 2 - 1;
       mouseY = -((t.clientY - rect.top) / rect.height) * 2 + 1;
-      targetRotY = mouseX * 0.5;
-      targetRotX = mouseY * 0.2;
+      targetRotY = mouseX * 1.0;
+      targetRotX = mouseY * 0.5;
     }
-  }, { passive: true });
+  }
+
+  canvas.addEventListener('touchstart', onTouch, { passive: true });
+  canvas.addEventListener('touchmove', onTouch, { passive: true });
 
   // ── Animation Loop ──
   let time = 0;
@@ -332,19 +170,14 @@
     fishGroup.position.y = 0.2 + Math.sin(time * 0.8) * 0.05;
     fishGroup.rotation.z = Math.sin(time * 0.6) * 0.02;
 
-    // Smooth mouse follow
-    currentRotY += (targetRotY - currentRotY) * 0.05;
-    currentRotX += (targetRotX - currentRotX) * 0.05;
+    // Smooth mouse follow (faster lerp for touch)
+    currentRotY += (targetRotY - currentRotY) * 0.1;
+    currentRotX += (targetRotX - currentRotX) * 0.1;
     fishGroup.rotation.y = currentRotY;
     fishGroup.rotation.x = currentRotX * 0.5;
 
     // Tail idle wag
-    tail.rotation.y = Math.sin(time * 3) * 0.15;
-    tailGlow.rotation.y = tail.rotation.y;
-
-    // Pulse glow opacity
-    glowBody.material.opacity = 0.06 + Math.sin(time * 1.2) * 0.03;
-    tailGlow.material.opacity = 0.04 + Math.sin(time * 1.2 + 0.5) * 0.025;
+    if (tail) tail.rotation.y = Math.sin(time * 3) * 0.3;
 
     // Belly light pulse
     bottomLight.intensity = 0.5 + Math.sin(time * 0.7) * 0.2;
@@ -379,7 +212,5 @@
 
   // ── Resize ──
   window.addEventListener('resize', resize);
-
-  // Initial resize
   resize();
 })();

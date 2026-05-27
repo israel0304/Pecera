@@ -480,11 +480,6 @@ function mostrarToast(mensaje, tipo, duracion) {
     }, duracion);
 }
 
-function cerrarOnboarding() {
-    let banner = document.getElementById('onboardingBanner');
-    if (banner) banner.style.display = 'none';
-}
-
 function alerta() {
     mostrarToast("Precauci\u00f3n: Todos los peces van a morir", 'warning');
     for (i = 0; i < peces.length; i++) {

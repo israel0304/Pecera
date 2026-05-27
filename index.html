@@ -16,11 +16,7 @@
         <!-- Scenario Tabs -->
         <div class="row mb-1">
             <div class="col-md">
-                <div id="onboardingBanner" class="onboarding">
-                    <h2>Bienvenido a Pecera</h2>
-                    <p>Explora 7 escenarios interactivos sobre acuarios, estanques solares y capacidad. Cada escenario se desbloquea con códigos secretos.</p>
-                    <button type="button" class="btn" onclick="cerrarOnboarding()">Comenzar &rarr;</button>
-                </div>
+
                 <div class="btn-group scenario-tabs" role="group">
                     <button type="button" id="esc1-btn" class="scenario-tab scenario-tab--active">
                         Pecera <span class="tab-badge"></span>
@@ -166,7 +162,7 @@
                             <div class="col-md">
                                 <p>Temperatura: <span id="tempVal">23</span>&deg;C</p>
                                 <div class="d-flex align-items-center gap-2">
-                                    <input type="range" min="0" max="50" value="23" id="temp" class="w-100" data-tooltip="Rango &oacute;ptimo: 22-28&deg;C">
+                                    <input type="range" min="0" max="50" value="23" id="temp" class="w-100" >
                                     <button id="playTemp" class="btn btn-success btn-sm" data-tooltip="Animar temperatura autom&aacute;ticamente" style="flex-shrink:0">&#9654;</button>
                                 </div>
                             </div>

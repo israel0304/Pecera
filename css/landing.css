@@ -1,7 +1,7 @@
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -41,6 +41,48 @@ h3 { font-size: 1.25rem; font-weight: 600; }
 .text-glow { text-shadow: 0 0 20px var(--primary-glow), 0 0 40px var(--primary-glow); }
 .text-center { text-align: center; }
 
+/* ── Splash Overlay ── */
+#splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  background: #08080b;
+}
+#splash-overlay.active {
+  display: block;
+}
+#splash-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+#splash-text {
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(1.2rem, 4vw, 2rem);
+  font-weight: 700;
+  text-shadow: 0 0 30px var(--primary-glow), 0 0 60px var(--primary-glow);
+  opacity: 0;
+  pointer-events: none;
+}
+#splashBlackout {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#splashBlackout.active {
+  pointer-events: auto;
+}
+
 /* ── Glass Panel ── */
 .glass {
   background: var(--glass);
@@ -69,6 +111,7 @@ h3 { font-size: 1.25rem; font-weight: 600; }
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .nav-logo {
@@ -78,7 +121,13 @@ h3 { font-size: 1.25rem; font-weight: 600; }
   text-decoration: none;
 }
 
-.nav-links { display: flex; gap: 8px; align-items: center; }
+.nav-links {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
 .nav-links a {
   color: var(--on-surface-variant);
   text-decoration: none;
@@ -116,6 +165,7 @@ h3 { font-size: 1.25rem; font-weight: 600; }
   width: 100%;
   height: 100%;
   display: block;
+  touch-action: pan-y;
 }
 
 .hero-overlay {
@@ -216,6 +266,8 @@ h3 { font-size: 1.25rem; font-weight: 600; }
   font-size: 0.75rem;
   opacity: 0.6;
   animation: bounce 2s infinite;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .scroll-indicator .arrow {
@@ -401,6 +453,7 @@ h3 { font-size: 1.25rem; font-weight: 600; }
   .btn { padding: 12px 24px; font-size: 0.875rem; min-height: 44px; }
   .phone-mockup { width: 100%; max-width: 280px; }
   .footer { flex-direction: column; text-align: center; }
+  .scroll-indicator { bottom: auto; top: 82%; }
 }
 
 /* ── Reduced Motion ── */

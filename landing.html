@@ -8,15 +8,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
   <meta name="description" content="Simulador interactivo de peceras y estanques. Aprende sobre capacidad, oxígeno, energía solar y más con visualización 2D y 3D.">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
+
+  <!-- ── Splash Overlay ── -->
+  <div id="splash-overlay">
+    <canvas id="splash-canvas"></canvas>
+    <div id="splash-text">Bienvenido a Pecera</div>
+    <div id="splashBlackout"></div>
+  </div>
 
   <!-- ── Nav ── -->
   <nav class="nav">
     <a href="#" class="nav-logo">Pecera</a>
     <div class="nav-links">
       <a href="#features">Características</a>
-      <a href="#screenshots">App</a>
+      <a href="#features">App</a>
       <a href="index.html" class="nav-cta">Abrir Simulador</a>
     </div>
   </nav>
@@ -46,10 +54,10 @@
       </div>
     </div>
 
-    <div class="scroll-indicator">
+    <a href="#features" class="scroll-indicator">
       <span>Descubre más</span>
       <div class="arrow"></div>
-    </div>
+    </a>
   </section>
 
   <!-- ── Features ── -->
@@ -195,6 +203,180 @@
     <div class="footer-copy">© 2026 Pecera. Hecho con 💙 y Three.js</div>
   </footer>
 
+  <script>
+  // ── Splash Screen ──
+  (function() {
+    const overlay = document.getElementById('splash-overlay');
+    const splashCanvas = document.getElementById('splash-canvas');
+    const splashText = document.getElementById('splash-text');
+    const blackout = document.getElementById('splashBlackout');
+    if (!overlay || !splashCanvas) return;
+
+    const ctx = splashCanvas.getContext('2d');
+    let W, H;
+    let aguaProgreso = 0;
+    let pezX = 0;
+    const pezYBase = 0;
+    let pezDireccion = 1;
+    let splashTime = 0;
+    let animando = false;
+    let splashResolve = null;
+    let fishImg = new Image();
+
+    function redim() {
+      W = splashCanvas.width = overlay.clientWidth;
+      H = splashCanvas.height = overlay.clientHeight;
+    }
+
+    function dibujarTanque() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Agua (llena desde abajo, 85% del alto del canvas)
+      const waterMaxH = H * 0.85;
+      const waterH = waterMaxH * aguaProgreso;
+      const waterY = H - waterH;
+      const grad = ctx.createLinearGradient(0, waterY, 0, H);
+      grad.addColorStop(0, 'rgba(0, 180, 255, 0.25)');
+      grad.addColorStop(0.5, 'rgba(0, 100, 220, 0.35)');
+      grad.addColorStop(1, 'rgba(0, 50, 180, 0.45)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, waterY, W, waterH);
+
+      // Olas en superficie
+      if (aguaProgreso > 0) {
+        ctx.beginPath();
+        ctx.moveTo(0, waterY);
+        for (let x = 0; x <= W; x += 4) {
+          const wave = Math.sin((x + splashTime * 40) * 0.03) * 3 + Math.sin((x + splashTime * 60) * 0.05) * 2;
+          ctx.lineTo(x, waterY + wave);
+        }
+        ctx.lineTo(W, waterY);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 150, 255, 0.15)';
+        ctx.fill();
+      }
+
+      // Burbujas
+      if (aguaProgreso > 0.2) {
+        for (let i = 0; i < 6; i++) {
+          const bx = W * (0.1 + 0.8 * Math.sin(i * 1.7 + splashTime * 0.5));
+          const by = H - aguaProgreso * waterMaxH * (0.2 + 0.8 * ((i * 0.3 + splashTime * 0.2) % 1));
+          ctx.beginPath();
+          ctx.arc(bx, by, 3 + Math.sin(i + splashTime) * 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(150, 220, 255, 0.3)';
+          ctx.fill();
+        }
+      }
+
+      // Borde sutil del acuario
+      ctx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, 0, W, H);
+
+      // Etiqueta PECERA
+      if (aguaProgreso < 0.98) {
+        ctx.fillStyle = 'rgba(0, 200, 255, 0.12)';
+        ctx.font = `bold ${Math.min(W * 0.08, 40)}px Montserrat, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PECERA', W / 2, H / 2);
+      }
+
+      // Pez
+      if (aguaProgreso > 0.1 && fishImg.complete && fishImg.naturalWidth > 0) {
+        const fishSize = Math.min(W, H) * 0.06;
+        const fishY = waterY + waterH * 0.4 + Math.sin(splashTime * 1.5) * 4;
+        ctx.save();
+        ctx.translate(pezX, fishY);
+        if (pezDireccion < 0) ctx.scale(-1, 1);
+        ctx.drawImage(fishImg, -fishSize / 2, -fishSize / 2, fishSize, fishSize);
+        ctx.restore();
+
+        // Glow sutil
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 243, 255, 0.25)';
+        ctx.shadowBlur = 8;
+        ctx.translate(pezX, fishY);
+        if (pezDireccion < 0) ctx.scale(-1, 1);
+        ctx.globalAlpha = 0.25;
+        ctx.drawImage(fishImg, -fishSize / 2, -fishSize / 2, fishSize, fishSize);
+        ctx.restore();
+      }
+    }
+
+    function animarSplash(resolve) {
+      animando = true;
+      splashResolve = resolve;
+      redim();
+      window.addEventListener('resize', redim);
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          gsap.to(splashText, {
+            opacity: 0,
+            duration: 0.8,
+            delay: 1.2,
+            onComplete: () => {
+              blackout.classList.add('active');
+              gsap.to(blackout, {
+                opacity: 1,
+                duration: 1,
+                onComplete: () => {
+                  animando = false;
+                  document.body.style.overflow = '';
+                  if (splashResolve) splashResolve();
+                }
+              });
+            }
+          });
+        }
+      });
+
+      tl.to({ val: 0 }, {
+        val: 1,
+        duration: 5,
+        ease: 'power2.inOut',
+        onUpdate: function() {
+          aguaProgreso = this.targets()[0].val;
+        }
+      });
+
+      splashText.style.opacity = '0';
+      gsap.to(splashText, {
+        opacity: 1,
+        duration: 0.8,
+        delay: 5
+      });
+
+      function loop() {
+        if (!animando) return;
+        splashTime += 0.016;
+        if (pezX > W * 0.8) pezDireccion = -1;
+        if (pezX < W * 0.2) pezDireccion = 1;
+        pezX += pezDireccion * 0.8;
+        dibujarTanque();
+        requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    // Interceptar clicks a index.html
+    document.querySelectorAll('a[href="index.html"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        if (animando) return;
+        document.body.style.overflow = 'hidden';
+        document.querySelector('.nav').style.display = 'none';
+        overlay.classList.add('active');
+        redim();
+        fishImg.src = 'img/pez-neon_todos.png';
+        animarSplash(() => {
+          window.location.href = 'index.html';
+        });
+      });
+    });
+  })();
+  </script>
   <script src="js/three.min.js"></script>
   <script src="js/landing.js"></script>
 </body>
