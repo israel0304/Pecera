@@ -1837,10 +1837,10 @@ function actualizarEscenario2() {
     if (escenarioActual === 5) {
         let vText, vColor, iText, iColor;
         if (V > 6) { vText = 'V: Voltaje Alto'; vColor = '#E67E22'; }
-        else if (V >= 4) { vText = 'V: Voltaje Optimo'; vColor = '#2ECC71'; }
+        else if (V >= 4) { vText = 'V: Voltaje Estable'; vColor = '#2ECC71'; }
         else { vText = 'V: Voltaje Bajo'; vColor = '#E74C3C'; }
         if (I > 2) { iText = 'I: Corriente Alta'; iColor = '#E67E22'; }
-        else if (I >= 1) { iText = 'I: Corriente Optima'; iColor = '#2ECC71'; }
+        else if (I >= 1) { iText = 'I: Corriente Estable'; iColor = '#2ECC71'; }
         else { iText = 'I: Corriente Baja'; iColor = '#E74C3C'; }
         let statusText5, statusColor5;
         if (pumpBroken) { statusText5 = 'Bomba descompuesta'; statusColor5 = '#E74C3C'; }
