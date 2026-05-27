@@ -156,8 +156,11 @@ Open `index.html` in any browser. No build or server required.
 - Free camera via OrbitControls (rotate, zoom, pan — touch compatible)
 - Local libraries: `js/three.min.js`, `js/OrbitControls.js`
 - Collapses (Dimensiones variables / Capacidad Dinámica) appear in a right-side column on PC (`col-md-5`), stacked on mobile
-- **Dimensiones variables collapse:** table with tabs (Ancho/Alto/Largo), rows with input + capacity (L), checkbox per row shows semi-transparent highlight volume in tank, different color per row (yellow/cyan/green/pink/purple/orange), dashed edges
-- **Capacidad Dinámica collapse:** accordion-locked with Dimensiones variables, two-column comparison table (Valor₁/Valor₂), capacity in liters, difference equation (▲/▼), checkbox per row shows paired highlight volumes in tank
+- **Dimensiones variables collapse:** table with tabs (Ancho/Alto/Largo), rows with input + capacity (L), wrapped in `.table-responsive`, checkbox per row shows semi-transparent highlight volume in tank, different color per row (yellow/cyan/green/pink/purple/orange), dashed edges
+- **Capacidad Dinámica collapse:** accordion-locked with Dimensiones variables, two-column comparison table (Valor₁/Valor₂), capacity in liters, difference equation (▲/▼), checkbox per row shows paired highlight volumes in tank, wrapped in `.table-responsive`
+- **Collapse UI design:** Material-style accordion with `.collapse-group-wrap` (border, radius), `.collapse-toggle` (flex, `border-left: 3px solid var(--md-primary)`, background `var(--md-primary-surface)`), animated chevron SVG that rotates 180° on expand, hint text below toggle on desktop (`d-none d-md-block`), smooth transitions
+- **Scrollbar visibility:** Custom `::-webkit-scrollbar` styles on desktop (`min-width: 768px`) for `.table-responsive` — 8px thumb with `var(--md-border)` color, visible independent of macOS scrollbar settings
+- **Chevron pulse animation:** `.collapse-chevron--pulse` with `@keyframes pulse-chevron` (scale 1→1.25→1→1.15→1, 2 cycles) triggered via JS on entering escenario 6
 - Slider locking: when either collapse is open, only the slider matching the active tab is enabled; the other two are set to maximum and disabled
 - "Reiniciar" button resets both tables to default rows
 

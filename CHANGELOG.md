@@ -19,6 +19,10 @@
 - **Burbujas más grandes** — Radio aumentado de 3–6 a 8–16
 - **Cielo dinámico día/noche** — Gradiente interpolado con `lerpC()` entre 3 zonas (noche/amanecer/día) según voltaje; 40 estrellas generadas en `initPecesEstanque()`; sol con efecto de recorte sobre el fondo
 - **`bubbleFrameCounter`** — Control independiente de generación de burbujas
+- **Collapse UI rediseñado (Esc6)** — Acordeón Material con `.collapse-group-wrap`, `.collapse-toggle`, chevron SVG animado (rotate 180°), borde lateral `--md-primary`, fondo `--md-primary-surface`
+- **Hint text en collapses** — Texto descriptivo "Compara variantes de ancho/alto/largo" y "Compara dos valores de capacidad y su diferencia △" (solo desktop, `d-none d-md-block`)
+- **Scrollbar visible en tablas Esc6** — `::-webkit-scrollbar` personalizado para `.table-responsive` en desktop, independiente de preferencias macOS
+- **Pulse animation en chevron** — `collapse-chevron--pulse` con `@keyframes pulse-chevron` al entrar a escenario 6, eliminado automáticamente tras 2 ciclos
 - **`pumpBroken` en esc5** — También se rompe si `I >= 4` (no solo `V > 10`)
 - **`pez.paddingIzq` reducido** — De `canvas.width * 0.15` a `0.07` (peces más cerca del borde)
 - **Navegación reordenada** — Orden `[1, 3, 6, 7, 2, 4, 5]`
@@ -35,7 +39,7 @@
 - Código refactorizado para mejor legibilidad
 
 ### Documentation
-- Actualización de AGENTS.md con UI/UX v1.11.0, toast, nav, tooltips, modals
+- Actualización de AGENTS.md con UI/UX v1.11.0, toast, nav, tooltips, modals, collapse UI rediseñado
 
 ## 1.10.0 (no publicado)
 
