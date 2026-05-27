@@ -236,49 +236,63 @@
             <div class="col-12 col-sm-6 col-md-5" id="contenedorCollapses" style="display:none;">
                 <div id="esc6-collapse-group">
                     <div id="esc6-tabla-section" style="display:none;">
-                        <button class="btn btn-sm btn-secondary w-100 text-start" data-bs-toggle="collapse" data-bs-target="#esc6-tabla-collapse">
-                            ▶ Dimensiones variables
-                        </button>
-                        <div id="esc6-tabla-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
-                            <div class="card card-body p-2">
-                                <ul class="nav nav-pills nav-justified mb-2" id="dimTabs">
-                                    <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
-                                    <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
-                                    <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
-                                </ul>
-                                <table class="table table-sm table-bordered mb-0" id="tablaDim">
-                                    <thead><tr><th style="width:36px"></th><th id="thCabecera">Ancho</th><th>Capacidad</th><th style="width:34px"></th></tr></thead>
-                                    <tbody id="tbodyDim"></tbody>
-                                </table>
-                                <button id="btnAddFila" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
+                        <div class="collapse-group-wrap">
+                            <button class="collapse-toggle" data-bs-toggle="collapse" data-bs-target="#esc6-tabla-collapse" aria-expanded="false" aria-controls="esc6-tabla-collapse">
+                                <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Dimensiones variables
+                            </button>
+                            <p class="hint d-none d-md-block">Compara variantes de ancho/alto/largo</p>
+                            <div id="esc6-tabla-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
+                                <div class="collapse-body">
+                                    <ul class="nav nav-pills nav-justified mb-2" id="dimTabs">
+                                        <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
+                                    </ul>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0" id="tablaDim">
+                                            <thead><tr><th style="width:36px"></th><th id="thCabecera">Ancho</th><th>Capacidad</th><th style="width:34px"></th></tr></thead>
+                                            <tbody id="tbodyDim"></tbody>
+                                        </table>
+                                    </div>
+                                    <button id="btnAddFila" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div id="esc6-cap-dinamica-section" style="display:none;">
-                        <button class="btn btn-sm btn-secondary w-100 text-start" data-bs-toggle="collapse" data-bs-target="#esc6-cap-dinamica-collapse">
-                            ▶ Capacidad Dinámica
-                        </button>
-                        <div id="esc6-cap-dinamica-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
-                            <div class="card card-body p-2">
-                                <ul class="nav nav-pills nav-justified mb-2" id="capDinaTabs">
-                                    <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
-                                    <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
-                                    <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
-                                </ul>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered mb-0" id="tablaCapDina">
-                                        <thead><tr>
-                                            <th style="width:36px"></th>
-                                            <th id="thCDVal1">Ancho₁</th>
-                                            <th id="thCDVal2">Ancho₂</th>
-                                            <th>Capacidad 1</th>
-                                            <th>Capacidad 2</th>
-                                            <th>Δ Capacidad</th>
-                                        </tr></thead>
-                                        <tbody id="tbodyCapDina"></tbody>
-                                    </table>
+                        <div class="collapse-group-wrap">
+                            <button class="collapse-toggle" data-bs-toggle="collapse" data-bs-target="#esc6-cap-dinamica-collapse" aria-expanded="false" aria-controls="esc6-cap-dinamica-collapse">
+                                <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Capacidad Dinámica
+                            </button>
+                            <p class="hint d-none d-md-block">Compara dos valores de capacidad y su diferencia △</p>
+                            <div id="esc6-cap-dinamica-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
+                                <div class="collapse-body">
+                                    <ul class="nav nav-pills nav-justified mb-2" id="capDinaTabs">
+                                        <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
+                                    </ul>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0" id="tablaCapDina">
+                                            <thead><tr>
+                                                <th style="width:36px"></th>
+                                                <th id="thCDVal1">Ancho₁</th>
+                                                <th id="thCDVal2">Ancho₂</th>
+                                                <th>Capacidad 1</th>
+                                                <th>Capacidad 2</th>
+                                                <th>Δ Capacidad</th>
+                                            </tr></thead>
+                                            <tbody id="tbodyCapDina"></tbody>
+                                        </table>
+                                    </div>
+                                    <button id="btnAddFilaCapDina" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
                                 </div>
-                                <button id="btnAddFilaCapDina" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
                             </div>
                         </div>
                     </div>

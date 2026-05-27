@@ -139,10 +139,14 @@ body {
     font-weight: 500;
     color: var(--md-on-surface);
 }
-.card-control .hint {
+.card-control .hint,
+.hint {
     font-size: 0.75rem;
     color: var(--md-on-surface-muted);
     margin-top: 4px;
+}
+.collapse-group-wrap .hint {
+    padding: 0 14px 6px;
 }
 
 /* ── Sliders personalizados ── */
@@ -400,7 +404,6 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ── Esc6 tables ── */
-#esc6-tabla-section { margin-top: 6px; }
 #esc6-tabla-section .table,
 #esc6-tabla-section .table th,
 #esc6-tabla-section .table td {
@@ -416,11 +419,6 @@ input[type="range"]::-moz-range-thumb {
     background: transparent;
     padding: 0 2px;
 }
-#esc6-tabla-section .card {
-    border-radius: 0 0 var(--md-radius-sm) var(--md-radius-sm);
-    border-top: none;
-    box-shadow: none;
-}
 #esc6-tabla-section .nav-pills .nav-link {
     background: #eeeeee !important;
     color: #333;
@@ -430,16 +428,10 @@ input[type="range"]::-moz-range-thumb {
     color: #fff;
 }
 
-#esc6-cap-dinamica-section { margin-top: 6px; }
 #esc6-cap-dinamica-section .table,
 #esc6-cap-dinamica-section .table th,
 #esc6-cap-dinamica-section .table td {
     border-color: var(--md-border) !important;
-}
-#esc6-cap-dinamica-section .card {
-    border-radius: 0 0 var(--md-radius-sm) var(--md-radius-sm);
-    border-top: none;
-    box-shadow: none;
 }
 #esc6-cap-dinamica-section .nav-pills .nav-link {
     background: #eeeeee !important;
@@ -458,6 +450,61 @@ input[type="range"]::-moz-range-thumb {
     border: none;
     background: transparent;
     padding: 0 2px;
+}
+
+/* ── Esc6 Collapse ── */
+.collapse-group-wrap {
+    border: 1px solid var(--md-border);
+    border-radius: var(--md-radius-sm);
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+.collapse-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--md-primary-surface);
+    color: var(--md-on-surface);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: none;
+    border-left: 3px solid var(--md-primary);
+    border-bottom: 1px solid transparent;
+    cursor: pointer;
+    transition: background var(--md-transition), border-color var(--md-transition);
+    text-align: left;
+    touch-action: manipulation;
+    min-height: 44px;
+}
+.collapse-toggle:hover {
+    background: color-mix(in srgb, var(--md-primary-surface) 88%, var(--md-border) 12%);
+}
+.collapse-toggle[aria-expanded="true"] {
+    background: var(--md-primary-surface);
+    color: var(--md-primary);
+    border-bottom-color: var(--md-border);
+}
+.collapse-chevron {
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+}
+.collapse-toggle[aria-expanded="true"] .collapse-chevron {
+    transform: rotate(180deg);
+}
+.collapse-body {
+    padding: 10px;
+    background: var(--md-surface);
+}
+.collapse-chevron--pulse {
+    animation: pulse-chevron 1.6s ease 2;
+}
+@keyframes pulse-chevron {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.25); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.15); }
 }
 
 #tablaCapDina td:nth-child(4),
@@ -663,6 +710,23 @@ input[type="range"]::-moz-range-thumb {
 }
 #esc1-controls .row + .row {
     margin-top: 0;
+}
+
+/* ── Esc6 table scrollbar (desktop) ── */
+@media (min-width: 768px) {
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: var(--md-border);
+        border-radius: 4px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: var(--md-on-surface-muted);
+    }
 }
 
 /* ── Responsive: Mobile <576px ── */

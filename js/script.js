@@ -1378,6 +1378,13 @@ const ESCENARIOS = {
             iniciarPeces3D();
             initTablaDimVar();
             initTablaCapDina();
+            var primerChevron = document.querySelector('#esc6-tabla-section .collapse-chevron');
+            if (primerChevron) {
+                primerChevron.classList.add('collapse-chevron--pulse');
+                primerChevron.addEventListener('animationend', function () {
+                    primerChevron.classList.remove('collapse-chevron--pulse');
+                }, { once: true });
+            }
         }
     },
     7: {
