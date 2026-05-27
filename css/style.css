@@ -50,11 +50,7 @@ body {
     gap: 4px;
     overflow-x: auto;
     padding: 4px 0;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-.btn-group.scenario-tabs::-webkit-scrollbar {
-    display: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 .scenario-tab {
