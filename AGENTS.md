@@ -2,6 +2,7 @@
 
 ## Running the App
 
+Open `landing.html` for the landing page with interactive 3D hero.
 Open `index.html` in any browser. No build or server required.
 
 ## Project Structure
@@ -15,6 +16,43 @@ Open `index.html` in any browser. No build or server required.
 - `css/style.css` - Styling for simulator
 - `css/landing.css` - Neon theme, glassmorphism, bento grid for landing page
 - `img/` - Fish, tank, solar panel, pump images, and phone screenshots
+
+## UI/UX Design (v1.11.0)
+
+### Material Design Refresh
+- CSS custom properties (`--md-*`) for consistent theming
+- `.card-control` — elevated cards wrapping each scenario's controls with rounded corners and shadow
+- Custom range sliders with colored track (`--md-primary` → `--md-secondary` gradient), 20px thumb
+- Buttons: `.btn-primary`, `.btn-success`, `.btn-info`, `.btn-secondary` with Material shadows and hover states
+- Ripple effect via JS-injected `.ripple` spans with CSS animation
+
+### Scenario Tabs
+- Custom `.scenario-tab` buttons (replacing Bootstrap `.btn-group .btn`)
+- States: `.scenario-tab--active` (Material blue, white underline), `.scenario-tab--locked` (dimmed, lock badge, `cursor: not-allowed`)
+- Short/long labels via `<span class="d-sm-none">` / `<span class="d-none d-sm-inline">`
+- `.tab-badge` showing lock icon for locked scenarios
+- Horizontal scroll on mobile with `overflow-x: auto`
+
+### Toast Notifications
+- `mostrarToast(mensaje, tipo, duracion)` replaces all `alert()` calls
+- Types: `success`, `error`, `warning`, `info` — each with colored left border and background
+- Positioned fixed at `bottom: 80px; right: 16px`
+- Auto-dismiss with slide-out animation (default 4000ms)
+- Container: `<div id="toastContainer">` at bottom of `index.html`
+
+### Navigation Bar (bottom sticky)
+- `#navWrap` — fixed at bottom with `backdrop-filter: blur(12px)`, glass effect
+- Shows "Siguiente Escenario" button to advance through navigation order
+- Centered, responsive padding on mobile
+
+### Tooltips
+- `[data-tooltip]` attribute on inputs/buttons shows a native-style tooltip above the element on hover
+- Dark background, white text, animated fade/scale
+
+### Modals (secret code)
+- Material-styled modal with `.modal-header` colored background
+- `.input--error` class on code input triggers shake animation on wrong code
+- `#codigoError` message shown on failed attempt
 
 ## Key Behavior
 
@@ -45,6 +83,7 @@ Open `index.html` in any browser. No build or server required.
 - Vibration: ±3px sinusoidal offset on pump image position
 - Bubbles (`ParticulaAgua`): spawned from pump location, size/speed scale with voltage, fewer in low current
 - Canvas buffer: fixed 1600×800, CSS `width: 100%` for retina sharpness
+- Estanque canvas uses class `canvas--estanque` → aspect-ratio `3 / 2` (vs `2 / 1` for Pecera)
 - Fish flee pump when `V > 6` (`velMax=3`)
 - Fish flee cursor/touch within 200px radius (`velMax=4`)
 
@@ -59,6 +98,7 @@ Open `index.html` in any browser. No build or server required.
 ### Estanque + Pendiente Variable (Escenario 5)
 - Same as Estanque Sustentable with adjustable slope curve
 - Slope `m` slider (0–5.0, step 0.01) controls `I = m × V`
+- `getCorriente()` checks `escenarioActual === 5` and computes `I = m × V` (overrides fixed R=5) 
 - Green draggable glider, label shows `U (5.00, 1.50)` with 2 decimals
 - Custom axes with ticks every 2 units and grid overlay
 - Zoom via mouse wheel or +/- buttons (0.5x–5x)
