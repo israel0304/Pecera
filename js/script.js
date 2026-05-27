@@ -26,10 +26,15 @@ imgBomba.src = './img/bomba_agua.png';
 let imgBombaIssue = new Image();
 imgBombaIssue.src = './img/bomba_agua_issue.png';
 let contenedorCanvas = document.getElementById('contenedorCanvas');
+let contenedorGrafica = document.getElementById('contenedorGrafica');
 
 function redimensionarCanvas() {
     canvas.width = 1600;
-    canvas.height = 800;
+    if (canvas.classList.contains('canvas--estanque')) {
+        canvas.height = Math.round(1600 * 2 / 3);
+    } else {
+        canvas.height = 800;
+    }
 }
 redimensionarCanvas();
 
@@ -382,15 +387,15 @@ let burbujas = generar(Burbuja, validarBurbujasIniciales(cajaTemperatura.value))
 function pecesDinamicos(e) {
     e.preventDefault();
     if (cajaPeces.value < 0) {
-        alert('Los peces no pueden menores a 0');
+        mostrarToast('Los peces no pueden ser menores a 0', 'error');
         cajaPeces.value = 0;
     }
     if (cajaSize.value > 7) {
-        alert('Los peces no pueden ser mayores a 7 cm');
+        mostrarToast('Los peces no pueden ser mayores a 7 cm', 'error');
         cajaSize.value = 7;
     }
     if (cajaSize.value < 0) {
-        alert('Los peces no pueden ser menores a 0 cm');
+        mostrarToast('Los peces no pueden ser menores a 0 cm', 'error');
         cajaSize.value = 0;
     }
     npecesValSpan.textContent = cajaPeces.value;
@@ -460,8 +465,28 @@ function signo() {
     return s;
 }
 
+function mostrarToast(mensaje, tipo, duracion) {
+    tipo = tipo || 'info';
+    duracion = duracion || 4000;
+    let container = document.getElementById('toastContainer');
+    if (!container) return;
+    let toast = document.createElement('div');
+    toast.className = 'toast toast--' + tipo;
+    toast.textContent = mensaje;
+    container.appendChild(toast);
+    setTimeout(function () {
+        toast.classList.add('toast--dismissing');
+        setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }, duracion);
+}
+
+function cerrarOnboarding() {
+    let banner = document.getElementById('onboardingBanner');
+    if (banner) banner.style.display = 'none';
+}
+
 function alerta() {
-    alert("¡Precaución!\nTodos Los peces van a morir");
+    mostrarToast("Precauci\u00f3n: Todos los peces van a morir", 'warning');
     for (i = 0; i < peces.length; i++) {
         peces[i].vivir = false;
         peces[i].salud = 'sano';
@@ -472,7 +497,7 @@ function enfermar() {
         for (i = 0; i < peces.length; i++) {
             peces[i].salud = 'enfermo';
         } else {
-        alert('Los peces ya estan muertos, ¡no pueden enfermar!');
+        mostrarToast('Los peces ya estan muertos, no pueden enfermar', 'error');
     }
 
 }
@@ -772,7 +797,7 @@ function getCorriente(V) {
 class ParticulaAgua {
     constructor(pumpX, pumpY, voltaje) {
         let factor = 0.3 + 0.7 * (voltaje / 12);
-        this.radius = aleatorio(3, 6) * factor;
+        this.radius = aleatorio(8, 16) * factor;
         this.x = pumpX + aleatorio(-15, 15);
         this.y = pumpY;
         this.speedY = aleatorio(1, 3) * factor;
@@ -807,6 +832,11 @@ class ParticulaAgua {
 let particulasEsc2 = [];
 let pumpBroken = false;
 let pecesEstanque = [];
+let bubbleFrameCounter = 0;
+let sunWaveProgress = 0;
+let nightStars = [];
+let cometProgress = 0;
+let cometCooldown = 0;
 let cursorX = null, cursorY = null;
 
 // Escenario 4 state
@@ -1385,15 +1415,44 @@ function limpiarGrafica() {
     }
 }
 
+function actualizarTabs(n) {
+    let tabs = ['esc1-btn', 'esc2-btn', 'esc3-btn', 'esc4-btn', 'esc5-btn', 'esc6-btn', 'esc7-btn'];
+    tabs.forEach(function (id) {
+        let el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('scenario-tab--active');
+    });
+    let active = document.getElementById('esc' + n + '-btn');
+    if (active) active.classList.add('scenario-tab--active');
+}
+
+function desbloquearTab(n) {
+    let el = document.getElementById('esc' + n + '-btn');
+    if (!el) return;
+    el.classList.remove('scenario-tab--locked');
+    el.disabled = false;
+    let badge = el.querySelector('.tab-badge');
+    if (badge) badge.textContent = '';
+}
+
 function cambiarEscenario(n) {
     limpiarGrafica();
     escenarioActual = n;
     let cfg = ESCENARIOS[n];
     if (!cfg) return;
 
-    for (let [id, clase] of Object.entries(cfg.btn)) {
-        document.getElementById(id).className = `btn btn-${clase} btn-sm`;
+    actualizarTabs(n);
+
+    let canvasEl = document.getElementById('canvas');
+    if (canvasEl) {
+        if (n === 2 || n === 4 || n === 5) {
+            canvasEl.classList.add('canvas--estanque');
+        } else {
+            canvasEl.classList.remove('canvas--estanque');
+        }
     }
+    redimensionarCanvas();
+
     cfg.mostrar.forEach(id => document.getElementById(id).style.display = '');
     cfg.ocultar.forEach(id => document.getElementById(id).style.display = 'none');
 
@@ -1424,13 +1483,23 @@ function actualizarDisplayEsc2() {
 
 function initPecesEstanque() {
     pecesEstanque = [];
+    if (nightStars.length === 0) {
+        for (let i = 0; i < 40; i++) {
+            nightStars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height * 0.4,
+                r: 1.5 + Math.random() * 1.5,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+    }
     let n = Math.floor(aleatorio(15, 25));
     for (let i = 0; i < n; i++) {
         let pez = new Pez(0);
         pez.size = 4;
         pez.dWidth = (canvas.width * pez.size) / 100;
         pez.dHeight = pez.dWidth / 2;
-        pez.paddingIzq = canvas.width * 0.15 + 5;
+        pez.paddingIzq = canvas.width * 0.07 + 5;
         pez.paddingDer = canvas.width * 0.60 - pez.dWidth - 5;
         pez.paddingArr = canvas.height * 0.6 + 5;
         pez.paddingAba = canvas.height - pez.dHeight - 5;
@@ -1455,68 +1524,120 @@ function actualizarEscenario2() {
         pumpBroken = (V > 10);
     }
 
-    // Sky - darker when low V, brighter when high V
-    let brightness = 0.3 + 0.7 * (V / 12);
-    let skyR = Math.floor(135 * brightness);
-    let skyG = Math.floor(206 * brightness);
-    let skyB = Math.floor(235 * brightness);
-    let skyColor = `rgb(${skyR}, ${skyG}, ${skyB})`;
+    // Sky - night → dawn → day based on V
+    function lerpC(a, b, t) {
+        return {
+            r: Math.floor(a.r + (b.r - a.r) * t),
+            g: Math.floor(a.g + (b.g - a.g) * t),
+            b: Math.floor(a.b + (b.b - a.b) * t)
+        };
+    }
+    let nightTop = {r: 40, g: 61, b: 70}, nightBot = {r: 55, g: 67, b: 74};
+    let dawnTop = {r: 180, g: 80, b: 100}, dawnBot = {r: 255, g: 180, b: 120};
+    let dayTop = {r: 135, g: 206, b: 235}, dayBot = {r: 184, g: 224, b: 247};
+    let topC, botC;
+    if (V < 2) {
+        let t = Math.max(0, V) / 2;
+        topC = lerpC(nightTop, dawnTop, t);
+        botC = lerpC(nightBot, dawnBot, t);
+    } else if (V < 3) {
+        let t = (V - 2) / 1;
+        topC = lerpC(dawnTop, dayTop, t);
+        botC = lerpC(dawnBot, dayBot, t);
+    } else {
+        topC = dayTop;
+        botC = dayBot;
+    }
+    let skyR = topC.r, skyG = topC.g, skyB = topC.b;
     let skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.5);
-    skyGrad.addColorStop(0, skyColor);
-    skyGrad.addColorStop(1, `rgb(${Math.floor(184 * brightness)}, ${Math.floor(224 * brightness)}, ${Math.floor(247 * brightness)})`);
+    skyGrad.addColorStop(0, `rgb(${topC.r}, ${topC.g}, ${topC.b})`);
+    skyGrad.addColorStop(1, `rgb(${botC.r}, ${botC.g}, ${botC.b})`);
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, w, h * 0.5);
 
     // Sun - glow and size based on V
     let sunX = w * 0.12, sunY = h * 0.15;
     let sunR = w * 0.015 + (w * 0.02) * (V / 50);
-    let glowR = sunR * (1.5 + 1.5 * (V / 50));
-    let alpha = 0.15 + 0.35 * (V / 50);
-    ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.3})`;
-    ctx.beginPath();
-    ctx.arc(sunX, sunY, glowR, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = `rgba(255, 243, 176, ${alpha * 0.5})`;
-    ctx.beginPath();
-    ctx.arc(sunX, sunY, glowR * 0.7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Pond water
+    if (V > 0) {
+        let glowR = sunR * (2.5 + 2.5 * (V / 50));
+        let alpha = 0.15 + 0.35 * (V / 50);
+        ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255, 243, 176, ${alpha * 0.7})`;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, glowR * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        // Stars
+        let time = Date.now() * 0.001;
+        for (let star of nightStars) {
+            let twinkle = 0.4 + 0.6 * Math.abs(Math.sin(star.phase + time));
+            ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // Crescent moon
+        let moonLight = Math.abs(Math.sin(time * 0.3)) * 0.3 + 0.7;
+        let moonGray = Math.floor(200 * moonLight);
+        ctx.fillStyle = `rgb(${moonGray}, ${moonGray - 20}, ${moonGray - 40})`;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+        ctx.fill();
+        let cutR = Math.floor(skyR * 0.9);
+        let cutG = Math.floor(skyG * 0.9);
+        let cutB = Math.floor(skyB * 0.9);
+        ctx.fillStyle = `rgb(${cutR}, ${cutG}, ${cutB})`;
+        ctx.beginPath();
+        ctx.arc(sunX + sunR * 0.35, sunY - sunR * 0.08, sunR * 0.85, 0, Math.PI * 2);
+        ctx.fill();
+        // Comet
+        if (cometProgress > 0) {
+            let cometX = w * 0.1 + (w * 0.8) * cometProgress;
+            let cometY = h * 0.05 + (h * 0.3) * cometProgress;
+            let tailLen = w * 0.12;
+            for (let j = 10; j >= 0; j--) {
+                let frac = j / 10;
+                let tx = cometX - tailLen * frac * 0.8;
+                let ty = cometY - tailLen * frac * 0.3;
+                let tr = 3 * (1 - frac * 0.7);
+                let ta = 0.8 * (1 - frac * 0.85);
+                ctx.fillStyle = `rgba(255, 255, 255, ${ta})`;
+                ctx.beginPath();
+                ctx.arc(tx, ty, tr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.arc(cometX, cometY, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Grass 
     let waterGrad = ctx.createLinearGradient(0, h * 0.40, 0, h);
     waterGrad.addColorStop(0, '#69d94a');
     waterGrad.addColorStop(0.5, '#31b338');
     waterGrad.addColorStop(1, '#358c1a');
     ctx.fillStyle = waterGrad;
-    ctx.fillRect(0, h * 0.40, w, h * 0.5);
+    ctx.fillRect(0, h * 0.45, w, h * 0.5);
 
-    // Water surface
-    ctx.strokeStyle = '#A0D4FF';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let x = w * 0.15; x < w * 0.6; x += 3) {
-        ctx.lineTo(x, h * 0.55 + Math.sin(x * 0.02 + Date.now() * 0.001) * 3);
-    }
-    ctx.stroke();
-
-    ctx.beginPath();
-    for (let x = w * 0.15; x < w * 0.6; x += 3) {
-        ctx.lineTo(x, h * 0.6 + Math.sin(x * 0.02 + Date.now() * 0.001) * 3);
-    }
-    ctx.stroke();
 
     // Trapecio decorativo base
     ctx.fillStyle = '#655139';
     ctx.strokeStyle = 'rgba(184, 109, 97, 0.8)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(w * 0.17, h * 0.95);
+    ctx.moveTo(w * 0.10, h * 0.95);
     ctx.lineTo(w * 0.57, h * 0.95);
     ctx.lineTo(w * 0.60, h);
-    ctx.lineTo(w * 0.15, h);
+    ctx.lineTo(w * 0.07, h);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -1526,10 +1647,10 @@ function actualizarEscenario2() {
     ctx.strokeStyle = '#655139';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(w * 0.15, h * 0.5);
-    ctx.lineTo(w * 0.17, h * 0.45);
-    ctx.lineTo(w * 0.17, h*0.95);
-    ctx.lineTo(w * 0.15, h);
+    ctx.moveTo(w * 0.07, h * 0.58);
+    ctx.lineTo(w * 0.10, h * 0.53);
+    ctx.lineTo(w * 0.10, h*0.95);
+    ctx.lineTo(w * 0.07, h);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -1539,8 +1660,8 @@ function actualizarEscenario2() {
     ctx.strokeStyle = '#655139';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(w * 0.6, h * 0.5);
-    ctx.lineTo(w * 0.57, h * 0.45);
+    ctx.moveTo(w * 0.6, h * 0.58);
+    ctx.lineTo(w * 0.57, h * 0.53);
     ctx.lineTo(w * 0.57, h*0.95);
     ctx.lineTo(w * 0.6, h);
     ctx.closePath();
@@ -1552,10 +1673,10 @@ function actualizarEscenario2() {
     ctx.strokeStyle = '#8B7355';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(w * 0.17, h * 0.45);
-    ctx.lineTo(w * 0.57, h * 0.45);
+    ctx.moveTo(w * 0.10, h * 0.53);
+    ctx.lineTo(w * 0.57, h * 0.53);
     ctx.lineTo(w * 0.57, h * 0.95);
-    ctx.lineTo(w * 0.17, h * 0.95);
+    ctx.lineTo(w * 0.10, h * 0.95);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -1566,10 +1687,10 @@ function actualizarEscenario2() {
     ctx.strokeStyle = 'rgba(160, 212, 255, 0.6)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(w * 0.15, h * 0.6);
+    ctx.moveTo(w * 0.07, h * 0.6);
     ctx.lineTo(w * 0.60, h * 0.6);
     ctx.lineTo(w * 0.60, h);
-    ctx.lineTo(w * 0.15, h);
+    ctx.lineTo(w * 0.07, h);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -1579,16 +1700,16 @@ function actualizarEscenario2() {
     ctx.strokeStyle = 'rgba(160, 212, 255, 0.6)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(w * 0.17, h * 0.55);
+    ctx.moveTo(w * 0.10, h * 0.55);
     ctx.lineTo(w * 0.57, h * 0.55);
     ctx.lineTo(w * 0.60, h* 0.6);
-    ctx.lineTo(w * 0.15, h* 0.6);
+    ctx.lineTo(w * 0.07, h* 0.6);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
     // Pump position (used by fish flee logic and pump drawing)
-    let pumpX = w * 0.50, pumpY = h * 0.72;
+    let pumpX = w * 0.50, pumpY = h * 0.8;
 
     // Peces decorativos en el agua frontal
     for (let pez of pecesEstanque) {
@@ -1625,9 +1746,9 @@ function actualizarEscenario2() {
     // Ground / shore (left side)
     ctx.fillStyle = '#8B7355';
     ctx.beginPath();
-    ctx.moveTo(0, h * 0.5);
-    ctx.lineTo(w * 0.15, h * 0.5);
-    ctx.lineTo(w * 0.15, h);
+    ctx.moveTo(0, h * 0.58);
+    ctx.lineTo(w * 0.07, h * 0.58);
+    ctx.lineTo(w * 0.07, h);
     ctx.lineTo(0, h);
     ctx.closePath();
     ctx.fill();
@@ -1635,8 +1756,8 @@ function actualizarEscenario2() {
     // Ground / shore (right side)
     ctx.fillStyle = '#8B7355';
     ctx.beginPath();
-    ctx.moveTo(w * 0.6, h * 0.5);
-    ctx.lineTo(w, h * 0.5);
+    ctx.moveTo(w * 0.6, h * 0.58);
+    ctx.lineTo(w, h * 0.58);
     ctx.lineTo(w, h);
     ctx.lineTo(w * 0.6, h);
     ctx.closePath();
@@ -1646,7 +1767,7 @@ function actualizarEscenario2() {
     let pumpW = w * 0.30, pumpH = pumpW * (311 / 803);
 
     // Solar panel image
-    let px = w * 0.55, py = h * 0.13;
+    let px = w * 0.55, py = h * 0.30;
     let pw = w * 0.50, ph = pw * (302 / 827);
     if (imgPanel.complete && imgPanel.naturalWidth > 0) {
         ctx.drawImage(imgPanel, px, py, pw, ph);
@@ -1654,6 +1775,42 @@ function actualizarEscenario2() {
         ctx.fillStyle = '#2C3E50';
         ctx.fillRect(px, py, pw, ph);
     }
+    // Animated sine wave from sun to panel (3 parallel lines)
+  /*   if (V > 0) {
+        let waveBright = 0.3 + 0.7 * (V / 12);
+        let r = Math.round(200 + 55 * waveBright);
+        let g = Math.round(100 + 115 * waveBright);
+        let swStartX = sunX + sunR, swStartY = sunY;
+        let swEndX = px + 150, swEndY = py + 55;
+        let swX = swStartX + (swEndX - swStartX) * sunWaveProgress;
+        let swY = swStartY + (swEndY - swStartY) * sunWaveProgress;
+        let angle = 24 * Math.PI / 180;
+        let cosA = Math.cos(angle), sinA = Math.sin(angle);
+        let waveLen = w * 0.08;
+        let amp = h * 0.015;
+        let freq = 0.08;
+        let perpOff = h * 0.025;
+        for (let i = -1; i <= 1; i++) {
+            let offX = -sinA * perpOff * i;
+            let offY = cosA * perpOff * i;
+            ctx.beginPath();
+            for (let t = 0; t < waveLen; t += 2) {
+                let baseX = swX + offX + cosA * t;
+                let baseY = swY + offY + sinA * t;
+                let osc = Math.sin(t * freq + Date.now() * 0.003) * amp;
+                let x = baseX - sinA * osc;
+                let y = baseY + cosA * osc;
+                if (t === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            ctx.strokeStyle = `rgb(${r}, ${g}, 0)`;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+    } */
     // White info box below panel
     let fontScale = w / canvas.clientWidth;
     let isSmall = canvas.clientWidth < 600;
@@ -1661,14 +1818,17 @@ function actualizarEscenario2() {
     let fs3 = Math.max((isSmall ? 12 : 16) * fontScale, isSmall ? 12 : 16);
     let lh1 = fs1 * 1;
     let lh3 = fs3 * 1.2;
-    let padBox = fs1 * 0.8;
-    let boxX = px + w * 0.08;
-    let boxW = pw - w * 0.16;
+    let padBox = fs1 * 1.5;
+    let boxX = px + w * 0.06;
+    let boxW = pw - w * 0.12;
     let boxY = py + ph + h * 0.02;
     let line1Y = boxY + padBox + lh1;
-    let line3Y = line1Y + lh3 - 3;
-    let line4Y = line3Y + lh3;
-    let boxH = line4Y + lh3 * 0.5 + padBox - boxY;
+    let lineA = line1Y + lh3 * 1.3;
+    let lineB = lineA + lh3;
+    let lineV = line1Y + lh3 * 1.3;
+    let lineI = lineV + lh3;
+    let lineS = lineI + lh3;
+    let boxH = ((escenarioActual === 5 ? lineS : lineB) + lh3 * 0.5 + padBox - boxY) + fs1 * 1.5;
 
     ctx.fillStyle = '#fff';
     ctx.beginPath();
@@ -1679,38 +1839,54 @@ function actualizarEscenario2() {
     ctx.fillStyle = '#222';
     ctx.font = `bold ${Math.round(fs1)}px Arial`;
     ctx.fillText(`V = ${V} V  |  I = ${I.toFixed(2)} A`, px + pw / 2, line1Y);
-    let statusText, statusColor;
-    if (pumpBroken) {
-        statusText = 'Corriente alta - Bomba descompuesta';
-        statusColor = '#E74C3C';
+    if (escenarioActual === 5) {
+        let vText, vColor, iText, iColor;
+        if (V > 6) { vText = 'V: Voltaje Alto'; vColor = '#E67E22'; }
+        else if (V >= 4) { vText = 'V: Voltaje Optimo'; vColor = '#2ECC71'; }
+        else { vText = 'V: Voltaje Bajo'; vColor = '#E74C3C'; }
+        if (I > 2) { iText = 'I: Corriente Alta'; iColor = '#E67E22'; }
+        else if (I >= 1) { iText = 'I: Corriente Optima'; iColor = '#2ECC71'; }
+        else { iText = 'I: Corriente Baja'; iColor = '#E74C3C'; }
+        let statusText5, statusColor5;
+        if (pumpBroken) { statusText5 = 'Bomba descompuesta'; statusColor5 = '#E74C3C'; }
+        else if (V > 6 || I > 2) { statusText5 = 'Sobrecalentamiento'; statusColor5 = '#E67E22'; }
+        else if (V >= 4 && V <= 6 && I >= 1 && I <= 2) { statusText5 = 'Funcionando bien'; statusColor5 = '#2ECC71'; }
+        else { statusText5 = 'Baja oxigenacion'; statusColor5 = '#E74C3C'; }
+        ctx.font = `bold ${Math.round(fs3)}px Arial`;
+        ctx.fillStyle = vColor;
+        ctx.fillText(vText, px + pw / 2, lineV);
+        ctx.fillStyle = iColor;
+        ctx.fillText(iText, px + pw / 2, lineI);
+        ctx.fillStyle = statusColor5;
+        ctx.fillText(statusText5, px + pw / 2, lineS);
     } else {
-        let isOverheat, isOptimal;
-        if (escenarioActual === 5) {
-            isOverheat = (V > 6 || I > 2);
-            isOptimal = (V >= 4 && V <= 6 && I >= 1 && I <= 2);
-        } else {
-            isOverheat = (V > 6);
-            isOptimal = (V >= 4 && V <= 6);
-        }
-        if (isOverheat) {
-            statusText = 'Corriente alta - Sobrecalentamiento';
-            statusColor = '#E67E22';
-        } else if (isOptimal) {
-            statusText = 'Rango optimo - Funcionando bien';
-            statusColor = '#2ECC71';
-        } else {
-            statusText = 'Corriente baja - Baja oxigenacion';
+        let statusText, statusColor;
+        if (pumpBroken) {
+            statusText = 'Corriente alta - Bomba descompuesta';
             statusColor = '#E74C3C';
+        } else {
+            let isOverheat = (V > 6);
+            let isOptimal = (V >= 4 && V <= 6);
+            if (isOverheat) {
+                statusText = 'Corriente alta - Sobrecalentamiento';
+                statusColor = '#E67E22';
+            } else if (isOptimal) {
+                statusText = 'Rango optimo - Funcionando bien';
+                statusColor = '#2ECC71';
+            } else {
+                statusText = 'Corriente baja - Baja oxigenacion';
+                statusColor = '#E74C3C';
+            }
         }
-    }
-    ctx.fillStyle = statusColor;
-    ctx.font = `bold ${Math.round(fs3)}px Arial`;
-    let statusParts = statusText.split(' - ');
-    if (statusParts.length === 2) {
-        ctx.fillText(statusParts[0], px + pw / 2, line3Y);
-        ctx.fillText('-' + statusParts[1], px + pw / 2, line4Y);
-    } else {
-        ctx.fillText(statusText, px + pw / 2, line3Y);
+        ctx.fillStyle = statusColor;
+        ctx.font = `bold ${Math.round(fs3)}px Arial`;
+        let statusParts = statusText.split(' - ');
+        if (statusParts.length === 2) {
+            ctx.fillText(statusParts[0], px + pw / 2, lineA);
+            ctx.fillText('-' + statusParts[1], px + pw / 2, lineB);
+        } else {
+            ctx.fillText(statusText, px + pw / 2, lineA);
+        }
     }
 
     // Wire from panel to pump
@@ -1773,11 +1949,18 @@ function actualizarEscenario2() {
         } else {
             oneBubble = (V < 4);
         }
+        bubbleFrameCounter++;
         if (oneBubble) {
+            if (bubbleFrameCounter % 3 === 0) {
+                particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+            }
+        } else if (overheat) {
+            particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
             particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
         } else {
-            particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
-            particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+            if (bubbleFrameCounter % 2 === 0) {
+                particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+            }
         }
     }
     for (let i = particulasEsc2.length - 1; i >= 0; i--) {
@@ -1786,6 +1969,36 @@ function actualizarEscenario2() {
         if (!particulasEsc2[i].vivo) {
             particulasEsc2.splice(i, 1);
         }
+    }
+
+    // Advance sun wave
+    if (V > 0) {
+        let speed = 0.003 + 0.01 * (V / 12);
+        if (sunWaveProgress < 1) {
+            sunWaveProgress += speed;
+        } else {
+            sunWaveProgress = 0;
+        }
+    } else {
+        sunWaveProgress = 0;
+    }
+
+    // Comet logic (only at V=0)
+    if (V === 0) {
+        if (cometProgress > 0) {
+            cometProgress += 0.003;
+            if (cometProgress >= 1) {
+                cometProgress = 0;
+                cometCooldown = 300 + Math.floor(Math.random() * 400);
+            }
+        } else if (cometCooldown > 0) {
+            cometCooldown--;
+        } else {
+            cometProgress = 0.01;
+        }
+    } else {
+        cometProgress = 0;
+        cometCooldown = 0;
     }
 
 }
@@ -1964,6 +2177,7 @@ document.getElementById('confirmarCodigo').addEventListener('click', async funct
     let dir = ant + 'a' + destino;
     if (normalizarCodigo(codigo) === normalizarCodigo(codigos[dir])) {
         escenariosDesbloqueados.add(destino);
+        desbloquearTab(destino);
         bootstrap.Modal.getInstance(document.getElementById('codigoModal')).hide();
         cambiarEscenario(destino);
         pendingDestino = null;
@@ -2931,4 +3145,20 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 });
 
 escenariosDesbloqueados.add(1);
+desbloquearTab(1);
 cambiarEscenario(1);
+
+// Ripple effect for buttons and tabs
+document.addEventListener('click', function (e) {
+    let el = e.target.closest('.scenario-tab, .btn:not(.no-ripple), .nav-link');
+    if (!el) return;
+    let rect = el.getBoundingClientRect();
+    let r = document.createElement('span');
+    r.className = 'ripple';
+    let size = Math.max(rect.width, rect.height);
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    r.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    el.appendChild(r);
+    r.addEventListener('animationend', function () { r.remove(); });
+});

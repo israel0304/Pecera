@@ -16,34 +16,32 @@
         <!-- Scenario Tabs -->
         <div class="row mb-1">
             <div class="col-md">
-                <div class="btn-group" role="group">
-                    <button type="button" id="esc1-btn" class="btn btn-primary btn-sm">
-                        <span class="d-none d-sm-inline">Pecera</span>
-                        <span class="d-inline d-sm-none">Pecera</span>
+                <div id="onboardingBanner" class="onboarding">
+                    <h2>Bienvenido a Pecera</h2>
+                    <p>Explora 7 escenarios interactivos sobre acuarios, estanques solares y capacidad. Cada escenario se desbloquea con códigos secretos.</p>
+                    <button type="button" class="btn" onclick="cerrarOnboarding()">Comenzar &rarr;</button>
+                </div>
+                <div class="btn-group scenario-tabs" role="group">
+                    <button type="button" id="esc1-btn" class="scenario-tab scenario-tab--active">
+                        Pecera <span class="tab-badge"></span>
                     </button>
-                    <button type="button" id="esc3-btn" class="btn btn-secondary btn-sm">
-                        <span class="d-none d-sm-inline">Pecera + Litros</span>
-                        <span class="d-inline d-sm-none">Pecera + Lit.</span>
+                    <button type="button" id="esc3-btn" class="scenario-tab scenario-tab--locked">
+                        P+L <span class="tab-badge">&#128274;</span>
                     </button>
-                    <button type="button" id="esc6-btn" class="btn btn-secondary btn-sm">
-                        <span class="d-none d-sm-inline">Dimensiones</span>
-                        <span class="d-inline d-sm-none">Dim</span>
+                    <button type="button" id="esc6-btn" class="scenario-tab scenario-tab--locked">
+                        3D <span class="tab-badge">&#128274;</span>
                     </button>
-                    <button type="button" id="esc7-btn" class="btn btn-secondary btn-sm">
-                        <span class="d-none d-sm-inline">Incremento Capacidad</span>
-                        <span class="d-inline d-sm-none">Inc. Cap.</span>
+                    <button type="button" id="esc7-btn" class="scenario-tab scenario-tab--locked">
+                        Inc.Cap <span class="tab-badge">&#128274;</span>
                     </button>
-                    <button type="button" id="esc2-btn" class="btn btn-secondary btn-sm">
-                        <span class="d-none d-sm-inline">Estanque Sustentable</span>
-                        <span class="d-inline d-sm-none">Estanque Sustentable</span>
+                    <button type="button" id="esc2-btn" class="scenario-tab scenario-tab--locked">
+                        Estanque <span class="tab-badge">&#128274;</span>
                     </button>
-                    <button type="button" id="esc4-btn" class="btn btn-secondary btn-sm">
-                        <span class="d-none d-sm-inline">Estanque + Gráfica</span>
-                        <span class="d-inline d-sm-none">Est. + Graf.</span>
+                    <button type="button" id="esc4-btn" class="scenario-tab scenario-tab--locked">
+                        E+G <span class="tab-badge">&#128274;</span>
                     </button>
-                    <button type="button" id="esc5-btn" class="btn btn-secondary btn-sm">
-                        <span class="d-none d-sm-inline">Estanque + Pendiente Variable</span>
-                        <span class="d-inline d-sm-none">Est. + Pen.</span>
+                    <button type="button" id="esc5-btn" class="scenario-tab scenario-tab--locked">
+                        E+P <span class="tab-badge">&#128274;</span>
                     </button>
                 </div>
             </div>
@@ -110,7 +108,7 @@
                                     <th id="esc7ThDelta" class="text-nowrap">Δ Ancho</th>
                                     <td>
                                         <div class="d-flex gap-1 justify-content-between align-items-center">
-                                            <input type="number" id="esc7DeltaVal" class="form-control form-control-sm" placeholder="?" step="0.01" style="min-width:60px">
+                                            <input type="number" id="esc7DeltaVal" class="form-control form-control-sm" placeholder="?" step="0.01" style="min-width:50px;max-width:80px">
                                             <button type="button" id="esc7BtnVal" class="btn btn-success btn-sm">Validar</button>
                                         </div>
                                     </td>
@@ -119,7 +117,7 @@
                                     <th class="text-nowrap">Δ Capacidad</th>
                                     <td>
                                         <div class="d-flex gap-1 justify-content-between align-items-center">
-                                            <input type="number" id="esc7DeltaCap" class="form-control form-control-sm" placeholder="?" step="0.01" style="min-width:60px">
+                                            <input type="number" id="esc7DeltaCap" class="form-control form-control-sm" placeholder="?" step="0.01" style="min-width:50px;max-width:80px">
                                             <button type="button" id="esc7BtnCap" class="btn btn-success btn-sm">Validar</button>
                                         </div>
                                     </td>
@@ -163,68 +161,64 @@
 
                 <!-- Escenario 1 Controls -->
                 <div id="esc1-controls">
-                    <div class="row">
-                        <div class="col-md py-1">
-                            <p class="mb-1">Temperatura: <span id="tempVal">23</span>&deg;C</p>
-                            <div class="d-flex align-items-center">
-                                <input type="range" min="0" max="50" value="23" id="temp" class="w-100">
-                                <button id="playTemp" class="btn btn-success btn-sm">&#9654;</button>
+                    <div class="card-control">
+                        <div class="row">
+                            <div class="col-md">
+                                <p>Temperatura: <span id="tempVal">23</span>&deg;C</p>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="range" min="0" max="50" value="23" id="temp" class="w-100" data-tooltip="Rango &oacute;ptimo: 22-28&deg;C">
+                                    <button id="playTemp" class="btn btn-success btn-sm" data-tooltip="Animar temperatura autom&aacute;ticamente" style="flex-shrink:0">&#9654;</button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md py-1">
-                            <p class="mb-1">N&uacute;mero de peces: <span id="npecesVal">1</span></p>
-                            <input type="range" min="0" max="20" value="1" id="npeces" class="w-100">
-                        </div>
-                        <div class="col-md py-1">
-                            <p class="mb-1">Tama&ntilde;o de peces: <span id="tpecesVal">1</span> cm</p>
-                            <input type="range" min="1" max="7" value="1" id="tpeces" class="w-100">
+                            <div class="col-md">
+                                <p>N&uacute;mero de peces: <span id="npecesVal">1</span></p>
+                                <input type="range" min="0" max="20" value="1" id="npeces" class="w-100" data-tooltip="M&aacute;x. 20 peces">
+                            </div>
+                            <div class="col-md">
+                                <p>Tama&ntilde;o de peces: <span id="tpecesVal">1</span> cm</p>
+                                <input type="range" min="1" max="7" value="1" id="tpeces" class="w-100" data-tooltip="1-7 cm">
+                            </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col pb-1">
-                            <div id="la-section" style="display:none;">
-                        <div class="form-check mb-1">
-                                    <input class="form-check-input" type="checkbox" id="checkLA">
-                                    <label class="form-check-label" for="checkLA">Litros de agua necesaria</label>
-                                </div>
-                                <div id="dataLA" style="display:none">
-                                    <p><b>Litros de agua (LA) = <span id="LA"></span></b></p>
-                                </div>
-                                <button id="pointLA" class="btn btn-info btn-sm" disabled>graficar punto LA</button>
+                    <div class="card-control">
+                        <div id="la-section" style="display:none;">
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" id="checkLA">
+                                <label class="form-check-label" for="checkLA">Litros de agua necesaria</label>
                             </div>
-                            <p class="mb-1"><b>Saturaci&oacute;n de ox&iacute;geno (SO) = <span id="sat"></span></b></p>
-                            <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                <button id="point" class="btn btn-info btn-sm">graficar punto</button>
-                                <button id="reset" class="btn btn-secondary btn-sm">Reiniciar</button>
+                            <div id="dataLA" style="display:none">
+                                <p class="mb-1">Litros de agua (LA) = <span id="LA"></span></p>
                             </div>
+                            <button id="pointLA" class="btn btn-info btn-sm" disabled>graficar punto LA</button>
+                        </div>
+                        <p class="mb-1">Saturaci&oacute;n de ox&iacute;geno (SO) = <span id="sat"></span></p>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            <button id="point" class="btn btn-info btn-sm">graficar punto</button>
+                            <button id="reset" class="btn btn-secondary btn-sm">Reiniciar</button>
                         </div>
                     </div>
                 </div>
                 <!-- Escenario 2, 4 & 5 Controls -->
                 <div id="esc2-controls" style="display:none;">
-                    <div class="row mb-1">
-                        <div class="col-md px-2">
-                            <p class="mb-0">V = <span id="voltVal">5</span> V &nbsp;|&nbsp; I = <span id="corrVal">1.00</span> A</p>
-                            <input type="range" min="0" max="12" value="5" step="0.01" id="voltaje" class="w-100">
-                        </div>
+                    <div class="card-control">
+                        <p>V = <span id="voltVal">5</span> V &nbsp;|&nbsp; I = <span id="corrVal">1.00</span> A</p>
+                        <input type="range" min="0" max="12" value="5" step="0.01" id="voltaje" class="w-100">
                     </div>
                     <div id="esc5-m-section" style="display:none;">
-                        <div class="row mb-1">
-                            <div class="col-md px-2">
-                                <p class="mb-0">Pendiente m = <span id="mVal">0.3</span></p>
-                                <input type="range" min="0" max="5.0" step="0.01" value="0.3" id="mSlider" class="w-100">
-                            </div>
+                        <div class="card-control">
+                            <p>Pendiente m = <span id="mVal">0.3</span></p>
+                            <input type="range" min="0" max="5.0" step="0.01" value="0.3" id="mSlider" class="w-100" data-tooltip="I = m &times; V">
                         </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="checkFranjas">
-                            <label class="form-check-label" for="checkFranjas">Mostrar franjas</label>
+                        <div class="card-control">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="checkFranjas">
+                                <label class="form-check-label" for="checkFranjas">Mostrar franjas</label>
+                            </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col pb-1">
-                            <div class="d-flex justify-content-center">
-                                <button id="reset-esc2" class="btn btn-secondary btn-sm">Reiniciar</button>
-                            </div>
+                    <div class="card-control">
+                        <div class="d-flex justify-content-center">
+                            <button id="reset-esc2" class="btn btn-secondary btn-sm">Reiniciar</button>
                         </div>
                     </div>
                 </div>
@@ -331,6 +325,8 @@
             </div>
         </div>
     </div>
+
+    <div id="toastContainer"></div>
 
     <script src="./js/three.min.js"></script>
     <script src="./js/OrbitControls.js"></script>
