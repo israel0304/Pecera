@@ -1,7 +1,7 @@
 # Pecera — Simulador de Acuario y Estanque Sustentable
 
 Simulador interactivo de pecera y sistema de bombeo solar con visualización en canvas (1600×800 fijo), gráficos JSXGraph, y tanque 3D con Three.js.
-Incluye una **landing page** (`landing.html`) con un pez neon tetra 3D interactivo como héroe.
+Incluye una **landing page** (`landing.html`) con un pez neon tetra 3D interactivo como héroe y un **splash preloader** con Three.js + GSAP al abrir el simulador.
 
 ## Cómo ejecutar
 
@@ -153,7 +153,8 @@ El escenario inicial (Pecera) está desbloqueado por defecto.
 - **HTML5 Canvas** — renderizado de escenarios (buffer fijo 1600×800)
 - **JSXGraph** — gráficos de saturación de oxígeno, curvas I vs V
 - **Bootstrap** — interfaz de usuario responsive
-- **Three.js** — renderizado 3D del tanque interactivo
+- **Three.js** — renderizado 3D del tanque interactivo y splash preloader
+- **GSAP** — animaciones y micro-interacciones en la landing page (hero entrance, scroll-triggered reveals)
 - **JavaScript vanilla** — sin frameworks ni librerías externas
 
 ## Estructura del proyecto
@@ -165,7 +166,8 @@ Pecera/
 ├── js/
 │   ├── script.js      # Lógica principal (clases, animación, eventos, escenario 3D)
 │   ├── landing.js     # Three.js interactive neon tetra para landing page
-│   ├── three.min.js   # Three.js para escenario Dimensiones 3D y landing
+│   ├── splash.js      # Splash preloader con Three.js + GSAP (tanque, agua, pez, partículas)
+│   ├── three.min.js   # Three.js para escenario Dimensiones 3D, landing y splash
 │   └── OrbitControls.js # Controles de cámara 3D
 ├── css/
 │   ├── style.css      # Estilos del simulador (Material Design)

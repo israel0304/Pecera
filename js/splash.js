@@ -1,277 +1,320 @@
-(function() {
+(function () {
   'use strict';
 
-  let active = false;
-  let renderer, scene, camera;
-  let waterMesh, fishGroup, tailMesh;
-  let particles, bubbles;
-  let fillProgress = 0;
-  let time = 0;
+  var active = false;
+  var renderer, scene, camera;
+  var waterMesh, fishGroup, tailMesh;
+  var particles, bubbles;
+  var fillProgress = 0, time = 0, animId = null;
 
-  const PARTICLE_COUNT = 80;
-  const BUBBLE_COUNT = 25;
-  const TANK_W = 3.0;
-  const TANK_H = 2.5;
-  const TANK_D = 1.5;
+  var TANK_W, TANK_H;
+  var PC = 60, BC = 20;
 
-  // ── Scene setup ──
   function initScene() {
-    const canvas = document.getElementById('splash-canvas');
-    if (!canvas) return;
+    var canvas = document.getElementById('splash-canvas');
+    if (!canvas) { fallback(); return; }
 
-    renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: false, antialias: true });
+    } catch (e) { fallback(); return; }
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 1);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.setClearColor(0x050508, 1);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    canvas.width = w;
+    canvas.height = h;
     renderer.setSize(w, h, false);
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    scene.background = new THREE.Color(0x050508);
 
-    camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
-    camera.position.set(3.2, 1.2, 5.5);
-    camera.lookAt(0, 0.2, 0);
+    camera = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
+    camera.position.set(0, 0.2, 5.5);
+    camera.lookAt(0, 0, 0);
 
-    const ambient = new THREE.AmbientLight(0x224466, 0.4);
-    scene.add(ambient);
-    const light = new THREE.DirectionalLight(0x4488ff, 1.8);
-    light.position.set(3, 4, 5);
-    scene.add(light);
-    const rim = new THREE.DirectionalLight(0x00ccff, 0.7);
-    rim.position.set(-2, 1, -3);
-    scene.add(rim);
-    const glow = new THREE.PointLight(0x00aaff, 0.5, 6);
-    glow.position.set(0, -1, 0);
-    scene.add(glow);
+    // Tank size = 60% of visible viewport width
+    var vFov = camera.fov * Math.PI / 180;
+    var dist = 5.5;
+    var visH = 2 * dist * Math.tan(vFov / 2);
+    TANK_W = Math.min(visH * camera.aspect, visH) * 0.6;
+    TANK_H = TANK_W;
 
-    window.addEventListener('resize', () => {
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      if (canvas.width !== w || canvas.height !== h) {
-        renderer.setSize(w, h, false);
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-      }
+    scene.add(new THREE.AmbientLight(0x446688, 1.0));
+    var dl = new THREE.DirectionalLight(0x88ccff, 2.2);
+    dl.position.set(2, 4, 4);
+    scene.add(dl);
+    var rl = new THREE.DirectionalLight(0x00ddff, 1.2);
+    rl.position.set(-2, 1, -3);
+    scene.add(rl);
+
+    window.addEventListener('resize', function () {
+      var w = window.innerWidth, h = window.innerHeight;
+      canvas.width = w; canvas.height = h;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
     });
   }
 
-  // ── Tank ──
+  function fallback() {
+    window.location.href = 'index.html';
+  }
+
   function initTank() {
-    const glass = new THREE.Mesh(
-      new THREE.BoxGeometry(TANK_W, TANK_H, TANK_D),
-      new THREE.MeshPhysicalMaterial({
-        color: 0x88ddff, transparent: true, opacity: 0.06,
-        roughness: 0, metalness: 0, side: THREE.DoubleSide, depthWrite: false
-      })
-    );
-    scene.add(glass);
+    var hw = TANK_W / 2, hh = TANK_H / 2;
 
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(TANK_W, TANK_H, TANK_D)),
-      new THREE.LineBasicMaterial({ color: 0x00ddff, transparent: true, opacity: 0.2 })
-    );
-    scene.add(edges);
+    var pts = [
+      [-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh], [-hw, -hh]
+    ];
+    var flat = [];
+    for (var i = 0; i < pts.length; i++) {
+      flat.push(pts[i][0], pts[i][1], 0);
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(flat, 3));
+    scene.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x00ddff, transparent: true, opacity: 0.7 })));
   }
 
-  // ── Water ──
   function initWater() {
-    waterMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(TANK_W * 0.92, TANK_H, TANK_D * 0.92),
-      new THREE.MeshPhysicalMaterial({
-        color: 0x0077dd, transparent: true, opacity: 0.3,
-        roughness: 0.1, metalness: 0, side: THREE.DoubleSide
-      })
-    );
-    waterMesh.scale.y = 0.01;
+    var geo = new THREE.BoxGeometry(TANK_W * 0.94, TANK_H, TANK_W * 0.08, 30, 20, 1);
+    waterMesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+      color: 0x3399ff, transparent: true, opacity: 0.4, side: THREE.DoubleSide
+    }));
     waterMesh.position.y = -TANK_H / 2;
+    waterMesh.scale.y = 0.01;
     scene.add(waterMesh);
-  }
 
-  // ── Fish (same as hero) ──
-  function createFish() {
-    const group = new THREE.Group();
-
-    const bodyGeo = new THREE.SphereGeometry(0.5, 14, 10);
-    bodyGeo.scale(1.8, 0.6, 0.7);
-    const pos = bodyGeo.attributes.position;
-    const cArr = new Float32Array(pos.count * 3);
-    for (let i = 0; i < pos.count; i++) {
-      const y = pos.getY(i);
-      const zAbs = Math.abs(pos.getZ(i));
-      if (y > 0.05 && y < 0.2 && zAbs > 0.08) {
-        cArr[i * 3] = 0; cArr[i * 3 + 1] = 0.83; cArr[i * 3 + 2] = 1;
-      } else if (y < -0.05 && zAbs > 0.08) {
-        cArr[i * 3] = 1; cArr[i * 3 + 1] = 0.27; cArr[i * 3 + 2] = 0.27;
-      } else {
-        cArr[i * 3] = 0.17; cArr[i * 3 + 1] = 0.24; cArr[i * 3 + 2] = 0.31;
+    // Store original positions and top-face indices
+    var pos = geo.attributes.position.array;
+    waterMesh.userData.orig = new Float32Array(pos);
+    var halfH = TANK_H / 2;
+    var topZ = [];
+    for (var i = 0; i < pos.length; i += 3) {
+      if (Math.abs(pos[i + 1] - halfH) < 0.001) {
+        topZ.push(i + 2);
       }
     }
-    bodyGeo.setAttribute('color', new THREE.Float32BufferAttribute(cArr, 3));
-    const bodyMat = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 25 });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    waterMesh.userData.topZ = topZ;
+  }
+
+  function makeFish() {
+    var g = new THREE.Group();
+
+    var bg = new THREE.SphereGeometry(0.5, 14, 10);
+    bg.scale(1.8, 0.6, 0.7);
+    var p = bg.attributes.position;
+    var c = new Float32Array(p.count * 3);
+    for (var i = 0; i < p.count; i++) {
+      var y = p.getY(i), za = Math.abs(p.getZ(i));
+      if (y > 0.05 && y < 0.2 && za > 0.08) {
+        c[i*3]=0; c[i*3+1]=0.83; c[i*3+2]=1;
+      } else if (y < -0.05 && za > 0.08) {
+        c[i*3]=1; c[i*3+1]=0.27; c[i*3+2]=0.27;
+      } else {
+        c[i*3]=0.17; c[i*3+1]=0.24; c[i*3+2]=0.31;
+      }
+    }
+    bg.setAttribute('color', new THREE.BufferAttribute(c, 3));
+    var body = new THREE.Mesh(bg, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 25 }));
     body.position.x = 0.3;
-    group.add(body);
+    g.add(body);
 
-    const tailShape = new THREE.Shape();
-    tailShape.moveTo(0, 0); tailShape.lineTo(-0.5, -0.3); tailShape.lineTo(-0.5, 0.3); tailShape.closePath();
-    tailMesh = new THREE.Mesh(
-      new THREE.ShapeGeometry(tailShape),
-      new THREE.MeshPhongMaterial({ color: 0x2C3E50, transparent: true, opacity: 0.8, side: THREE.DoubleSide })
-    );
+    var ts = new THREE.Shape();
+    ts.moveTo(0,0); ts.lineTo(-0.5,-0.3); ts.lineTo(-0.5,0.3); ts.closePath();
+    tailMesh = new THREE.Mesh(new THREE.ShapeGeometry(ts),
+      new THREE.MeshPhongMaterial({ color: 0x2C3E50, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
     tailMesh.position.x = -0.7;
-    group.add(tailMesh);
+    g.add(tailMesh);
 
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), eyeMat);
-    eye.position.set(0.9, 0.1, 0.3);
-    group.add(eye);
-    const eye2 = eye.clone();
-    eye2.position.z = -0.3;
-    group.add(eye2);
+    var em = new THREE.MeshBasicMaterial({ color: 0x222222 });
+    var e1 = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), em);
+    e1.position.set(0.9, 0.1, 0.3); g.add(e1);
+    var e2 = e1.clone();
+    e2.position.z = -0.3; g.add(e2);
 
-    group.scale.set(0.4, 0.4, 0.4);
-    return group;
+    var s = TANK_W * 0.1;
+    g.scale.set(s, s, s);
+    return g;
   }
 
   function initFish() {
-    fishGroup = createFish();
-    fishGroup.position.set(0, -0.3, 0);
+    fishGroup = makeFish();
+    fishGroup.position.set(0, 0, 0);
     scene.add(fishGroup);
   }
 
-  // ── Bioluminescent particles ──
   function initParticles() {
-    const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(PARTICLE_COUNT * 3);
-    const sz = new Float32Array(PARTICLE_COUNT);
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * TANK_W * 1.4;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * TANK_H;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * TANK_D * 1.4;
-      sz[i] = 1 + Math.random() * 2;
+    var geo = new THREE.BufferGeometry();
+    var pos = new Float32Array(PC * 3);
+    for (var i = 0; i < PC; i++) {
+      pos[i*3] = (Math.random() - 0.5) * TANK_W * 0.85;
+      pos[i*3+1] = (Math.random() - 0.5) * TANK_H;
+      pos[i*3+2] = (Math.random() - 0.5) * TANK_W * 0.06;
     }
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    geo.setAttribute('size', new THREE.Float32BufferAttribute(sz, 1));
-    particles = new THREE.Points(
-      geo,
-      new THREE.PointsMaterial({
-        color: 0x66ddff, size: 0.035, transparent: true, opacity: 0.5,
-        blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false
-      })
-    );
+    particles = new THREE.Points(geo, new THREE.PointsMaterial({
+      color: 0x88ddff, size: 0.04, transparent: true, opacity: 0.6,
+      blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false
+    }));
     scene.add(particles);
   }
 
-  // ── Bubbles ──
   function initBubbles() {
-    const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(BUBBLE_COUNT * 3);
-    for (let i = 0; i < BUBBLE_COUNT; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * TANK_W * 0.7;
-      pos[i * 3 + 1] = -TANK_H / 2 + Math.random() * TANK_H * 0.8;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * TANK_D * 0.7;
+    var geo = new THREE.BufferGeometry();
+    var pos = new Float32Array(BC * 3);
+    for (var i = 0; i < BC; i++) {
+      pos[i*3] = (Math.random() - 0.5) * TANK_W * 0.55;
+      pos[i*3+1] = -TANK_H/2 + Math.random() * TANK_H * 0.8;
+      pos[i*3+2] = (Math.random() - 0.5) * TANK_W * 0.04;
     }
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    bubbles = new THREE.Points(
-      geo,
-      new THREE.PointsMaterial({
-        color: 0x88eeff, size: 0.05, transparent: true, opacity: 0.35,
-        blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false
-      })
-    );
+    bubbles = new THREE.Points(geo, new THREE.PointsMaterial({
+      color: 0xaaefff, size: 0.07, transparent: true, opacity: 0.5,
+      blending: THREE.AdditiveBlending, sizeAttenuation: true, depthWrite: false
+    }));
     scene.add(bubbles);
   }
 
-  // ── Render loop ──
-  function animate() {
+  function tick() {
     if (!active) return;
     time += 0.016;
 
-    const f = Math.max(0.01, fillProgress);
-    waterMesh.scale.y = f;
-    waterMesh.position.y = -TANK_H / 2 + (TANK_H * f) / 2;
+    if (waterMesh) {
+      var f = Math.max(0.01, fillProgress);
+      waterMesh.scale.y = f;
+      waterMesh.position.y = -TANK_H/2 + (TANK_H * f) / 2;
+      // Wave animation only on top face vertices
+      if (f > 0.05 && waterMesh.userData.topZ) {
+        var wp = waterMesh.geometry.attributes.position.array;
+        var orig = waterMesh.userData.orig;
+        var topZ = waterMesh.userData.topZ;
+        for (var t = 0; t < topZ.length; t++) {
+          var zi = topZ[t];
+          var wx = orig[zi - 2], wy = orig[zi - 1];
+          var wave = Math.sin(wx * 4 + time * 3) * 0.025 + Math.cos(wy * 5 + time * 2.5) * 0.015;
+          wp[zi - 1] = orig[zi - 1] + Math.min(wave, 0.03);
+          wp[zi] = orig[zi];
+        }
+        waterMesh.geometry.attributes.position.needsUpdate = true;
+      }
+    }
 
     if (fishGroup) {
-      const s = Math.sin(time * 0.7) * 0.9;
-      const sy = -0.1 + Math.sin(time * 0.9) * 0.2;
-      const sz = Math.sin(time * 0.5) * 0.2;
-      fishGroup.position.set(s, sy, sz);
-      fishGroup.rotation.y = Math.cos(time * 0.7) * 0.4;
+      var fp = Math.max(fillProgress, 0.05);
+      var wc = -TANK_H/2 + (TANK_H * fp) / 2;
+      fishGroup.position.set(
+        Math.sin(time * 0.8) * TANK_W * 0.3,
+        wc + Math.sin(time * 0.9) * TANK_H * fp * 0.25,
+        Math.sin(time * 0.5) * 0.05
+      );
+      fishGroup.rotation.y = Math.cos(time * 0.8) * 0.3;
       fishGroup.rotation.z = Math.sin(time * 0.6) * 0.03;
       if (tailMesh) tailMesh.rotation.y = Math.sin(time * 3.5) * 0.4;
     }
 
-    const pp = particles.geometry.attributes.position.array;
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      pp[i * 3 + 1] += Math.sin(time * 0.6 + i) * 0.002;
-      pp[i * 3] += Math.sin(time * 0.3 + i * 0.7) * 0.001;
-      pp[i * 3 + 2] += Math.cos(time * 0.4 + i * 0.5) * 0.001;
-      if (pp[i * 3 + 1] > TANK_H / 2) {
-        pp[i * 3 + 1] = -TANK_H / 2;
-        pp[i * 3] = (Math.random() - 0.5) * TANK_W * 1.4;
-        pp[i * 3 + 2] = (Math.random() - 0.5) * TANK_D * 1.4;
+    if (particles) {
+      var pp = particles.geometry.attributes.position.array;
+      for (var i = 0; i < PC; i++) {
+        pp[i*3+1] += Math.sin(time * 0.5 + i) * 0.002;
+        pp[i*3] += Math.sin(time * 0.3 + i * 0.7) * 0.001;
+        pp[i*3+2] += Math.cos(time * 0.4 + i * 0.5) * 0.001;
+        if (pp[i*3+1] > TANK_H/2) {
+          pp[i*3+1] = -TANK_H/2;
+          pp[i*3] = (Math.random() - 0.5) * TANK_W * 0.85;
+          pp[i*3+2] = (Math.random() - 0.5) * TANK_W * 0.06;
+        }
+        if (pp[i*3+1] < -TANK_H/2) {
+          pp[i*3+1] = TANK_H/2;
+          pp[i*3] = (Math.random() - 0.5) * TANK_W * 0.85;
+          pp[i*3+2] = (Math.random() - 0.5) * TANK_W * 0.06;
+        }
+        if (pp[i*3] > TANK_W * 0.45) pp[i*3] = -TANK_W * 0.45;
+        if (pp[i*3] < -TANK_W * 0.45) pp[i*3] = TANK_W * 0.45;
+        if (pp[i*3+2] > TANK_W * 0.06) pp[i*3+2] = -TANK_W * 0.06;
+        if (pp[i*3+2] < -TANK_W * 0.06) pp[i*3+2] = TANK_W * 0.06;
       }
+      particles.geometry.attributes.position.needsUpdate = true;
     }
-    particles.geometry.attributes.position.needsUpdate = true;
 
-    const bp = bubbles.geometry.attributes.position.array;
-    for (let i = 0; i < BUBBLE_COUNT; i++) {
-      bp[i * 3 + 1] += (0.3 + i * 0.02) * 0.008;
-      bp[i * 3] += Math.sin(time * 2.5 + i) * 0.002;
-      if (bp[i * 3 + 1] > TANK_H / 2) {
-        bp[i * 3 + 1] = -TANK_H / 2;
-        bp[i * 3] = (Math.random() - 0.5) * TANK_W * 0.7;
-        bp[i * 3 + 2] = (Math.random() - 0.5) * TANK_D * 0.7;
+    if (bubbles) {
+      var bp = bubbles.geometry.attributes.position.array;
+      for (var i = 0; i < BC; i++) {
+        bp[i*3+1] += (0.3 + i * 0.02) * 0.008;
+        bp[i*3] += Math.sin(time * 2.5 + i) * 0.002;
+        if (bp[i*3+1] > TANK_H/2) {
+          bp[i*3+1] = -TANK_H/2;
+          bp[i*3] = (Math.random() - 0.5) * TANK_W * 0.55;
+          bp[i*3+2] = (Math.random() - 0.5) * TANK_W * 0.04;
+        }
+        if (bp[i*3+1] < -TANK_H/2) {
+          bp[i*3+1] = TANK_H/2;
+          bp[i*3] = (Math.random() - 0.5) * TANK_W * 0.55;
+          bp[i*3+2] = (Math.random() - 0.5) * TANK_W * 0.04;
+        }
+        if (bp[i*3] > TANK_W * 0.3) bp[i*3] = -TANK_W * 0.3;
+        if (bp[i*3] < -TANK_W * 0.3) bp[i*3] = TANK_W * 0.3;
+        if (bp[i*3+2] > TANK_W * 0.04) bp[i*3+2] = -TANK_W * 0.04;
+        if (bp[i*3+2] < -TANK_W * 0.04) bp[i*3+2] = TANK_W * 0.04;
       }
+      bubbles.geometry.attributes.position.needsUpdate = true;
     }
-    bubbles.geometry.attributes.position.needsUpdate = true;
 
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
+    if (renderer && scene && camera) renderer.render(scene, camera);
+    animId = requestAnimationFrame(tick);
   }
 
-  // ── Launch splash ──
   function launchSplash() {
     if (active) return;
     active = true;
 
-    const overlay = document.getElementById('splash-overlay');
-    overlay.style.display = 'block';
-    overlay.style.opacity = 0;
+    var overlay = document.getElementById('splash-overlay');
+    overlay.classList.add('active');
+
+    // Force reflow
+    overlay.offsetHeight;
 
     initScene();
+    if (!renderer) { fallback(); return; }
     initTank();
     initWater();
     initFish();
     initParticles();
     initBubbles();
 
-    const state = { progress: 0 };
-    const tl = gsap.timeline({
-      defaults: { ease: 'power2.out' },
-      onComplete: () => { window.location.href = 'index.html'; }
+    // Render first frame immediately to confirm scene exists
+    renderer.render(scene, camera);
+
+    // Queue render loop on next frame
+    animId = requestAnimationFrame(tick);
+
+    // Animated dots on text
+    var dotEl = document.getElementById('splash-dots');
+    var dotCount = 0;
+    var dotInterval = setInterval(function () {
+      dotCount = (dotCount + 1) % 4;
+      dotEl.textContent = dotCount === 0 ? '' : new Array(dotCount + 1).join('.');
+    }, 400);
+
+    var state = { progress: 0 };
+    var tl = gsap.timeline({
+      onComplete: function () { window.location.href = 'index.html'; }
     });
 
-    tl.to(overlay, { opacity: 1, duration: 0.4 }, 0)
+    tl.to(overlay, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0)
       .to(state, {
-        progress: 1, duration: 3.5, ease: 'power2.inOut',
-        onUpdate: () => { fillProgress = state.progress; }
+        progress: 0.95, duration: 4.5, ease: 'power2.inOut',
+        onUpdate: function () { fillProgress = state.progress; }
       }, 0)
-      .to('#splash-text', { opacity: 1, duration: 0.5 }, 0.5)
-      .to('#splashBlackout', { opacity: 1, duration: 0.8, ease: 'power2.in' }, 4.0)
-      .to('#splash-text', { opacity: 0, duration: 0.3 }, 4.2);
-
-    animate();
+      .to('#splash-text', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0.5)
+      .to('#splashBlackout', { opacity: 1, duration: 1.5, ease: 'power3.inOut' }, 4.2)
+      .to('#splash-text', { opacity: 0, duration: 0.3 }, 4.6);
   }
 
-  // ── Intercept all links to index.html ──
-  document.querySelectorAll('a[href="index.html"]').forEach(function(link) {
-    link.addEventListener('click', function(e) {
+  document.querySelectorAll('a[href="index.html"]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
       e.preventDefault();
       launchSplash();
     });

@@ -14,6 +14,8 @@
 - **Tooltips** — Atributo `data-tooltip` con tooltip nativo oscuro sobre inputs/botones
 - **Modal de código secreto** — Estilo Material, `.input--error` con shake animation en código incorrecto
 - **Navigation bar inferior** — `#navWrap` sticky al fondo con `backdrop-filter: blur(12px)`, botón "Siguiente Escenario"
+- **Splash preloader landing page** — Pantalla de carga con Three.js 3D al hacer clic en "Abrir Simulador": tanque 2D con outline, agua 3D que se llena al 95% (BoxGeometry, 4.5s GSAP), pez neon tetra 3D que nada dentro, partículas bioluminiscentes, burbujas, ondas en superficie superior, texto "Preparando acuario" con puntos animados, blackout fade-in antes de redirigir a index.html
+- **GSAP micro-interacciones landing page** — Timeline de entrada del héroe con fade-in + scale (0.6s), efecto de scroll en nav bar (fondo sólido + sombra, 50px), ScrollTrigger para feature cards (stagger 0.15s), phone mockups y CTA con fade-in desde abajo
 - **Canvas `canvas--estanque`** — Clase que cambia aspect-ratio a 3/2 para escenarios de estanque
 - **`getCorriente()` para esc5** — Detecta `escenarioActual === 5` y calcula `I = m × V` en vez de `V/R`
 - **Burbujas más grandes** — Radio aumentado de 3–6 a 8–16
@@ -31,9 +33,9 @@
 ### Fix
 - Mensajes de voltaje/corriente actualizados para claridad
 - Scroll horizontal en landing page para móvil corregido con `overflow-x: hidden` en `html`
+- Partículas y burbujas del splash preloader: límite inferior agregado para evitar desborde por debajo del tanque
 
 ### Internal
-- Splash screen removido de landing page
 - `sincronizarAlturaGrafica7()` añadida al resize listener
 - `contenedorGrafica` añadido para layout de gráficas
 - Código refactorizado para mejor legibilidad

@@ -8,10 +8,11 @@ Open `index.html` in any browser. No build or server required.
 ## Project Structure
 
 - `index.html` - Entry point with scenario tabs, controls, canvas, and JSXGraph container
-- `landing.html` - Landing page with Three.js 3D neon tetra hero, features, screenshots
+- `landing.html` - Landing page with Three.js 3D neon tetra hero, features, screenshots, splash preloader
 - `js/script.js` - Main logic: `Pez`, `Burbuja`, `Pecera`, `Grafica`, `ParticulaAgua`, and Three.js 3D scene classes
 - `js/landing.js` - Three.js interactive neon tetra for landing page (aurora particles, glow, mouse follow)
-- `js/three.min.js` - Three.js library for 3D fish tank (Escenario 6) and landing page
+- `js/splash.js` - Splash preloader: Three.js tank outline, BoxGeometry water fill, neon tetra fish, particles, bubbles, GSAP timeline
+- `js/three.min.js` - Three.js library for 3D fish tank (Escenario 6), landing page, and splash
 - `js/OrbitControls.js` - Camera controls for 3D scene
 - `css/style.css` - Styling for simulator
 - `css/landing.css` - Neon theme, glassmorphism, bento grid for landing page
@@ -198,3 +199,16 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 - **Reset:** clicking "Reiniciar" or switching scenarios restores zoom to 1x
 - **Fish cursor:** cursor position is correctly mapped to the zoomed/panned canvas so fish flee behavior works at any zoom level
 - Implemented via `ctx.save()/translate()/scale()/restore()` in the `actualizar()` render loop, with no changes to existing drawing code
+
+## Splash Preloader (landing.html)
+
+- Triggered on click of any "Abrir Simulador" / "Comenzar Simulación" link (all `href="index.html"`)
+- 5-second duration: overlay fade-in (0.4s), water fill to 95% (4.5s, `power2.inOut`), blackout at 4.2s (1.5s, `power3.inOut`), redirect on complete
+- **Tank:** 60% of viewport size, square, 2D outline with Three.js lines at Z=0
+- **Water:** BoxGeometry with Y-scale driven by GSAP fillProgress, waves on top-face vertices only (vertical Y displacement, amplitude 0.025+0.015, clamped to +0.03)
+- **Fish:** Custom geometry (body + tail), two-tone neon vertex colors (cyan + red), scale = TANK_W * 0.1, swim range adjusts with water level
+- **Particles:** 200 bioluminescent points, spawn range X: TANK_W * 0.85, Z: TANK_W * 0.06, clamped to ±TANK_W*0.45 (X) / ±TANK_W*0.06 (Z), reset at both TANK_H/2 and -TANK_H/2
+- **Bubbles:** 80 translucent spheres, spawn range X: TANK_W * 0.55, Z: TANK_W * 0.04, clamped to ±TANK_W*0.3 (X) / ±TANK_W*0.04 (Z), rise speed scales with size
+- **Text:** "Preparando acuario" with animated dots cycling every 400ms via `setInterval`
+- **Decoupling:** GSAP tweens a `state.progress` object; Three.js render loop reads `fillProgress` each frame
+- **Z-index:** `#splash-overlay` at 9999 covers hero scene during preloader
