@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/brainstorming/SKILL.md",
       "computedHash": "8df9b47092524833138b58682d03f2e153a242e550d1693657afdbee0cc9cdb0"
+    },
+    "ui-ux-pro-max": {
+      "source": "likaia/nginxpulse",
+      "sourceType": "github",
+      "skillPath": ".codex/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "f98912d74b4cfd29fd0488002a5cc7dab2dc82376c7ff73591cae842e2042ae0"
     }
   }
 }
