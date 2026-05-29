@@ -3357,3 +3357,9 @@ document.addEventListener('click', function (e) {
     el.appendChild(r);
     r.addEventListener('animationend', function () { r.remove(); });
 });
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js');
+    });
+}

@@ -213,6 +213,13 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 - **Decoupling:** GSAP tweens a `state.progress` object; Three.js render loop reads `fillProgress` each frame
 - **Z-index:** `#splash-overlay` at 9999 covers hero scene during preloader
 
+## PWA
+
+- `manifest.json` — app name, icons (192/512), `display: standalone`, theme color `#0d47a1`
+- `sw.js` — caches HTML, CSS, JS, images on install; stale-while-revalidate on fetch
+- Registered in `js/script.js` on `window.load`
+- `apple-touch-icon` and `theme-color` meta in both `index.html` and `landing.html`
+
 ## Hotfixes
 
 ### Esc7 graph width on mobile (2026-05-29)
