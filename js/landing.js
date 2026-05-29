@@ -213,4 +213,64 @@
   // ── Resize ──
   window.addEventListener('resize', resize);
   resize();
+
+  // ── GSAP Micro-interactions ──
+  if (typeof gsap !== 'undefined') {
+    // Hero entrance timeline
+    const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+    heroTl
+      .fromTo('.hero-badge', { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6 }, 0)
+      .fromTo('h1', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 }, 0.2)
+      .fromTo('.subtitle', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7 }, 0.4)
+      .fromTo('.hero-actions .btn', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.15 }, 0.6)
+      .fromTo('.scroll-indicator', { opacity: 0 }, { opacity: 0.6, duration: 0.5 }, 1.2);
+
+    // ── Nav scroll effect ──
+    const nav = document.querySelector('.nav');
+    if (nav) {
+      gsap.to(nav, {
+        scrollTrigger: {
+          trigger: document.body,
+          start: 'top -80',
+          end: 'top -160',
+          toggleActions: 'play none none reverse'
+        },
+        backgroundColor: 'rgba(8,8,11,0.95)',
+        backdropFilter: 'blur(20px)',
+        duration: 0.3,
+        ease: 'none'
+      });
+    }
+
+    // ── Scroll-triggered: feature cards ──
+    gsap.fromTo('.feature-card', { opacity: 0, y: 40 }, {
+      opacity: 1, y: 0, duration: 0.7, stagger: 0.15, ease: 'power3.out',
+      scrollTrigger: {
+        trigger: '.features-grid',
+        start: 'top 85%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+
+    // ── Scroll-triggered: phone mockups ──
+    gsap.fromTo('.phone-mockup', { opacity: 0, scale: 0.92, y: 30 }, {
+      opacity: 1, scale: 1, y: 0, duration: 0.7, stagger: 0.2, ease: 'power3.out',
+      scrollTrigger: {
+        trigger: '.screenshots-grid',
+        start: 'top 85%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+
+    // ── Scroll-triggered: CTA section ──
+    gsap.fromTo('.cta-section', { opacity: 0, y: 30 }, {
+      opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
+      scrollTrigger: {
+        trigger: '.cta-section',
+        start: 'top 88%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+  }
 })();
