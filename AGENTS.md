@@ -212,3 +212,16 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 - **Text:** "Preparando acuario" with animated dots cycling every 400ms via `setInterval`
 - **Decoupling:** GSAP tweens a `state.progress` object; Three.js render loop reads `fillProgress` each frame
 - **Z-index:** `#splash-overlay` at 9999 covers hero scene during preloader
+
+## Hotfixes
+
+### Esc7 graph width on mobile (2026-05-29)
+
+**Problem:** JSXGraph's `resizeContainer()` sets an inline `style.width` (px) on `#box7`, overriding the CSS `width: 100%`. On mobile, if `box7.clientWidth` is read before the flex layout settles, the graph renders at an incorrect narrow width.
+
+**Fix** (`js/script.js:961-962`):
+- Clear `box7.style.width` before reading `clientWidth` so the value reflects CSS `width: 100%`
+- Pass third argument `true` to `board7.resizeContainer()` so JSXGraph doesn't re-set the inline width
+
+**Mobile height** (`css/style.css:816-817`):
+- Increased `#box7` mobile `max-height` from 180px → 282px, `min-height` from 100px → 150px for a taller graph

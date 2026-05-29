@@ -813,8 +813,8 @@ input[type="range"]::-moz-range-thumb {
         overflow-x: hidden;
     }
     #box4, #box5, #box7 {
-        max-height: 180px;
-        min-height: 100px;
+        max-height: 282px;
+        min-height: 150px;
         overflow-x: hidden;
     }
     #contenedorGrafica {

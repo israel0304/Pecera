@@ -958,7 +958,8 @@ function sincronizarAlturaGrafica7() {
         let h = contenedorCanvas.clientHeight;
         let box7 = document.getElementById('box7');
         box7.style.height = h + 'px';
-        board7.resizeContainer(box7.clientWidth, h);
+        box7.style.width = '';
+        board7.resizeContainer(box7.clientWidth, h, true);
     }
 }
 
