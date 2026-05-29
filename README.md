@@ -188,6 +188,11 @@ Pecera/
 └── README.md
 ```
 
+## Créditos
+
+**Diseño y autoría:** Helen Mariel Pérez Martínez (CINVESTAV)
+**Desarrollo técnico:** Israel Emmanuel Hernández González
+
 ## Versiones
 
 El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer](https://semver.org/). Las versiones publicadas están disponibles en [GitHub Releases](https://github.com/israel0304/Pecera/releases).

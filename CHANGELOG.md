@@ -40,6 +40,7 @@
 
 ### Documentation
 - Actualización de AGENTS.md con UI/UX v1.11.0, toast, nav, tooltips, modals, collapse UI rediseñado
+- Agregados créditos de autoría en landing.html y README.md
 
 ## 1.10.0 (no publicado)
 
