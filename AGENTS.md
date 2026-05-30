@@ -181,14 +181,24 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 | Escenario 5 (franjas) | Unlock colored bands | `franjas` |
 
 - Every scenario requires its code the **first time** it is visited, regardless of direction (forward, backward, or direct button click)
-- Once unlocked, a scenario is freely accessible for the rest of the session
+- Once unlocked, a scenario is freely accessible (depending on `UNLOCK_KEY` mode)
 - Codes are case-insensitive and ignore accents and punctuation (e.g., `"Dimensiónes!"` matches `"dimensiones"`)
 - The `"franjas"` code is for the checkbox in escenario 5 (one-time per session modal)
 - The starting scenario (Escenario 1) is unlocked by default
 - Navigation order is defined by `getOrden()` — see script.js for current order
 
+### Unlock Key (`var UNLOCK_KEY` in `js/script.js:1`)
+Controls how code unlocking behaves:
+| Key | Behavior |
+|-----|----------|
+| `pecera_locked` | Codes required every session (no persistence) |
+| `pecera_unlocked` | Codes persist across sessions via `localStorage` |
+| `pecera_deploy` | All 7 scenarios unlocked, no codes needed |
+
 ## Mobile Behavior
 - **Tabs**: buttons show abbreviated text on `<576px` (Pecera, P+L, 3D, Estanque, E+G, E+P, Inc.Cap) via `d-none/d-sm-none` spans
+- **Nav bar (`#navWrap`)**: hidden by default on mobile, appears when scrolling to end of content via `IntersectionObserver` + CSS transition (`max-height`/`opacity`). Uses `.navWrap--visible` class. Gives more vertical space in landscape and long content
+- **Z-index**: `#navWrap` has `z-index: 101` (above JSXGraph navigation buttons at 100)
 
 ## Canvas Zoom & Pan (Escenarios 1–5)
 
@@ -243,9 +253,18 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 
 **Problem:** JSXGraph's `resizeContainer()` sets an inline `style.width` (px) on `#box7`, overriding the CSS `width: 100%`. On mobile, if `box7.clientWidth` is read before the flex layout settles, the graph renders at an incorrect narrow width.
 
-**Fix** (`js/script.js:961-962`):
+**Fix** (removed in v1.13.0, no longer needed with flexbox layout):
 - Clear `box7.style.width` before reading `clientWidth` so the value reflects CSS `width: 100%`
 - Pass third argument `true` to `board7.resizeContainer()` so JSXGraph doesn't re-set the inline width
 
 **Mobile height** (`css/style.css:816-817`):
 - Increased `#box7` mobile `max-height` from 180px → 282px, `min-height` from 100px → 150px for a taller graph
+
+### iOS JSXGraph width regression on scroll bounce (2026-05-30)
+
+**Problem:** On iOS Safari, scrolling past the content (rubber-band bounce) triggered the `window.resize` event, which called `sincronizarAlturaGrafica*()`. These functions read `box.clientWidth` during the bounce (incorrect value) and passed it to `resizeContainer()`, which set a stale inline `style.width`, progressively narrowing the graph.
+
+**Fix** (`js/script.js`):
+- Removed `window.addEventListener('resize', ...)` (lines 41-46)
+- Removed all 4 `sincronizarAlturaGrafica*()` functions (legacy pre-flexbox)
+- JSXGraph now relies entirely on `flex: 1` + CSS `min-height`/`max-height` for sizing
