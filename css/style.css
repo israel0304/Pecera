@@ -725,12 +725,16 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ── Navigation bar ── */
+#navSentinel {
+    pointer-events: none;
+    height: 1px;
+}
 #navWrap {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     width: 100%;
-    padding: 10px 16px;
+    padding: 0 16px;
     position: sticky;
     bottom: 0;
     display: flex;
@@ -738,6 +742,15 @@ input[type="range"]::-moz-range-thumb {
     gap: 10px;
     border-top: 1px solid rgba(0, 0, 0, 0.06);
     z-index: 101;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+#navWrap.navWrap--visible {
+    max-height: 80px;
+    opacity: 1;
+    padding: 10px 16px;
 }
 #navWrap .btn {
     max-width: 250px;
@@ -840,8 +853,11 @@ input[type="range"]::-moz-range-thumb {
     }
 
     #navWrap {
-        padding: 6px 8px;
+        padding: 0 8px;
         gap: 6px;
+    }
+    #navWrap.navWrap--visible {
+        padding: 6px 8px;
     }
     #navWrap .btn {
         font-size: 0.875rem;

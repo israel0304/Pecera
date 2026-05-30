@@ -4,7 +4,6 @@
   "description": "Simulador interactivo de pecera, estanque sustentable y dimensiones 3D para aprender sobre capacidad, volumen y energía",
   "start_url": "app.html",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#f5f7fa",
   "theme_color": "#0d47a1",
   "icons": [

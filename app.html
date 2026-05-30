@@ -322,6 +322,7 @@
         </div>
     </div>
 
+    <div id="navSentinel"></div>
     <div id="navWrap">
         <button id="btnAtras" class="btn btn-secondary btn-lg">← Atrás</button>
         <button id="btnContinuar" class="btn btn-primary btn-lg">Continuar →</button>
@@ -370,5 +371,17 @@
     <script src="./js/three.min.js"></script>
     <script src="./js/OrbitControls.js"></script>
     <script src="js/script.js"></script>
+    <script>
+    (function() {
+      var s = document.getElementById('navSentinel');
+      var n = document.getElementById('navWrap');
+      if (!s || !n) return;
+      new IntersectionObserver(function(e) {
+        e.forEach(function(entry) {
+          n.classList.toggle('navWrap--visible', entry.isIntersecting);
+        });
+      }, { threshold: 0 }).observe(s);
+    })();
+    </script>
 </body>
 </html>

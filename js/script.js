@@ -38,13 +38,6 @@ function redimensionarCanvas() {
 }
 redimensionarCanvas();
 
-window.addEventListener('resize', function () {
-    redimensionarCanvas();
-    sincronizarAlturaGrafica();
-    sincronizarAlturaGrafica5();
-    sincronizarAlturaGrafica7();
-});
-
 // event listeers
 boton3.addEventListener('click', crearPunto);
 cajaPeces.addEventListener('input', pecesDinamicos);
@@ -753,8 +746,6 @@ function pressIntro(e) {
     }
 }
 crearGrafica();
-setTimeout(sincronizarAlturaGrafica, 100);
-
 // ============================================
 // ESCENARIO 2: Sistema Sustentable
 // ============================================
@@ -855,16 +846,6 @@ let bandaVerdeFuerte = null;
 let bandaRoja = null;
 let franjasUnlocked = false;
 
-function sincronizarAlturaGrafica() {
-    if (escenarioActual === 1 || escenarioActual === 3) {
-        let h = contenedorCanvas.clientHeight;
-        box.style.height = h + 'px';
-        if (grafica && grafica.board) {
-            grafica.board.resizeContainer(box.clientWidth, h);
-        }
-    }
-}
-
 function initBoard4() {
     if (board4) return;
     let box4 = document.getElementById('box4');
@@ -928,39 +909,11 @@ function initBoard4() {
     });
 }
 
-function sincronizarAlturaGrafica4() {
-    if (escenarioActual === 4 && board4) {
-        let h = contenedorCanvas.clientHeight;
-        let box4 = document.getElementById('box4');
-        box4.style.height = h + 'px';
-        board4.resizeContainer(box4.clientWidth, h);
-    }
-}
-
-function sincronizarAlturaGrafica5() {
-    if (escenarioActual === 5 && board5) {
-        let h = contenedorCanvas.clientHeight;
-        let box5 = document.getElementById('box5');
-        box5.style.height = h + 'px';
-        board5.resizeContainer(box5.clientWidth, h);
-    }
-}
-
 function getEsc7Factor(dim) {
     if (dim === 'ancho') return FIXED_LARGO * FIXED_ALTO / 1000;
     if (dim === 'alto') return FIXED_LARGO * FIXED_ANCHO / 1000;
     if (dim === 'largo') return FIXED_ANCHO * FIXED_ALTO / 1000;
     return 0;
-}
-
-function sincronizarAlturaGrafica7() {
-    if (escenarioActual === 7 && board7) {
-        let h = contenedorCanvas.clientHeight;
-        let box7 = document.getElementById('box7');
-        box7.style.height = h + 'px';
-        box7.style.width = '';
-        board7.resizeContainer(box7.clientWidth, h, true);
-    }
 }
 
 var ESC7_COLORS = {
@@ -1356,7 +1309,6 @@ const ESCENARIOS = {
             if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
             grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
             grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
-            sincronizarAlturaGrafica();
         }
     },
     2: {
@@ -1395,7 +1347,6 @@ const ESCENARIOS = {
             if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
             grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
             grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
-            sincronizarAlturaGrafica();
         }
     },
     4: {
@@ -1421,7 +1372,6 @@ const ESCENARIOS = {
             }
             actualizarDisplayEsc2();
             initPecesEstanque();
-            sincronizarAlturaGrafica4();
         }
     },
     5: {
@@ -1454,7 +1404,6 @@ const ESCENARIOS = {
             }
             actualizarDisplayEsc2();
             initPecesEstanque();
-            sincronizarAlturaGrafica5();
         }
     },
     6: {
@@ -1503,7 +1452,6 @@ const ESCENARIOS = {
             actualizarEsc7();
             aplicarColoresEsc7(esc7DimActual);
             document.getElementById('esc7-controls').className = 'dim-' + esc7DimActual;
-            sincronizarAlturaGrafica7();
         }
     }
 };
