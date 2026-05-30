@@ -2,13 +2,13 @@
 
 ## Running the App
 
-Open `landing.html` for the landing page with interactive 3D hero.
-Open `index.html` in any browser. No build or server required.
+Open `index.html` for the landing page with interactive 3D hero.
+Open `app.html` in any browser for the simulator. No build or server required.
 
 ## Project Structure
 
-- `index.html` - Entry point with scenario tabs, controls, canvas, and JSXGraph container
-- `landing.html` - Landing page with Three.js 3D neon tetra hero, features, screenshots, splash preloader
+- `index.html` - Landing page with Three.js 3D neon tetra hero, features, screenshots, splash preloader
+- `app.html` - Simulator with scenario tabs, controls, canvas, and JSXGraph container
 - `js/script.js` - Main logic: `Pez`, `Burbuja`, `Pecera`, `Grafica`, `ParticulaAgua`, and Three.js 3D scene classes
 - `js/landing.js` - Three.js interactive neon tetra for landing page (aurora particles, glow, mouse follow)
 - `js/splash.js` - Splash preloader: Three.js tank outline, BoxGeometry water fill, neon tetra fish, particles, bubbles, GSAP timeline
@@ -39,7 +39,7 @@ Open `index.html` in any browser. No build or server required.
 - Types: `success`, `error`, `warning`, `info` — each with colored left border and background
 - Positioned fixed at `bottom: 80px; right: 16px`
 - Auto-dismiss with slide-out animation (default 4000ms)
-- Container: `<div id="toastContainer">` at bottom of `index.html`
+- Container: `<div id="toastContainer">` at bottom of `app.html`
 
 ### Navigation Bar (bottom sticky)
 - `#navWrap` — fixed at bottom with `backdrop-filter: blur(12px)`, glass effect
@@ -200,9 +200,9 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 - **Fish cursor:** cursor position is correctly mapped to the zoomed/panned canvas so fish flee behavior works at any zoom level
 - Implemented via `ctx.save()/translate()/scale()/restore()` in the `actualizar()` render loop, with no changes to existing drawing code
 
-## Splash Preloader (landing.html)
+## Splash Preloader (index.html)
 
-- Triggered on click of any "Abrir Simulador" / "Comenzar Simulación" link (all `href="index.html"`)
+- Triggered on click of any "Abrir Simulador" / "Comenzar Simulación" link (all `href="app.html"`)
 - 5-second duration: overlay fade-in (0.4s), water fill to 95% (4.5s, `power2.inOut`), blackout at 4.2s (1.5s, `power3.inOut`), redirect on complete
 - **Tank:** 60% of viewport size, square, 2D outline with Three.js lines at Z=0
 - **Water:** BoxGeometry with Y-scale driven by GSAP fillProgress, waves on top-face vertices only (vertical Y displacement, amplitude 0.025+0.015, clamped to +0.03)
@@ -215,10 +215,32 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 
 ## PWA
 
-- `manifest.json` — app name, icons (192/512), `display: standalone`, theme color `#0d47a1`
-- `sw.js` — caches HTML, CSS, JS, images on install; stale-while-revalidate on fetch
-- Registered in `js/script.js` on `window.load`
-- `apple-touch-icon` and `theme-color` meta in both `index.html` and `landing.html`
+### Dynamic Manifest (Blob URL)
+- The manifest is **generated at runtime** as a Blob URL in an inline `<script>` in `<head>`, before the browser fetches it
+- All URLs are absolute: `window.location.origin + PECERA_BASE + "/path"`
+- Detects the deployment subdirectory automatically via `PECERA_BASE = window.location.pathname.replace(/\/[^/]*$/, '')`
+- Supports root (`/`), subdirectory (`/pezneon/`), and any deployment path
+- Static `manifest.json` kept as fallback if Blob URL fails
+
+### Service Worker
+- **Dynamic registration** in `js/script.js:3361-3366` using `PECERA_BASE + '/sw.js'` with `scope: PECERA_BASE + '/'`
+- Falls back to `window.location.pathname.replace()` if `PECERA_BASE` is not set
+- **Fetch filter**: only intercepts HTTP(S) requests via `event.request.url.startsWith('http')` to avoid `chrome-extension://` errors
+- Caches HTML, CSS, JS, images on install; stale-while-revalidate on fetch
+- Registered on `window.load` event
+
+### iOS Support
+- `<meta name="apple-mobile-web-app-capable" content="yes">` — full-screen mode on iOS
+- `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`
+- `<meta name="mobile-web-app-capable" content="yes">` — Android/Chrome compatibility
+- `<link rel="apple-touch-icon" href="./img/icon-192.png">`
+
+### Behaviour by deployment path
+
+| Deployment | `PECERA_BASE` | Manifest `start_url` | SW scope |
+|------------|---------------|----------------------|----------|
+| Root (`/`) | `""` | `http://origin/app.html` | `"/"` |
+| `/pezneon/` | `"/pezneon"` | `http://origin/pezneon/app.html` | `"/pezneon/"` |
 
 ## Hotfixes
 

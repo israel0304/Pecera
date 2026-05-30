@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="theme-color" content="#0d47a1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="./manifest.json" id="manifest-link">
+    <link rel="apple-touch-icon" href="./img/icon-192.png">
+    <script>
+    window.PECERA_BASE = window.location.pathname.replace(/\/[^/]*$/, '');
+    (function(d,u,o){
+      var l = d.getElementById('manifest-link');
+      if (!l) return;
+      l.href = URL.createObjectURL(new Blob([JSON.stringify({
+        name: "Pecera - Simulador de Acuario",
+        short_name: "Pecera",
+        description: "Simulador interactivo de pecera, estanque sustentable y dimensiones 3D para aprender sobre capacidad, volumen y energ\u00eda",
+        start_url: o + u + "/app.html",
+        display: "standalone",
+        orientation: "portrait",
+        background_color: "#f5f7fa",
+        theme_color: "#0d47a1",
+        scope: o + u + "/",
+        icons: [
+          {src: o + u + "/img/icon-192.png", sizes:"192x192", type:"image/png"},
+          {src: o + u + "/img/icon-512.png", sizes:"512x512", type:"image/png", purpose:"any maskable"}
+        ]
+      })], {type:'application/json'}));
+    })(document, window.PECERA_BASE, window.location.origin);
+    </script>
+    <link rel="stylesheet" href="./css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="./css/jsxgraph.css">
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/jsxgraphcore.js"></script>
+    <title>Pecera - Simulador</title>
+</head>
+<body>
+    <div id="contenedor" class="container">
+        <!-- Scenario Tabs -->
+        <div class="row mb-1">
+            <div class="col-md">
+
+                <div class="btn-group scenario-tabs" role="group">
+                    <button type="button" id="esc1-btn" class="scenario-tab scenario-tab--active">
+                        <span class="d-sm-none">Pecera</span>
+                        <span class="d-none d-sm-inline">Pecera</span>
+                        <span class="tab-badge"></span>
+                    </button>
+                    <button type="button" id="esc3-btn" class="scenario-tab scenario-tab--locked">
+                        <span class="d-sm-none">P+L.</span>
+                        <span class="d-none d-sm-inline">Pecera + Litros</span>
+                        <span class="tab-badge">&#128274;</span>
+                    </button>
+                    <button type="button" id="esc6-btn" class="scenario-tab scenario-tab--locked">
+                        <span class="d-sm-none">Dim</span>
+                        <span class="d-none d-sm-inline">Dimensiones 3D</span>
+                        <span class="tab-badge">&#128274;</span>
+                    </button>
+                    <button type="button" id="esc7-btn" class="scenario-tab scenario-tab--locked">
+                        <span class="d-sm-none">Inc. C.</span>
+                        <span class="d-none d-sm-inline">Incremento Capacidad</span>
+                        <span class="tab-badge">&#128274;</span>
+                    </button>
+                    <button type="button" id="esc2-btn" class="scenario-tab scenario-tab--locked">
+                        <span class="d-sm-none">Est.</span>
+                        <span class="d-none d-sm-inline">Estanque</span>
+                        <span class="tab-badge">&#128274;</span>
+                    </button>
+                    <button type="button" id="esc4-btn" class="scenario-tab scenario-tab--locked">
+                        <span class="d-sm-none">E+G</span>
+                        <span class="d-none d-sm-inline">Estanque + Gráfica</span>
+                        <span class="tab-badge">&#128274;</span>
+                    </button>
+                    <button type="button" id="esc5-btn" class="scenario-tab scenario-tab--locked">
+                        <span class="d-sm-none">E+P</span>
+                        <span class="d-none d-sm-inline">Estanque + Pendiente</span>
+                        <span class="tab-badge">&#128274;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas & Graph -->
+        <div class="row">
+            <div class="col-12 col-sm-6 col-md-7" id="contenedorCanvas">
+                <canvas id="canvas">Esto solo si no esta implementado</canvas>
+                <div id="three-container" style="display:none; width:100%; height:100%; min-height:300px;">
+                    <div id="esc6-overlay" style="display:none;">
+                        <div id="esc6-info">
+                            Capacidad: <span id="capValInfo">7182</span>
+                        </div>
+                        <div class="esc6-sliders">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <p class="mb-1">Largo: <span id="largoVal">19</span></p>
+                                    <input type="range" min="1" max="19" value="19" id="largo" class="w-100">
+                                </div>
+                                <div class="col">
+                                    <p class="mb-1">Ancho: <span id="anchoVal">18</span></p>
+                                    <input type="range" min="1" max="18" value="18" id="ancho" class="w-100">
+                                </div>
+                                <div class="col">
+                                    <p class="mb-1">Alto: <span id="altoVal">21</span></p>
+                                    <input type="range" min="1" max="21" value="21" id="alto" class="w-100">
+                                </div>
+                                <div class="col-auto">
+                                    <button id="reset-esc6" class="btn btn-light btn-sm">Reiniciar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Escenario 7 Controls -->
+                    <div id="esc7-controls" style="display:none;">
+                        <ul class="nav nav-pills nav-justified mb-2" id="esc7Tabs">
+                            <li class="nav-item"><button class="nav-link active" data-dim="ancho">Ancho</button></li>
+                            <li class="nav-item"><button class="nav-link" data-dim="alto">Alto</button></li>
+                            <li class="nav-item"><button class="nav-link" data-dim="largo">Largo</button></li>
+                        </ul>
+                        <div class="card-control esc7-table-wrap">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-1" style="width:auto;min-width:280px">
+                                    <tbody>
+                                        <tr>
+                                            <th id="esc7Th1" class="text-nowrap" style="width:1%">Ancho₁</th>
+                                            <td style="width:99%"><input type="number" id="esc7Val1" class="form-control form-control-sm" step="0.1" min="0"></td>
+                                        </tr>
+                                        <tr>
+                                            <th id="esc7Th2" class="text-nowrap">Ancho₂</th>
+                                            <td><input type="number" id="esc7Val2" class="form-control form-control-sm" step="0.1" min="0"></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-nowrap">Cap₁</th>
+                                            <td id="esc7Cap1" class="fw-bold">0.000</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-nowrap">Cap₂</th>
+                                            <td id="esc7Cap2" class="fw-bold">0.000</td>
+                                        </tr>
+                                        <tr>
+                                            <th id="esc7ThDelta" class="text-nowrap">Δ Ancho</th>
+                                            <td>
+                                                <div class="d-flex gap-1 justify-content-between align-items-center">
+                                                    <input type="number" id="esc7DeltaVal" class="form-control form-control-sm" placeholder="?" step="0.01" min="0" style="min-width:50px;max-width:80px">
+                                                    <button type="button" id="esc7BtnVal" class="btn btn-success btn-sm">Validar</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-nowrap">Δ Capacidad</th>
+                                            <td>
+                                                <div class="d-flex gap-1 justify-content-between align-items-center">
+                                                    <input type="number" id="esc7DeltaCap" class="form-control form-control-sm" placeholder="?" step="0.01" min="0" style="min-width:50px;max-width:80px">
+                                                    <button type="button" id="esc7BtnCap" class="btn btn-success btn-sm">Validar</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="form-check mb-1">
+                            <input type="checkbox" id="esc7IncluirPeces" class="form-check-input">
+                            <label class="form-check-label" for="esc7IncluirPeces">Incluir peces</label>
+                        </div>
+                        <div id="esc7FishSection" style="display:none">
+                            <div class="card-control esc7-table-wrap">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-1" style="width:auto;min-width:200px">
+                                        <tbody>
+                                            <tr><th class="text-nowrap">Cantidad</th><td><input type="number" id="esc7FishCount" class="form-control form-control-sm" step="1" min="0"></td></tr>
+                                            <tr><th class="text-nowrap">Tamaño (cm)</th><td><input type="number" id="esc7FishSize" class="form-control form-control-sm" step="0.5" min="0"></td></tr>
+                                            <tr><th class="text-nowrap">LA</th><td id="esc7FishLA" class="fw-bold">0.00</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-1">
+                            <button type="button" id="esc7BtnReset" class="btn btn-secondary btn-sm">Reiniciar</button>
+                        </div>
+                        <div id="esc7CorrectoModal" class="modal fade" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">✓ ¡Correcto!</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p id="esc7CorrectoMsg" class="mb-0 fw-bold">¡Has acertado el incremento!</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+
+                <!-- Escenario 1 Controls -->
+                <div id="esc1-controls">
+                    <div class="card-control">
+                        <div class="row">
+                            <div class="col-md">
+                                <p>Temperatura: <span id="tempVal">23</span>&deg;C</p>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="range" min="0" max="50" value="23" id="temp" class="w-100" >
+                                    <button id="playTemp" class="btn btn-success btn-sm" data-tooltip="Animar temperatura autom&aacute;ticamente" style="flex-shrink:0">&#9654;</button>
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <p>N&uacute;mero de peces: <span id="npecesVal">1</span></p>
+                                <input type="range" min="0" max="20" value="1" id="npeces" class="w-100" data-tooltip="M&aacute;x. 20 peces">
+                            </div>
+                            <div class="col-md">
+                                <p>Tama&ntilde;o de peces: <span id="tpecesVal">1</span> cm</p>
+                                <input type="range" min="1" max="7" value="1" id="tpeces" class="w-100" data-tooltip="1-7 cm">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-control">
+                        <div id="la-section" style="display:none;">
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" id="checkLA">
+                                <label class="form-check-label" for="checkLA">Litros de agua necesaria</label>
+                            </div>
+                            <div id="dataLA" style="display:none">
+                                <p class="mb-1">Litros de agua (LA) = <span id="LA"></span></p>
+                            </div>
+                            <button id="pointLA" class="btn btn-info btn-sm" disabled>graficar punto LA</button>
+                        </div>
+                        <p class="mb-1">Saturaci&oacute;n de ox&iacute;geno (SO) = <span id="sat"></span></p>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            <button id="point" class="btn btn-info btn-sm">graficar punto</button>
+                            <button id="reset" class="btn btn-secondary btn-sm">Reiniciar</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Escenario 2, 4 & 5 Controls -->
+                <div id="esc2-controls" style="display:none;">
+                    <div class="card-control">
+                        <p>V = <span id="voltVal">5</span> V &nbsp;|&nbsp; I = <span id="corrVal">1.00</span> A</p>
+                        <input type="range" min="0" max="12" value="5" step="0.01" id="voltaje" class="w-100">
+                    </div>
+                    <div id="esc5-m-section" style="display:none;">
+                        <div class="card-control">
+                            <p>Pendiente m = <span id="mVal">0.3</span></p>
+                            <input type="range" min="0" max="5.0" step="0.01" value="0.3" id="mSlider" class="w-100" data-tooltip="I = m &times; V">
+                        </div>
+                        <div class="card-control">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="checkFranjas">
+                                <label class="form-check-label" for="checkFranjas">Mostrar franjas</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-control">
+                        <div class="d-flex justify-content-center">
+                            <button id="reset-esc2" class="btn btn-secondary btn-sm">Reiniciar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-5" id="contenedorCollapses" style="display:none;">
+                <div id="esc6-collapse-group">
+                    <div id="esc6-tabla-section" style="display:none;">
+                        <div class="collapse-group-wrap">
+                            <button class="collapse-toggle" data-bs-toggle="collapse" data-bs-target="#esc6-tabla-collapse" aria-expanded="false" aria-controls="esc6-tabla-collapse">
+                                <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Dimensiones variables
+                            </button>
+                            <p class="hint d-none d-md-block">Compara variantes de ancho/alto/largo</p>
+                            <div id="esc6-tabla-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
+                                <div class="collapse-body">
+                                    <ul class="nav nav-pills nav-justified mb-2" id="dimTabs">
+                                        <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
+                                    </ul>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0" id="tablaDim">
+                                            <thead><tr><th style="width:36px"></th><th id="thCabecera">Ancho</th><th>Capacidad</th><th style="width:34px"></th></tr></thead>
+                                            <tbody id="tbodyDim"></tbody>
+                                        </table>
+                                    </div>
+                                    <button id="btnAddFila" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="esc6-cap-dinamica-section" style="display:none;">
+                        <div class="collapse-group-wrap">
+                            <button class="collapse-toggle" data-bs-toggle="collapse" data-bs-target="#esc6-cap-dinamica-collapse" aria-expanded="false" aria-controls="esc6-cap-dinamica-collapse">
+                                <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Capacidad Dinámica
+                            </button>
+                            <p class="hint d-none d-md-block">Compara dos valores de capacidad y su diferencia △</p>
+                            <div id="esc6-cap-dinamica-collapse" class="collapse" data-bs-parent="#esc6-collapse-group">
+                                <div class="collapse-body">
+                                    <ul class="nav nav-pills nav-justified mb-2" id="capDinaTabs">
+                                        <li class="nav-item"><button class="nav-link active" data-tab="ancho">Ancho</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-tab="alto">Alto</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-tab="largo">Largo</button></li>
+                                    </ul>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0" id="tablaCapDina">
+                                            <thead><tr>
+                                                <th style="width:36px"></th>
+                                                <th id="thCDVal1">Ancho₁</th>
+                                                <th id="thCDVal2">Ancho₂</th>
+                                                <th>Capacidad 1</th>
+                                                <th>Capacidad 2</th>
+                                                <th>Δ Capacidad</th>
+                                            </tr></thead>
+                                            <tbody id="tbodyCapDina"></tbody>
+                                        </table>
+                                    </div>
+                                    <button id="btnAddFilaCapDina" class="btn btn-sm btn-outline-secondary w-100 mt-1">+ Agregar fila</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 d-flex flex-column" id="contenedorGrafica">
+                <div id="box" class="jxgbox flex-grow-1"></div>
+                <div id="box4" class="jxgbox flex-grow-1" style="display:none;"></div>
+                <div id="box5" class="jxgbox flex-grow-1" style="display:none;"></div>
+                <div id="box7" class="jxgbox flex-grow-1" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="navWrap">
+        <button id="btnAtras" class="btn btn-secondary btn-lg">← Atrás</button>
+        <button id="btnContinuar" class="btn btn-primary btn-lg">Continuar →</button>
+    </div>
+
+    <div class="modal fade" id="codigoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Código Secreto</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Ingresa el código secreto para continuar:</p>
+                    <input type="text" id="codigoInput" class="form-control" placeholder="Ingresa el código secreto">
+                    <div id="codigoError" class="text-danger mt-2" style="display:none;">Código incorrecto</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmarCodigo" class="btn btn-primary">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="franjasCodeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Activar Franjas</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Ingresa el código para activar las franjas:</p>
+                    <input type="text" id="franjasModalInput" class="form-control" placeholder="Código secreto">
+                    <div id="franjasModalError" class="text-danger mt-2" style="display:none;">Código incorrecto</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmarFranjasCode" class="btn btn-primary">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script src="./js/three.min.js"></script>
+    <script src="./js/OrbitControls.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>

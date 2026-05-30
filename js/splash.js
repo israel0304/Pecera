@@ -60,7 +60,7 @@
   }
 
   function fallback() {
-    window.location.href = 'index.html';
+    window.location.href = 'app.html';
   }
 
   function initTank() {
@@ -300,7 +300,7 @@
 
     var state = { progress: 0 };
     var tl = gsap.timeline({
-      onComplete: function () { window.location.href = 'index.html'; }
+      onComplete: function () { window.location.href = 'app.html'; }
     });
 
     tl.to(overlay, { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0)
@@ -313,7 +313,7 @@
       .to('#splash-text', { opacity: 0, duration: 0.3 }, 4.6);
   }
 
-  document.querySelectorAll('a[href="index.html"]').forEach(function (link) {
+  document.querySelectorAll('a[href="app.html"]').forEach(function (link) {
     link.addEventListener('click', function (e) {
       e.preventDefault();
       launchSplash();

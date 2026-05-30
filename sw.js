@@ -2,8 +2,8 @@ const CACHE = 'pecera-v1';
 
 const urlsToCache = [
   './',
+  './app.html',
   './index.html',
-  './landing.html',
   './css/style.css',
   './css/landing.css',
   './css/jsxgraph.css',
@@ -41,6 +41,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  if (!event.request.url.startsWith('http')) return;
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request).then(response => {

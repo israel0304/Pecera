@@ -3360,6 +3360,7 @@ document.addEventListener('click', function (e) {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js');
+        var b = window.PECERA_BASE || window.location.pathname.replace(/\/[^/]*$/, '');
+        navigator.serviceWorker.register(b + '/sw.js', { scope: b + '/' });
     });
 }

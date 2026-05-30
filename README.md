@@ -1,11 +1,11 @@
 # Pecera — Simulador de Acuario y Estanque Sustentable
 
 Simulador interactivo de pecera y sistema de bombeo solar con visualización en canvas (1600×800 fijo), gráficos JSXGraph, y tanque 3D con Three.js.
-Incluye una **landing page** (`landing.html`) con un pez neon tetra 3D interactivo como héroe y un **splash preloader** con Three.js + GSAP al abrir el simulador.
+Incluye una **landing page** (`index.html`) con un pez neon tetra 3D interactivo como héroe y un **splash preloader** con Three.js + GSAP al abrir el simulador.
 
 ## Cómo ejecutar
 
-Abrir `landing.html` para la página de presentación, o `index.html` para el simulador directamente. No requiere servidor ni build.
+Abrir `index.html` para la página de presentación, o `app.html` para el simulador directamente. No requiere servidor ni build.
 
 ## Escenarios
 
@@ -161,8 +161,8 @@ El escenario inicial (Pecera) está desbloqueado por defecto.
 
 ```
 Pecera/
-├── index.html         # Simulador principal (escenarios, controles, canvas, gráficos)
-├── landing.html       # Landing page con Three.js 3D neon tetra interactivo
+├── index.html         # Landing page con Three.js 3D neon tetra interactivo
+├── app.html           # Simulador principal (escenarios, controles, canvas, gráficos)
 ├── js/
 │   ├── script.js      # Lógica principal (clases, animación, eventos, escenario 3D)
 │   ├── landing.js     # Three.js interactive neon tetra para landing page
@@ -214,6 +214,7 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.9.0 | Códigos insensibles a acentos/puntuación, navegación hacia atrás protegida, collapses en columna derecha, `dimensiones` movido a escenario 5 |
 | v1.10.0 | Zoom y paneo en canvas 2D (scroll + clic sostenido, pinch + arrastre táctil 2 dedos), coordenadas de cursor corregidas con zoom |
 | v1.11.0 | Landing page con Three.js 3D, Escenario 7 (Incremento de Capacidad), toast notifications, rediseño UI Material Design, tooltips, nav bar inferior, burbujas más grandes, `getCorriente()` para esc5, navegación reordenada |
+| v1.12.0 | PWA dinámico (base path automático, manifest Blob URL con origin, SW con scope dinámico), meta tags iOS, filtro SW para chrome-extension, iconos actualizados, rename landing→index / index→app |
 
 ## Historial de cambios
 

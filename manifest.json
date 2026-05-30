@@ -2,7 +2,7 @@
   "name": "Pecera - Simulador de Acuario",
   "short_name": "Pecera",
   "description": "Simulador interactivo de pecera, estanque sustentable y dimensiones 3D para aprender sobre capacidad, volumen y energía",
-  "start_url": "index.html",
+  "start_url": "app.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f5f7fa",

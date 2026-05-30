@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.12.0 (no publicado)
+
+### Features
+- **PWA dinámico con base path automático** — El manifest se genera como Blob URL con rutas absolutas completas usando `window.location.origin + PECERA_BASE`, detectando automáticamente si la app está en `/`, `/pezneon/`, o cualquier subdirectorio
+- **Service Worker dinámico** — Registro con `base_path + '/sw.js'` y `scope: base_path + '/'`, determinado por `PECERA_BASE` o `window.location.pathname`
+- **Filtro SW para chrome-extension** — `event.request.url.startsWith('http')` en el fetch handler para evitar errores al cachear requests de extensiones
+- **Soporte iOS para PWA** — Meta tags `apple-mobile-web-app-capable`, `mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style` añadidos
+- **Iconos PWA actualizados** — Reemplazados `img/icon-192.png` y `img/icon-512.png` con nuevo diseño
+- **Rename de archivos** — `landing.html` → `index.html`, `index.html` → `app.html`
+
+### Internal
+- Nueva variable global `window.PECERA_BASE` para detección de base path en `<head>`
+- Script inline síncrono en ambos HTMLs que genera manifest como Blob URL antes de que el browser lo procese
+
+### Documentation
+- Actualización completa de README.md, AGENTS.md y CHANGELOG.md
+
 ## 1.11.0 (no publicado)
 
 ### Features
