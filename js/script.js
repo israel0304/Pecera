@@ -3305,7 +3305,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
     });
 });
 
-desbloquearTab(1);
+escenariosDesbloqueados.forEach(function (n) { desbloquearTab(n); });
 cambiarEscenario(1);
 
 // Ripple effect for buttons and tabs
