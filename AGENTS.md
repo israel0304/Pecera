@@ -215,19 +215,16 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 
 ## PWA
 
-### Dynamic Manifest (Blob URL)
-- The manifest is **generated at runtime** as a Blob URL in an inline `<script>` in `<head>`, before the browser fetches it
-- All URLs are absolute: `window.location.origin + PECERA_BASE + "/path"`
-- Detects the deployment subdirectory automatically via `PECERA_BASE = window.location.pathname.replace(/\/[^/]*$/, '')`
-- Supports root (`/`), subdirectory (`/pezneon/`), and any deployment path
-- Static `manifest.json` kept as fallback if Blob URL fails
+### Manifest
+- Static `manifest.json` referenced directly via `<link rel="manifest" href="./manifest.json">` on both `index.html` and `app.html`
+- Relative URLs resolve correctly against the manifest location (same directory)
+- Icons: 144x144, 192x192 (standard), 512x512 (maskable)
 
 ### Service Worker
-- **Dynamic registration** in `js/script.js:3361-3366` using `PECERA_BASE + '/sw.js'` with `scope: PECERA_BASE + '/'`
-- Falls back to `window.location.pathname.replace()` if `PECERA_BASE` is not set
+- **Registered on both pages**: `index.html` (inline script) and `app.html` (via `js/script.js:3361-3366`)
+- **Dynamic scope**: uses `PECERA_BASE` from `window.location.pathname.replace()` for subdirectory support
 - **Fetch filter**: only intercepts HTTP(S) requests via `event.request.url.startsWith('http')` to avoid `chrome-extension://` errors
 - Caches HTML, CSS, JS, images on install; stale-while-revalidate on fetch
-- Registered on `window.load` event
 
 ### iOS Support
 - `<meta name="apple-mobile-web-app-capable" content="yes">` — full-screen mode on iOS
@@ -235,12 +232,10 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 - `<meta name="mobile-web-app-capable" content="yes">` — Android/Chrome compatibility
 - `<link rel="apple-touch-icon" href="./img/icon-192.png">`
 
-### Behaviour by deployment path
-
-| Deployment | `PECERA_BASE` | Manifest `start_url` | SW scope |
-|------------|---------------|----------------------|----------|
-| Root (`/`) | `""` | `http://origin/app.html` | `"/"` |
-| `/pezneon/` | `"/pezneon"` | `http://origin/pezneon/app.html` | `"/pezneon/"` |
+### Install Prompt
+- `beforeinstallprompt` event listener on both pages captures the install prompt
+- "Instalar App" button (hidden by default) appears in nav (`index.html`) and bottom bar (`app.html`) when the browser fires the event
+- Chrome on Android requires: HTTPS, valid manifest, active service worker on the current page, and user engagement
 
 ## Hotfixes
 

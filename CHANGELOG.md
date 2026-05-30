@@ -3,6 +3,10 @@
 ## 1.12.0 (no publicado)
 
 ### Features
+- **PWA install prompt en Android** — Service Worker registrado también en `index.html` (landing) para que Chrome detecte la app como instalable desde la primera visita
+- **Manifest estático** — Reemplazado Blob URL por `manifest.json` estático con rutas relativas (el servidor lo sirve correctamente con HTTPS)
+- **Icono 144x144** — Nuevo `img/icon-144.png` para mejorar compatibilidad con dispositivos Android
+- **Botón "Instalar App"** — Aparece en la navegación (`index.html`) y barra inferior (`app.html`) cuando el navegador dispara `beforeinstallprompt`
 - **PWA dinámico con base path automático** — El manifest se genera como Blob URL con rutas absolutas completas usando `window.location.origin + PECERA_BASE`, detectando automáticamente si la app está en `/`, `/pezneon/`, o cualquier subdirectorio
 - **Service Worker dinámico** — Registro con `base_path + '/sw.js'` y `scope: base_path + '/'`, determinado por `PECERA_BASE` o `window.location.pathname`
 - **Filtro SW para chrome-extension** — `event.request.url.startsWith('http')` en el fetch handler para evitar errores al cachear requests de extensiones
@@ -12,7 +16,6 @@
 
 ### Internal
 - Nueva variable global `window.PECERA_BASE` para detección de base path en `<head>`
-- Script inline síncrono en ambos HTMLs que genera manifest como Blob URL antes de que el browser lo procese
 
 ### Documentation
 - Actualización completa de README.md, AGENTS.md y CHANGELOG.md

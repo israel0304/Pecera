@@ -7,29 +7,23 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="./manifest.json" id="manifest-link">
+  <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./img/icon-192.png">
   <script>
   window.PECERA_BASE = window.location.pathname.replace(/\/[^/]*$/, '');
-  (function(d,u,o){
-    var l = d.getElementById('manifest-link');
-    if (!l) return;
-    l.href = URL.createObjectURL(new Blob([JSON.stringify({
-      name: "Pecera - Simulador de Acuario",
-      short_name: "Pecera",
-      description: "Simulador interactivo de pecera, estanque sustentable y dimensiones 3D para aprender sobre capacidad, volumen y energ\u00eda",
-      start_url: o + u + "/app.html",
-      display: "standalone",
-      orientation: "portrait",
-      background_color: "#f5f7fa",
-      theme_color: "#0d47a1",
-      scope: o + u + "/",
-      icons: [
-        {src: o + u + "/img/icon-192.png", sizes:"192x192", type:"image/png"},
-        {src: o + u + "/img/icon-512.png", sizes:"512x512", type:"image/png", purpose:"any maskable"}
-      ]
-    })], {type:'application/json'}));
-  })(document, window.PECERA_BASE, window.location.origin);
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      var b = window.PECERA_BASE || window.location.pathname.replace(/\/[^/]*$/, '');
+      navigator.serviceWorker.register(b + '/sw.js', { scope: b + '/' });
+    });
+  }
+  var installPrompt;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    installPrompt = e;
+    var btn = document.getElementById('install-btn');
+    if (btn) btn.style.display = '';
+  });
   </script>
   <title>Pecera — Simulador Acuático Inteligente</title>
   <link rel="stylesheet" href="css/landing.css">
@@ -46,6 +40,7 @@
       <a href="#features">Características</a>
       <a href="#features">App</a>
       <a href="app.html" class="nav-cta">Abrir Simulador</a>
+      <button id="install-btn" class="nav-cta" style="display:none" onclick="installApp()">Instalar App</button>
     </div>
   </nav>
 
@@ -238,5 +233,18 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="js/landing.js"></script>
   <script src="js/splash.js"></script>
+  <script>
+  function installApp() {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    installPrompt.userChoice.then(function (result) {
+      if (result.outcome === 'accepted') {
+        var btn = document.getElementById('install-btn');
+        if (btn) btn.style.display = 'none';
+      }
+      installPrompt = null;
+    });
+  }
+  </script>
 </body>
 </html>

@@ -19,6 +19,7 @@ const urlsToCache = [
   './img/panel_solar.png',
   './img/bomba_agua.png',
   './img/bomba_agua_issue.png',
+  './img/icon-144.png',
   './img/icon-192.png',
   './img/icon-512.png',
   './manifest.json'
