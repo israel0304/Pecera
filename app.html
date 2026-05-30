@@ -12,13 +12,6 @@
     <link rel="apple-touch-icon" href="./img/icon-192.png">
     <script>
     window.PECERA_BASE = window.location.pathname.replace(/\/[^/]*$/, '');
-    var installPrompt;
-    window.addEventListener('beforeinstallprompt', function (e) {
-      e.preventDefault();
-      installPrompt = e;
-      var btn = document.getElementById('install-btn');
-      if (btn) btn.style.display = '';
-    });
     </script>
     <link rel="stylesheet" href="./css/style.css"/>
     <link rel="stylesheet" type="text/css" href="./css/jsxgraph.css">
@@ -332,7 +325,6 @@
     <div id="navWrap">
         <button id="btnAtras" class="btn btn-secondary btn-lg">← Atrás</button>
         <button id="btnContinuar" class="btn btn-primary btn-lg">Continuar →</button>
-        <button id="install-btn" class="btn btn-info btn-lg" style="display:none" onclick="installApp()">📲 Instalar App</button>
     </div>
 
     <div class="modal fade" id="codigoModal" tabindex="-1">
@@ -378,18 +370,5 @@
     <script src="./js/three.min.js"></script>
     <script src="./js/OrbitControls.js"></script>
     <script src="js/script.js"></script>
-    <script>
-    function installApp() {
-      if (!installPrompt) return;
-      installPrompt.prompt();
-      installPrompt.userChoice.then(function (result) {
-        if (result.outcome === 'accepted') {
-          var btn = document.getElementById('install-btn');
-          if (btn) btn.style.display = 'none';
-        }
-        installPrompt = null;
-      });
-    }
-    </script>
 </body>
 </html>
