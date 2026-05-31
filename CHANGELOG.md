@@ -1,15 +1,12 @@
 # Changelog
 
-## 1.13.0 (no publicado)
+## 1.12.0 (no publicado)
 
 ### Features
-- **Nav bar dinámico** — `#navWrap` oculto por defecto en mobile, aparece solo al scrollear al final del contenido mediante `IntersectionObserver` y transición CSS (max-height/opacity). Gana espacio vertical en landscape y contenido largo
-- **Códigos persistentes** — Los códigos secretos se guardan en `localStorage` cuando `UNLOCK_KEY='pecera_unlocked'`, persistiendo entre sesiones. Modo `pecera_deploy` desbloquea todo sin códigos. Modo `pecera_locked` pide códigos siempre. Controlado por `var UNLOCK_KEY` en la línea 1 de `script.js`
-- **Rotación landscape permitida** — Eliminado `orientation: portrait` del manifest para que la PWA instalada pueda rotar libremente
-- **Z-index de navWrap corregido** — `z-index: 101` para evitar superposición con botones JSXGraph
 - **PWA install prompt en Android** — Service Worker registrado también en `index.html` (landing) para que Chrome detecte la app como instalable desde la primera visita
 - **Manifest estático** — Reemplazado Blob URL por `manifest.json` estático con rutas relativas (el servidor lo sirve correctamente con HTTPS)
 - **Icono 144x144** — Nuevo `img/icon-144.png` para mejorar compatibilidad con dispositivos Android
+- **Botón "Instalar App"** — Aparece en la navegación (`index.html`) y barra inferior (`app.html`) cuando el navegador dispara `beforeinstallprompt`
 - **PWA dinámico con base path automático** — El manifest se genera como Blob URL con rutas absolutas completas usando `window.location.origin + PECERA_BASE`, detectando automáticamente si la app está en `/`, `/pezneon/`, o cualquier subdirectorio
 - **Service Worker dinámico** — Registro con `base_path + '/sw.js'` y `scope: base_path + '/'`, determinado por `PECERA_BASE` o `window.location.pathname`
 - **Filtro SW para chrome-extension** — `event.request.url.startsWith('http')` en el fetch handler para evitar errores al cachear requests de extensiones
@@ -17,15 +14,7 @@
 - **Iconos PWA actualizados** — Reemplazados `img/icon-192.png` y `img/icon-512.png` con nuevo diseño
 - **Rename de archivos** — `landing.html` → `index.html`, `index.html` → `app.html`
 
-### Fix
-- **Bug iOS: ancho de JSXGraph se reducía al scrollear** — Eliminadas funciones legacy `sincronizarAlturaGrafica*()` y el listener de `resize` que causaban `resizeContainer` con `clientWidth` incorrecto durante el bounce en iOS. Flexbox + Bootstrap ahora controlan el tamaño del gráfico
-- **Superposición de botones nav y zoom JSXGraph** — `z-index: 101` en `#navWrap`
-
 ### Internal
-- Eliminadas 4 funciones `sincronizarAlturaGrafica*()` (858, 931, 940, 956) y todas sus llamadas (legacy pre-flexbox)
-- Eliminado `window.addEventListener('resize', ...)` que causaba el bug en iOS
-- Nueva función `initUnlocked()` con 3 modos controlados por `var UNLOCK_KEY`
-- Nuevo IntersectionObserver para nav bar dinámico
 - Nueva variable global `window.PECERA_BASE` para detección de base path en `<head>`
 
 ### Documentation

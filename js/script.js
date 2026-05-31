@@ -1,5 +1,3 @@
-var UNLOCK_KEY = 'pecera_unlocked';
-
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 let graph = document.getElementById("box");
@@ -2164,20 +2162,7 @@ function normalizarCodigo(str) {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }
 
-var escenariosDesbloqueados;
-
-function initUnlocked() {
-    if (UNLOCK_KEY === 'pecera_deploy') {
-        escenariosDesbloqueados = new Set([1, 2, 3, 4, 5, 6, 7]);
-    } else if (UNLOCK_KEY === 'pecera_unlocked') {
-        var saved = localStorage.getItem('pecera_unlocked_set');
-        escenariosDesbloqueados = new Set(saved ? JSON.parse(saved) : []);
-        escenariosDesbloqueados.add(1);
-    } else {
-        escenariosDesbloqueados = new Set([1]);
-    }
-}
-initUnlocked();
+let escenariosDesbloqueados = new Set();
 
 function navegar(dir) {
     let cfg = ESCENARIOS[escenarioActual];
@@ -2243,9 +2228,6 @@ document.getElementById('confirmarCodigo').addEventListener('click', async funct
     let dir = ant + 'a' + destino;
     if (normalizarCodigo(codigo) === normalizarCodigo(codigos[dir])) {
         escenariosDesbloqueados.add(destino);
-        if (UNLOCK_KEY === 'pecera_unlocked') {
-            localStorage.setItem('pecera_unlocked_set', JSON.stringify([...escenariosDesbloqueados]));
-        }
         desbloquearTab(destino);
         bootstrap.Modal.getInstance(document.getElementById('codigoModal')).hide();
         cambiarEscenario(destino);
@@ -3305,6 +3287,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
     });
 });
 
+escenariosDesbloqueados.add(1);
 desbloquearTab(1);
 cambiarEscenario(1);
 
