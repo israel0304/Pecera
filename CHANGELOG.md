@@ -4,6 +4,7 @@
 
 ### Features
 - **SW network-first** — Service Worker cambiado de `stale-while-revalidate` a `network-first`. La PWA instalada siempre muestra el contenido más reciente del servidor en lugar de la versión cacheada. El cache solo se usa como respaldo offline
+- **Pantalla completa** — Botón "⛶" en la esquina del canvas que expande el canvas a pantalla completa usando Fullscreen API. Funciona en todos los escenarios (2D, Three.js 3D, JSXGraph). Al salir, todo vuelve a la normalidad. Compatible con Android Chrome y iOS Safari
 
 ## 1.12.0 (no publicado)
 

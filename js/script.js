@@ -1487,6 +1487,7 @@ function desbloquearTab(n) {
 }
 
 function cambiarEscenario(n) {
+    if (document.fullscreenElement) document.exitFullscreen();
     limpiarGrafica();
     escenarioActual = n;
     let cfg = ESCENARIOS[n];
@@ -2053,6 +2054,40 @@ function actualizarEscenario2() {
     }
 
 }
+
+// ── Fullscreen ──
+function toggleFullscreen() {
+    var el = document.getElementById('contenedorCanvas');
+    var btn = document.getElementById('fsBtn');
+    if (!document.fullscreenElement) {
+        el.requestFullscreen().catch(function(){});
+        btn.textContent = '✕';
+        btn.classList.add('fs-btn--active');
+    } else {
+        document.exitFullscreen();
+        btn.textContent = '⛶';
+        btn.classList.remove('fs-btn--active');
+    }
+}
+document.getElementById('fsBtn').onclick = toggleFullscreen;
+document.addEventListener('fullscreenchange', function () {
+    var btn = document.getElementById('fsBtn');
+    if (document.fullscreenElement) {
+        btn.textContent = '✕';
+        btn.classList.add('fs-btn--active');
+        actualizar();
+        if (escenarioActual === 6 && typeof threeRenderer !== 'undefined' && threeRenderer) {
+            var w = document.getElementById('contenedorCanvas').clientWidth;
+            var h = document.getElementById('contenedorCanvas').clientHeight;
+            threeRenderer.setSize(w, h);
+            threeCamera.aspect = w / h;
+            threeCamera.updateProjectionMatrix();
+        }
+    } else {
+        btn.textContent = '⛶';
+        btn.classList.remove('fs-btn--active');
+    }
+});
 
 // Event listeners for escenario 2
 esc1Btn.addEventListener('click', function () { navegarA(1); });
