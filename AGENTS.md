@@ -224,7 +224,7 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 - **Registered on both pages**: `index.html` (inline script) and `app.html` (via `js/script.js:3361-3366`)
 - **Dynamic scope**: uses `PECERA_BASE` from `window.location.pathname.replace()` for subdirectory support
 - **Fetch filter**: only intercepts HTTP(S) requests via `event.request.url.startsWith('http')` to avoid `chrome-extension://` errors
-- Caches HTML, CSS, JS, images on install; network-first on fetch (always fetches fresh content, falls back to cache when offline)
+- Caches HTML, CSS, JS, images on install; stale-while-revalidate on fetch
 
 ### iOS Support
 - `<meta name="apple-mobile-web-app-capable" content="yes">` — full-screen mode on iOS
