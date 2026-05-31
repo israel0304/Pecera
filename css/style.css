@@ -292,54 +292,7 @@ input[type="range"]::-moz-range-thumb {
 #contenedorCanvas {
     display: flex;
     flex-direction: column;
-    position: relative;
 }
-
-/* ── Fullscreen ── */
-.fs-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 100;
-    width: 36px;
-    height: 36px;
-    border: none;
-    border-radius: 8px;
-    background: rgba(0,0,0,0.5);
-    color: #fff;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background .2s;
-    line-height: 1;
-}
-.fs-btn:hover { background: rgba(0,0,0,0.7); }
-.fs-btn--active { background: #e53935; }
-
-#contenedorCanvas:fullscreen {
-    width: 100vw;
-    height: 100vh;
-    background: #000;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-#contenedorCanvas:fullscreen #canvas,
-#contenedorCanvas:fullscreen #three-container {
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
-    aspect-ratio: auto;
-    border-radius: 0;
-}
-#contenedorCanvas:fullscreen #esc1-controls,
-#contenedorCanvas:fullscreen #esc2-controls,
-#contenedorCanvas:fullscreen #esc7-controls,
-#contenedorCanvas:fullscreen #esc6-overlay { display: none !important; }
 
 #contenedorGrafica {
     display: flex;

@@ -237,15 +237,6 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 - "Instalar App" button (hidden by default) appears in nav (`index.html`) and bottom bar (`app.html`) when the browser fires the event
 - Chrome on Android requires: HTTPS, valid manifest, active service worker on the current page, and user engagement
 
-## Canvas Fullscreen
-
-- **Button** — `#fsBtn` positioned absolutely at top-right of `#contenedorCanvas`
-- **API** — Uses `element.requestFullscreen()` / `document.exitFullscreen()` (native Fullscreen API)
-- **Fullscreen CSS** — `#contenedorCanvas:fullscreen` sets 100vw×100vh, black background, hides all controls (`#esc1-controls`, `#esc2-controls`, `#esc7-controls`, `#esc6-overlay`), removes aspect-ratio constraint on canvas
-- **Resize handling** — `fullscreenchange` event calls `actualizar()` and resizes Three.js renderer
-- **Escenario change** — Exits fullscreen automatically when switching scenarios
-- **Mobile** — Works on Android Chrome and iOS Safari 16+
-
 ## Hotfixes
 
 ### Esc7 graph width on mobile (2026-05-29)
