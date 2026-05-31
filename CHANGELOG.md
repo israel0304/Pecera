@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0 (no publicado)
+
+### Features
+- **SW network-first** — Service Worker cambiado de `stale-while-revalidate` a `network-first`. La PWA instalada siempre muestra el contenido más reciente del servidor en lugar de la versión cacheada. El cache solo se usa como respaldo offline
+
 ## 1.12.0 (no publicado)
 
 ### Features
