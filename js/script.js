@@ -16,6 +16,12 @@ let isPlaying = false;
 let escenarioActual = 2;
 let box = document.getElementById('box');
 let grafica = null;
+let nivelAgua = 100;
+const aguaCapacidadMax = 200;
+let arrastrandoTemp = false;
+let arrastrandoNivel = false;
+let esc3CanvasUI = false;
+let nivelAguaLine = null;
 
 let image = new Image();
 let imgPecera = new Image();
@@ -317,14 +323,26 @@ class Grafica {
     }
 
     graficarPunto() {
-        this.pointColor = this.pecera.temperatura >= 22 & this.pecera.temperatura <= 28 ? '#3b82f6' : '#fd7b7b';
+        var x, y, color;
+        if (escenarioActual === 3) {
+            x = Number(cajaPeces.value);
+            y = Number(cajaSize.value) * 3 * x;
+            var colores = ['#e74c3c','#e67e22','#f1c40f','#2ecc71','#3498db','#9b59b6','#1abc9c'];
+            var t = Number(cajaSize.value);
+            color = colores[Math.min(Math.max(t, 1), 7) - 1];
+        } else {
+            x = this.pecera.temperatura;
+            y = this.pecera.saturacion;
+            color = x >= 22 && x <= 28 ? '#3b82f6' : '#fd7b7b';
+        }
+        this.pointColor = color;
         let p = this.board.create(
             'point',
-            [this.pecera.temperatura, this.pecera.saturacion],
+            [x, y],
             {
                 name: '',
-                strokecolor: this.pointColor,
-                fillColor: this.pointColor,
+                strokecolor: color,
+                fillColor: color,
                 fixed: true
             }
         );
@@ -332,7 +350,7 @@ class Grafica {
             [
                 function () { return p.X() + 0.3; },
                 function () { return p.Y() + 1.5; },
-                '(' + this.pecera.temperatura + ', ' + this.pecera.saturacion + ')'
+                '(' + x.toFixed(1) + ', ' + y.toFixed(1) + ')'
             ],
             { visible: false, fontSize: 12, fixed: true, cssClass: '' }
         );
@@ -393,7 +411,7 @@ function pecesDinamicos(e) {
     }
     npecesValSpan.textContent = cajaPeces.value;
 tpecesValSpan.textContent = cajaSize.value;
-    if (escenarioActual === 3 && checkLA.checked) litrosDinamicos();
+    if (escenarioActual === 3) litrosDinamicos();
     let nuevop = generar(Pez, cajaPeces.value, cajaSize.value);
     peces = nuevop;
 }
@@ -497,6 +515,14 @@ function actualizar() {
     ctx.scale(zoomScale, zoomScale);
     if (escenarioActual === 1 || escenarioActual === 3) {
         pecera.aparecer();
+        if (esc3CanvasUI) {
+            var wt3 = canvas.height * 0.15;
+            var wb3 = canvas.height * 0.85;
+            var wh3 = wb3 - wt3;
+            var fillY3 = wb3 - wh3 * (nivelAgua / 100);
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.15)';
+            ctx.fillRect(0, fillY3, canvas.width, wb3 - fillY3);
+        }
         for (i = 0; i < burbujas.length; i++) {
             burbujas[i].draw();
         }
@@ -526,13 +552,35 @@ function actualizar() {
                 pez.nadar();
                 pez.morir();
             } else {
+                if (!pez.vivir) {
+                pez.vivir = true;
+                if (escenarioActual === 3) {
+                    pez.dir = new Vector((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+                    pez.dir.norm();
+                }
+            }
                 pez.nadar();
             }
         }
     } else if (escenarioActual === 2 || escenarioActual === 4 || escenarioActual === 5) {
         actualizarEscenario2();
     }
+    if (esc3CanvasUI) {
+        var wt = canvas.height * 0.15;
+        var wb = canvas.height * 0.85;
+        var wh = wb - wt;
+        var waterSurfaceY = wb - wh * (nivelAgua / 100);
+        peces.forEach(function (p) {
+            p.paddingArr = waterSurfaceY + p.dHeight / 2;
+            p.paddingAba = wb - p.dHeight / 2;
+        });
+    }
+
     ctx.restore();
+
+    if (esc3CanvasUI) {
+        dibujarEsc3UI();
+    }
 
     if (escenarioActual === 6 && threeRenderer) {
         threeControls.update();
@@ -545,6 +593,74 @@ function actualizar() {
 }
 
 requestAnimationFrame(actualizar);
+
+function dibujarEsc3UI() {
+    var w = canvas.width, h = canvas.height;
+
+    // --- Temperature slider (horizontal, top) ---
+    var sl = w * 0.08, sr = w * 0.85, st = 12, sh = 16;
+    var tempVal = Number(cajaTemperatura.value);
+    var tFrac = Math.max(0, Math.min(1, (tempVal - 10) / 35));
+    var thumbX = sl + tFrac * (sr - sl);
+    ctx.fillStyle = '#ddd';
+    ctx.beginPath();
+    ctx.roundRect(sl, st, sr - sl, sh, 8);
+    ctx.fill();
+    var grad = ctx.createLinearGradient(sl, 0, sr, 0);
+    grad.addColorStop(0, '#3b82f6');
+    grad.addColorStop(tFrac, '#3b82f6');
+    grad.addColorStop(Math.min(tFrac + 0.001, 1), '#e2e8f0');
+    grad.addColorStop(1, '#e2e8f0');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(sl, st, sr - sl, sh, 8);
+    ctx.fill();
+    ctx.fillStyle = '#1e40af';
+    ctx.beginPath();
+    ctx.arc(thumbX, st + sh / 2, 50, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(tempVal + '°C', thumbX, st + sh / 2 + 5);
+
+    // --- SO label (below temp slider) ---
+    var so = pecera.saturacion.toFixed(2);
+    ctx.fillStyle = '#0d6efd';
+    ctx.font = 'bold 18px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('SO: ' + so + ' mg/L', sl, st + sh + 30);
+
+    // --- Water level slider (vertical, right) ---
+    var sx = w * 0.91, stop = h * 0.15, sbottom = h * 0.85, sw = 20;
+    var nFrac = nivelAgua / 100;
+    var thumbY = sbottom - nFrac * (sbottom - stop);
+    ctx.fillStyle = '#ddd';
+    ctx.beginPath();
+    ctx.roundRect(sx - sw / 2, stop, sw, sbottom - stop, 6);
+    ctx.fill();
+    var vgrad = ctx.createLinearGradient(0, sbottom, 0, stop);
+    vgrad.addColorStop(0, '#3498db');
+    vgrad.addColorStop(nFrac, '#3498db');
+    vgrad.addColorStop(Math.min(nFrac + 0.001, 1), '#e2e8f0');
+    vgrad.addColorStop(1, '#e2e8f0');
+    ctx.fillStyle = vgrad;
+    ctx.beginPath();
+    ctx.roundRect(sx - sw / 2, stop, sw, sbottom - stop, 6);
+    ctx.fill();
+    ctx.fillStyle = '#1e40af';
+    ctx.beginPath();
+    ctx.arc(sx, thumbY, 50, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(nivelAgua + '%', sx, thumbY + 4);
+    ctx.fillStyle = '#0d6efd';
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Nivel', sx, stop - 8);
+}
 
 function reiniciar() {
     clearInterval(tempInterval);
@@ -610,91 +726,54 @@ grafica = new Grafica('box', pecera,
 );
 
 function crearGrafica() {
-    var checkbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], { fixed: true })
-    grafica.curvaSO = grafica.board.create('functiongraph', [
-        function (x) {
-            if (checkbox.Value()) {
-                return -0.0001 * (Math.pow(x, 3)) + 0.01 * (Math.pow(x, 2)) - 0.39 * (x) + 14.57
-            }
-        }
-    ], { strokecolor: '#3673c5', strokeWidth: 2 });
-    grafica.curvaLA = grafica.board.create('functiongraph', [
-        function (x) {
-            if (checkbox.Value()) {
-                return Number(cajaSize.value) * 3 * x;
-            }
-        }
-    ], { strokecolor: '#E67E22', strokeWidth: 2, visible: false });
-    grafica.puntosLA = [];
+    initBoard1();
+}
+
+function initBoard3() {
+    grafica.board.setBoundingBox([-1, 220, 25, -10]);
+    if (grafica.esc3Labels) {
+        grafica.esc3Labels.forEach(function (l) { grafica.board.removeObject(l); });
+    }
+    grafica.esc3Labels = [
+        grafica.board.create('text', [10, -8, 'N° peces'], { fontSize: 13, fixed: true, cssClass: '' }),
+        grafica.board.create('text', [-0.5, 210, 'LA (litros)'], { fontSize: 13, fixed: true, cssClass: '' })
+    ];
+    grafica.board.update();
+}
+
+function initBoard1() {
+    grafica.board.setBoundingBox([-5, 40, 55, -5]);
+    if (grafica.esc3Labels) {
+        grafica.esc3Labels.forEach(function (l) { grafica.board.removeObject(l); });
+        grafica.esc3Labels = null;
+    }
+    grafica.board.update();
+}
+
+function actualizarLineaNivel() {
+    if (nivelAguaLine) {
+        grafica.board.removeObject(nivelAguaLine);
+        nivelAguaLine = null;
+    }
+    if (checkNivelAgua && checkNivelAgua.checked && escenarioActual === 3) {
+        var nivelLitros = nivelAgua * 2;
+        nivelAguaLine = grafica.board.create('line', [
+            [0, nivelLitros], [25, nivelLitros]
+        ], {
+            strokeColor: '#3498db', strokeWidth: 2, dash: 2,
+            fixed: true, straightFirst: false, straightLast: false
+        });
+        grafica.board.update();
+    }
 }
 
 function crearPunto() {
     grafica.graficarPunto();
 }
 
-function crearPuntoLA() {
-    let cantidad = Number(cajaPeces.value);
-    let tamano = Number(cajaSize.value);
-    let LA = cantidad * tamano * 3;
-    let p = grafica.board.create('point', [cantidad, LA], {
-        name: '',
-        strokecolor: '#E67E22',
-        fillColor: '#E67E22',
-        fixed: true,
-        visible: false
-    });
-    let label = grafica.board.create('text',
-        [
-            function () { return p.X() + 0.3; },
-            function () { return p.Y() + 1.5; },
-            '(' + cantidad + ', ' + LA + ')'
-        ],
-        { visible: false, fontSize: 12, fixed: true, cssClass: '' }
-    );
-    let labelTimeout = null;
-    p.on('over', function () {
-        label.setAttribute({ visible: true });
-        if (labelTimeout) { clearTimeout(labelTimeout); labelTimeout = null; }
-    });
-    p.on('out', function () {
-        if (!labelTimeout) {
-            label.setAttribute({ visible: false });
-        }
-    });
-    p.on('down', function () {
-        label.setAttribute({ visible: true });
-        if (labelTimeout) clearTimeout(labelTimeout);
-        labelTimeout = setTimeout(function () {
-            label.setAttribute({ visible: false });
-            labelTimeout = null;
-        }, 2000);
-    });
-    grafica.puntosLA.push(p);
-    if (checkLA.checked) p.setAttribute({ visible: true });
-}
 
-function checklitros_fn() {
-    if (checkLA.checked) {
-        dataLA.style.display = '';
-        boton3.style.display = 'none';
-        botonLA.style.display = '';
-        botonLA.disabled = false;
-        grafica.curvaSO.setAttribute({ visible: false });
-        grafica.curvaLA.setAttribute({ visible: true });
-        grafica.puntos.forEach(function (p) { p.setAttribute({ visible: false }); });
-        grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: true }); });
-        litrosDinamicos();
-    } else {
-        dataLA.style.display = 'none';
-        boton3.style.display = '';
-        botonLA.style.display = 'none';
-        botonLA.disabled = true;
-        grafica.curvaSO.setAttribute({ visible: true });
-        grafica.curvaLA.setAttribute({ visible: false });
-        grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
-        grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
-    }
-}
+
+
 
 function litrosDinamicos() {
     textoLA.textContent = Number(cajaPeces.value) * Number(cajaSize.value) * 3;
@@ -723,26 +802,16 @@ function reiniciar3() {
 
     grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
     grafica.puntos = [];
-    grafica.puntosLA.forEach(function (p) { grafica.board.removeObject(p); });
-    grafica.puntosLA = [];
 
-    if (checkLA.checked) checkLA.checked = false;
-    dataLA.style.display = 'none';
     boton3.disabled = false;
-    botonLA.disabled = true;
-    if (grafica.curvaSO && grafica.curvaLA) {
-        grafica.curvaSO.setAttribute({ visible: true });
-        grafica.curvaLA.setAttribute({ visible: false });
-    }
-    grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
-    grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
+    if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
+    if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
     restablecerZoom();
 }
 
 function pressIntro(e) {
     if (e.keyCode === 13) {
-        if (escenarioActual === 3 && checkLA.checked) crearPuntoLA();
-        else crearPunto();
+        crearPunto();
     }
 }
 crearGrafica();
@@ -764,11 +833,9 @@ let esc4Btn = document.getElementById('esc4-btn');
 let esc2Btn = document.getElementById('esc2-btn');
 let esc1Controls = document.getElementById('esc1-controls');
 let esc2Controls = document.getElementById('esc2-controls');
-let checkLA = document.getElementById('checkLA');
-let dataLA = document.getElementById('dataLA');
 let textoLA = document.getElementById('LA');
-let botonLA = document.getElementById('pointLA');
-let laSection = document.getElementById('la-section');
+let checkNivelAgua = document.getElementById('checkNivelAgua');
+let esc3LaSection = document.getElementById('esc3-la-section');
 
 let R = 5;
 
@@ -1300,19 +1367,16 @@ const ESCENARIOS = {
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'litros',
         alEntrar: function () {
-            laSection.style.display = 'none';
-            if (checkLA.checked) checkLA.checked = false;
-            dataLA.style.display = 'none';
-            botonLA.disabled = true;
+            esc3LaSection.style.display = 'none';
+            if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
             boton3.disabled = false;
-            if (grafica.curvaSO) grafica.curvaSO.setAttribute({ visible: true });
-            if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
-            grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
+            if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
             grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
             ['esc1-npeces-col', 'esc1-tpeces-col'].forEach(function (id) {
                 var el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
+            crearGrafica();
         }
     },
     2: {
@@ -1323,15 +1387,10 @@ const ESCENARIOS = {
         graficaClass: 'd-none',
         codigo: 'grafica',
         alEntrar: function () {
-            laSection.style.display = 'none';
-            if (checkLA.checked) checkLA.checked = false;
-            dataLA.style.display = 'none';
-            botonLA.disabled = true;
+            esc3LaSection.style.display = 'none';
+            if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
+            if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
             boton3.disabled = false;
-            if (grafica.curvaSO) grafica.curvaSO.setAttribute({ visible: true });
-            if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
-            grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
-            grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
         }
     },
     3: {
@@ -1342,15 +1401,24 @@ const ESCENARIOS = {
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'capacidad',
         alEntrar: function () {
-            laSection.style.display = '';
-            if (checkLA.checked) checkLA.checked = false;
-            dataLA.style.display = 'none';
-            botonLA.disabled = true;
-            boton3.disabled = false;
-            if (grafica.curvaSO) grafica.curvaSO.setAttribute({ visible: true });
-            if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
-            grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
-            grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
+            esc3LaSection.style.display = '';
+            boton3.disabled = true;
+            nivelAgua = 100;
+            arrastrandoNivel = false;
+            arrastrandoTemp = false;
+            esc3CanvasUI = true;
+            document.getElementById('esc1-temp-col').style.display = 'none';
+            document.getElementById('esc1-so-col').style.display = 'none';
+            initBoard3();
+            actualizarLineaNivel();
+        },
+        alSalir: function () {
+            esc3CanvasUI = false;
+            if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
+            grafica.puntos.forEach(function (p) { p.setAttribute({ visible: false }); });
+            document.getElementById('esc1-temp-col').style.display = '';
+            document.getElementById('esc1-so-col').style.display = '';
+            crearGrafica();
         }
     },
     4: {
@@ -1361,10 +1429,7 @@ const ESCENARIOS = {
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'pendiente',
         alEntrar: function () {
-            laSection.style.display = 'none';
-            if (checkLA.checked) checkLA.checked = false;
-            dataLA.style.display = 'none';
-            botonLA.disabled = true;
+            esc3LaSection.style.display = 'none';
             boton3.disabled = false;
             pumpBroken = false;
             document.getElementById('esc5-m-section').style.display = 'none';
@@ -1386,10 +1451,7 @@ const ESCENARIOS = {
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'incremento',
         alEntrar: function () {
-            laSection.style.display = 'none';
-            if (checkLA.checked) checkLA.checked = false;
-            dataLA.style.display = 'none';
-            botonLA.disabled = true;
+            esc3LaSection.style.display = 'none';
             boton3.disabled = false;
             pumpBroken = false;
             document.getElementById('esc5-m-section').style.display = '';
@@ -1418,10 +1480,7 @@ const ESCENARIOS = {
         graficaClass: 'd-none',
         codigo: 'incremento',
         alEntrar: function () {
-            laSection.style.display = 'none';
-            if (checkLA.checked) checkLA.checked = false;
-            dataLA.style.display = 'none';
-            botonLA.disabled = true;
+            esc3LaSection.style.display = 'none';
             boton3.disabled = false;
             if (!threeRenderer) initEscena3D();
             threeContainer.style.height = Math.max(300, window.innerHeight * 0.55) + 'px';
@@ -1447,10 +1506,7 @@ const ESCENARIOS = {
         graficaClass: 'col-12 col-sm-6 d-flex flex-column',
         codigo: 'estanque',
         alEntrar: function () {
-            laSection.style.display = 'none';
-            if (checkLA.checked) checkLA.checked = false;
-            dataLA.style.display = 'none';
-            botonLA.disabled = true;
+            esc3LaSection.style.display = 'none';
             boton3.disabled = false;
             initBoard7();
             actualizarEsc7();
@@ -1464,10 +1520,7 @@ function limpiarGrafica() {
     if (!grafica || !grafica.board) return;
     grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
     grafica.puntos = [];
-    if (grafica.puntosLA) {
-        grafica.puntosLA.forEach(function (p) { grafica.board.removeObject(p); });
-        grafica.puntosLA = [];
-    }
+    if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
 }
 
 function actualizarTabs(n) {
@@ -1491,6 +1544,8 @@ function desbloquearTab(n) {
 }
 
 function cambiarEscenario(n) {
+    var prevCfg = ESCENARIOS[escenarioActual];
+    if (prevCfg && prevCfg.alSalir) prevCfg.alSalir();
     limpiarGrafica();
     escenarioActual = n;
     let cfg = ESCENARIOS[n];
@@ -2065,8 +2120,11 @@ esc2Btn.addEventListener('click', function () { navegarA(2); });
 esc4Btn.addEventListener('click', function () { navegarA(4); });
 esc5Btn.addEventListener('click', function () { navegarA(5); });
 esc7Btn.addEventListener('click', function () { navegarA(7); });
-checkLA.addEventListener('change', checklitros_fn);
-botonLA.addEventListener('click', crearPuntoLA);
+if (checkNivelAgua) {
+    checkNivelAgua.addEventListener('change', function () {
+        actualizarLineaNivel();
+    });
+}
 
 voltSlider.addEventListener('input', function () {
     actualizarDisplayEsc2();
@@ -2260,6 +2318,7 @@ function screenToBuffer(clientX, clientY) {
 }
 
 canvas.addEventListener('wheel', function (e) {
+    if (escenarioActual === 3) return;
     e.preventDefault();
     let rect = canvas.getBoundingClientRect();
     let mx = (e.clientX - rect.left) * (canvas.width / rect.width);
@@ -2285,6 +2344,7 @@ let lastTouchDist = null, lastTouchMidX = null, lastTouchMidY = null;
 let isMouseDown = false, lastMouseX = null, lastMouseY = null;
 
 canvas.addEventListener('mousedown', function (e) {
+    if (escenarioActual === 3) return;
     if (e.button === 0) {
         isMouseDown = true;
         lastMouseX = e.clientX;
@@ -2296,6 +2356,7 @@ canvas.addEventListener('mouseup', function () {
     lastMouseX = lastMouseY = null;
 });
 canvas.addEventListener('mousemove', function (e) {
+    if (escenarioActual === 3) return;
     if (isMouseDown) {
         let rect = canvas.getBoundingClientRect();
         let scale = canvas.width / rect.width;
@@ -2312,15 +2373,18 @@ canvas.addEventListener('mousemove', function (e) {
     cursorX = p.x; cursorY = p.y;
 });
 canvas.addEventListener('mouseenter', function (e) {
+    if (escenarioActual === 3) return;
     let p = screenToBuffer(e.clientX, e.clientY);
     cursorX = p.x; cursorY = p.y;
 });
 canvas.addEventListener('mouseleave', function () {
+    if (escenarioActual === 3) return;
     isMouseDown = false;
     lastMouseX = lastMouseY = null;
     cursorX = cursorY = null;
 });
 canvas.addEventListener('touchmove', function (e) {
+    if (escenarioActual === 3) return;
     e.preventDefault();
     if (e.touches.length === 2) {
         let dist = Math.hypot(
@@ -2352,6 +2416,7 @@ canvas.addEventListener('touchmove', function (e) {
     cursorX = p.x; cursorY = p.y;
 }, { passive: false });
 canvas.addEventListener('touchstart', function (e) {
+    if (escenarioActual === 3) return;
     if (e.touches.length === 2) {
         lastTouchDist = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
@@ -2365,9 +2430,151 @@ canvas.addEventListener('touchstart', function (e) {
     cursorX = p.x; cursorY = p.y;
 }, { passive: true });
 canvas.addEventListener('touchend', function () {
+    if (escenarioActual === 3) return;
     lastTouchDist = null;
     lastTouchMidX = lastTouchMidY = null;
     cursorX = cursorY = null;
+});
+
+// ============================================
+// Escenario 3 canvas UI helpers
+// ============================================
+
+function esc3getCanvasCoords(e) {
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+
+function esc3hitTestTempSlider(cx, cy) {
+    var w = canvas.width, h = canvas.height;
+    var left = w * 0.08, top = 12, right = w * 0.85;
+    var sliderH = 16;
+    if (cy >= top - 40 && cy <= top + sliderH + 40) {
+        var t = (cx - left) / (right - left);
+        if (t >= -0.2 && t <= 1.2) {
+            return Math.max(10, Math.min(45, Math.round(10 + t * 35)));
+        }
+    }
+    return -1;
+}
+
+function esc3hitTestWaterSlider(cx, cy) {
+    var w = canvas.width, h = canvas.height;
+    var sx = w * 0.91, top = h * 0.15, bottom = h * 0.85;
+    var sliderW = 26;
+    if (cx >= sx - sliderW / 2 - 40 && cx <= sx + sliderW / 2 + 40 && cy >= top - 40 && cy <= bottom + 40) {
+        var t = 1 - (cy - top) / (bottom - top);
+        return Math.max(0, Math.min(100, Math.round(t * 100)));
+    }
+    return -1;
+}
+
+canvas.addEventListener('mousedown', function (e) {
+    if (escenarioActual !== 3) return;
+    var c = esc3getCanvasCoords(e);
+    var temp = esc3hitTestTempSlider(c.x, c.y);
+    if (temp >= 0) {
+        arrastrandoTemp = true;
+        cajaTemperatura.value = temp;
+        tempValSpan.textContent = temp;
+        pecera.temperatura = temp;
+        pecera.calSaturacion(temp);
+        return;
+    }
+    var nivel = esc3hitTestWaterSlider(c.x, c.y);
+    if (nivel >= 0) {
+        arrastrandoNivel = true;
+        nivelAgua = nivel;
+        actualizarLineaNivel();
+        return;
+    }
+});
+
+canvas.addEventListener('mousemove', function (e) {
+    if (escenarioActual !== 3) return;
+    if (arrastrandoTemp) {
+        var c = esc3getCanvasCoords(e);
+        var temp = esc3hitTestTempSlider(c.x, c.y);
+        if (temp >= 0) {
+            cajaTemperatura.value = temp;
+            tempValSpan.textContent = temp;
+            pecera.temperatura = temp;
+            pecera.calSaturacion(temp);
+        }
+        return;
+    }
+    if (arrastrandoNivel) {
+        var c = esc3getCanvasCoords(e);
+        var nivel = esc3hitTestWaterSlider(c.x, c.y);
+        if (nivel >= 0) {
+            nivelAgua = nivel;
+            actualizarLineaNivel();
+        }
+        return;
+    }
+});
+
+canvas.addEventListener('mouseup', function () {
+    arrastrandoTemp = false;
+    arrastrandoNivel = false;
+});
+
+canvas.addEventListener('touchstart', function (e) {
+    if (escenarioActual !== 3 || e.touches.length > 1) return;
+    var c = esc3getCanvasCoords(e);
+    var temp = esc3hitTestTempSlider(c.x, c.y);
+    if (temp >= 0) {
+        arrastrandoTemp = true;
+        cajaTemperatura.value = temp;
+        tempValSpan.textContent = temp;
+        pecera.temperatura = temp;
+        pecera.calSaturacion(temp);
+        e.preventDefault();
+        return;
+    }
+    var nivel = esc3hitTestWaterSlider(c.x, c.y);
+    if (nivel >= 0) {
+        arrastrandoNivel = true;
+        nivelAgua = nivel;
+        actualizarLineaNivel();
+        e.preventDefault();
+        return;
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', function (e) {
+    if (escenarioActual !== 3) return;
+    if (arrastrandoTemp && e.touches.length === 1) {
+        var c = esc3getCanvasCoords(e);
+        var temp = esc3hitTestTempSlider(c.x, c.y);
+        if (temp >= 0) {
+            cajaTemperatura.value = temp;
+            tempValSpan.textContent = temp;
+            pecera.temperatura = temp;
+            pecera.calSaturacion(temp);
+        }
+        e.preventDefault();
+        return;
+    }
+    if (arrastrandoNivel && e.touches.length === 1) {
+        var c = esc3getCanvasCoords(e);
+        var nivel = esc3hitTestWaterSlider(c.x, c.y);
+        if (nivel >= 0) {
+            nivelAgua = nivel;
+            actualizarLineaNivel();
+        }
+        e.preventDefault();
+        return;
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchend', function () {
+    arrastrandoTemp = false;
+    arrastrandoNivel = false;
 });
 
 // ============================================
@@ -3293,7 +3500,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 
 escenariosDesbloqueados.add(1);
 desbloquearTab(1);
-cambiarEscenario(1);
+cambiarEscenario(3);
 
 // Ripple effect for buttons and tabs
 document.addEventListener('click', function (e) {
