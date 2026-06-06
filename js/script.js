@@ -22,6 +22,9 @@ let arrastrandoTemp = false;
 let arrastrandoNivel = false;
 let esc3CanvasUI = false;
 let nivelAguaLine = null;
+var contadorMuerte = -1;
+var intervaloMuerte = null;
+var muertePorAgua = false;
 
 let image = new Image();
 let imgPecera = new Image();
@@ -130,6 +133,7 @@ class Pez {
         this.imageDirection = 'izquierda';
         this.vivir = true;
         this.salud = 'sano'
+        this.sinAgua = false;
         // Area de nado
         this.paddingDer = canvas.width - ((canvas.width * 5) / 100) - this.dWidth;
         this.paddingIzq = (canvas.width * 5) / 100;
@@ -148,6 +152,7 @@ class Pez {
 
     aparecer() {
         this.enfermar();
+        this.aplicarSinAgua();
         // Dirección del pez
         if (this.aceleracion.x < 0) {
             this.imageDirection = 'izquierda';
@@ -159,13 +164,21 @@ class Pez {
         // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 
         if (this.imageDirection === 'derecha' & this.vivir === true) {
-            this.ctx.drawImage(this.image, 0, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            if (this.sinAgua) {
+                this.ctx.drawImage(this.image, this.sWidth * 2, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            } else {
+                this.ctx.drawImage(this.image, 0, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            }
         } else if (this.imageDirection === 'derecha' & this.vivir === false) {
             this.ctx.drawImage(this.image, this.sWidth * 2, 0, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
         }
 
         if (this.imageDirection === 'izquierda' & this.vivir === true) {
-            this.ctx.drawImage(this.image, this.sWidth, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            if (this.sinAgua) {
+                this.ctx.drawImage(this.image, this.sWidth * 3, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            } else {
+                this.ctx.drawImage(this.image, this.sWidth, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            }
         } else if (this.imageDirection === 'izquierda' & this.vivir === false) {
             this.ctx.drawImage(this.image, this.sWidth * 3, 0, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
         }
@@ -215,6 +228,14 @@ class Pez {
             this.sy = 0
             this.dWidth = (canvas.width * this.size) / 100
             this.dHeight = this.dWidth / 2;
+        }
+    }
+
+    aplicarSinAgua() {
+        if (this.sinAgua && this.vivir) {
+            this.dWidth = aleatorio((canvas.width * this.size) / 100, (canvas.width * this.size * (18 / 20)) / 100);
+            this.dHeight = this.dWidth / 2;
+            this.sy = 0;
         }
     }
 
@@ -530,18 +551,24 @@ function actualizar() {
         }
         for (i = 0; i < burbujas.length; i++) {
             if (esc3CanvasUI) {
-                burbujas[i].move();
-                if (burbujas[i].y < fillY3) {
-                    burbujas[i].y = wb3 - Math.random() * (wb3 - fillY3);
+                if (nivelAgua > 1) {
+                    burbujas[i].move();
+                    if (burbujas[i].y < fillY3) {
+                        burbujas[i].y = wb3 - Math.random() * (wb3 - fillY3);
+                    }
+                    burbujas[i].reset();
+                    burbujas[i].draw();
                 }
-                burbujas[i].reset();
-                burbujas[i].draw();
             } else {
                 burbujas[i].draw();
             }
         }
         for (i = 0; i < peces.length; i++) {
             let pez = peces[i];
+            if (muertePorAgua && !pez.vivir && escenarioActual === 3) {
+                pez.aparecer();
+                continue;
+            }
             pez.velMax = 0.5;
             if (cursorX !== null) {
                 let dx = pez.posicion.x - cursorX;
@@ -566,7 +593,7 @@ function actualizar() {
                 pez.nadar();
                 pez.morir();
             } else {
-                if (!pez.vivir) {
+                if (!pez.vivir && !(muertePorAgua && escenarioActual === 3)) {
                 pez.vivir = true;
                 if (escenarioActual === 3) {
                     pez.dir = new Vector((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
@@ -584,9 +611,28 @@ function actualizar() {
         var wb = canvas.height * 0.85;
         var wh = wb - wt;
         var waterSurfaceY = wb - wh * (nivelAgua / 100);
+        var npeces3 = Number(cajaPeces.value);
+        var tpeces3 = Number(cajaSize.value);
+        var LN3 = npeces3 * tpeces3 * 3;
+        var L3 = nivelAgua * 2;
         peces.forEach(function (p) {
-            p.paddingArr = waterSurfaceY + p.dHeight / 2;
-            p.paddingAba = wb - p.dHeight / 2;
+            var aguaHeight = wb - waterSurfaceY;
+            if (aguaHeight < p.dHeight && LN3 > L3) {
+                p.sinAguaY = waterSurfaceY - p.dHeight / 2;
+                p.sinAgua = true;
+                p.paddingArr = p.sinAguaY;
+                p.paddingAba = p.sinAguaY;
+                if (muertePorAgua && !p.vivir) {
+                    p.posicion.y = p.sinAguaY;
+                }
+            } else {
+                p.sinAgua = false;
+                p.paddingArr = waterSurfaceY + p.dHeight / 2;
+                p.paddingAba = wb - p.dHeight / 2;
+                if (muertePorAgua && !p.vivir) {
+                    p.posicion.y = waterSurfaceY + p.dHeight / 2;
+                }
+            }
         });
     }
 
@@ -832,6 +878,22 @@ function litrosDinamicos() {
     actualizarAdvertenciaLN();
 }
 
+function detenerContadorMuerte() {
+    if (intervaloMuerte) {
+        clearInterval(intervaloMuerte);
+        intervaloMuerte = null;
+    }
+    contadorMuerte = -1;
+}
+
+function revivirPeces() {
+    peces.forEach(function (p) {
+        p.vivir = true;
+        p.dir = new Vector((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+        p.dir.norm();
+    });
+}
+
 function actualizarAdvertenciaLN() {
     var npeces = Number(cajaPeces.value);
     var tpeces = Number(cajaSize.value);
@@ -840,14 +902,43 @@ function actualizarAdvertenciaLN() {
     var warn = document.getElementById('esc3-warning');
     var msg = document.getElementById('esc3-warning-msg');
     if (LN > L) {
-        msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L';
-        warn.style.display = '';
+        if (muertePorAgua) {
+            msg.textContent = 'Los peces han muerto por falta de agua';
+            warn.style.display = '';
+        } else if (contadorMuerte === -1) {
+            contadorMuerte = 10;
+            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Morirán en ' + contadorMuerte + 's';
+            warn.style.display = '';
+            intervaloMuerte = setInterval(function () {
+                contadorMuerte--;
+                if (contadorMuerte <= 0) {
+                    clearInterval(intervaloMuerte);
+                    intervaloMuerte = null;
+                    muertePorAgua = true;
+                    contadorMuerte = -1;
+                    peces.forEach(function (p) { p.morir(); });
+                    msg.textContent = 'Los peces han muerto por falta de agua';
+                } else {
+                    msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Morirán en ' + contadorMuerte + 's';
+                }
+            }, 1000);
+        } else if (contadorMuerte >= 0 && intervaloMuerte) {
+            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Morirán en ' + contadorMuerte + 's';
+            warn.style.display = '';
+        }
     } else {
+        if (muertePorAgua) {
+            muertePorAgua = false;
+            revivirPeces();
+        }
+        detenerContadorMuerte();
         warn.style.display = 'none';
     }
 }
 
 function reiniciar3() {
+    detenerContadorMuerte();
+    muertePorAgua = false;
     clearInterval(tempInterval);
     isPlaying = false;
     playBtn.textContent = '▶';
@@ -1487,6 +1578,8 @@ const ESCENARIOS = {
         },
         alSalir: function () {
             esc3CanvasUI = false;
+            detenerContadorMuerte();
+            muertePorAgua = false;
             if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
             grafica.puntos.forEach(function (p) { p.setAttribute({ visible: false }); });
             document.getElementById('esc1-temp-col').style.display = '';
@@ -3578,7 +3671,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 
 escenariosDesbloqueados.add(1);
 desbloquearTab(1);
-cambiarEscenario(1);
+cambiarEscenario(3);
 
 // Ripple effect for buttons and tabs
 document.addEventListener('click', function (e) {
