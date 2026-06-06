@@ -517,14 +517,25 @@ function actualizar() {
         pecera.aparecer();
         if (esc3CanvasUI) {
             var wt3 = canvas.height * 0.15;
-            var wb3 = canvas.height * 0.85;
+            var wb3 = canvas.height * 0.90;
             var wh3 = wb3 - wt3;
             var fillY3 = wb3 - wh3 * (nivelAgua / 100);
             ctx.fillStyle = 'rgba(52, 152, 219, 0.15)';
-            ctx.fillRect(0, fillY3, canvas.width, wb3 - fillY3);
+            var mIzq3 = canvas.width * 0.02;
+            var mDer3 = canvas.width * 0.02;
+            ctx.fillRect(mIzq3, fillY3, canvas.width - mIzq3 - mDer3, wb3 - fillY3);
         }
         for (i = 0; i < burbujas.length; i++) {
-            burbujas[i].draw();
+            if (esc3CanvasUI) {
+                burbujas[i].move();
+                if (burbujas[i].y < fillY3) {
+                    burbujas[i].y = wb3 - Math.random() * (wb3 - fillY3);
+                }
+                burbujas[i].reset();
+                burbujas[i].draw();
+            } else {
+                burbujas[i].draw();
+            }
         }
         for (i = 0; i < peces.length; i++) {
             let pez = peces[i];
@@ -598,41 +609,62 @@ function dibujarEsc3UI() {
     var w = canvas.width, h = canvas.height;
 
     // --- Temperature slider (horizontal, top) ---
-    var sl = w * 0.08, sr = w * 0.85, st = 12, sh = 16;
+    var sl = w * 0.12, sr = w * 0.75, st = h * 0.18, sh = 16;
     var tempVal = Number(cajaTemperatura.value);
     var tFrac = Math.max(0, Math.min(1, (tempVal - 10) / 35));
     var thumbX = sl + tFrac * (sr - sl);
+    var nivelLitros = nivelAgua * 2;
     ctx.fillStyle = '#ddd';
     ctx.beginPath();
     ctx.roundRect(sl, st, sr - sl, sh, 8);
     ctx.fill();
     var grad = ctx.createLinearGradient(sl, 0, sr, 0);
-    grad.addColorStop(0, '#3b82f6');
-    grad.addColorStop(tFrac, '#3b82f6');
+    grad.addColorStop(0, '#0d47a1');
+    grad.addColorStop(tFrac, '#0d47a1');
     grad.addColorStop(Math.min(tFrac + 0.001, 1), '#e2e8f0');
     grad.addColorStop(1, '#e2e8f0');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.roundRect(sl, st, sr - sl, sh, 8);
     ctx.fill();
-    ctx.fillStyle = '#1e40af';
-    ctx.beginPath();
-    ctx.arc(thumbX, st + sh / 2, 50, 0, Math.PI * 2);
-    ctx.fill();
+    // Thumb
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 4;
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.beginPath();
+    ctx.arc(thumbX, st + sh / 2, 42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = '#0d47a1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(thumbX, st + sh / 2, 42, 0, Math.PI * 2);
+    ctx.stroke();
+    // Floating label above thumb
+    var bubY = st + sh / 2 - 70;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = '#0d47a1';
+    ctx.beginPath();
+    ctx.roundRect(thumbX - 65, bubY - 24, 130, 48, 10);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 40px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(tempVal + '°C', thumbX, st + sh / 2 + 5);
+    ctx.fillText(tempVal + '°C', thumbX, bubY + 10);
 
     // --- SO label (below temp slider) ---
     var so = pecera.saturacion.toFixed(2);
-    ctx.fillStyle = '#0d6efd';
-    ctx.font = 'bold 18px system-ui, sans-serif';
+    ctx.fillStyle = '#0d47a1';
+    ctx.font = 'bold 30px system-ui, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('SO: ' + so + ' mg/L', sl, st + sh + 30);
+    ctx.fillText('SO: ' + so + ' mg/L', sl, st + sh + 38);
 
     // --- Water level slider (vertical, right) ---
-    var sx = w * 0.91, stop = h * 0.15, sbottom = h * 0.85, sw = 20;
+    var sx = w * 0.95, stop = h * 0.15, sbottom = h * 0.85, sw = 20;
     var nFrac = nivelAgua / 100;
     var thumbY = sbottom - nFrac * (sbottom - stop);
     ctx.fillStyle = '#ddd';
@@ -640,26 +672,43 @@ function dibujarEsc3UI() {
     ctx.roundRect(sx - sw / 2, stop, sw, sbottom - stop, 6);
     ctx.fill();
     var vgrad = ctx.createLinearGradient(0, sbottom, 0, stop);
-    vgrad.addColorStop(0, '#3498db');
-    vgrad.addColorStop(nFrac, '#3498db');
+    vgrad.addColorStop(0, '#0d47a1');
+    vgrad.addColorStop(nFrac, '#0d47a1');
     vgrad.addColorStop(Math.min(nFrac + 0.001, 1), '#e2e8f0');
     vgrad.addColorStop(1, '#e2e8f0');
     ctx.fillStyle = vgrad;
     ctx.beginPath();
     ctx.roundRect(sx - sw / 2, stop, sw, sbottom - stop, 6);
     ctx.fill();
-    ctx.fillStyle = '#1e40af';
-    ctx.beginPath();
-    ctx.arc(sx, thumbY, 50, 0, Math.PI * 2);
-    ctx.fill();
+    // Thumb
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 4;
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.beginPath();
+    ctx.arc(sx, thumbY, 42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = '#0d47a1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(sx, thumbY, 42, 0, Math.PI * 2);
+    ctx.stroke();
+    // Floating label to the left of thumb
+    var bubX = sx - 130;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = '#0d47a1';
+    ctx.beginPath();
+    ctx.roundRect(bubX - 75, thumbY - 24, 150, 48, 10);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 40px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(nivelAgua + '%', sx, thumbY + 4);
-    ctx.fillStyle = '#0d6efd';
-    ctx.font = '13px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Nivel', sx, stop - 8);
+    var nivelLitros = nivelAgua * 2;
+    ctx.fillText(nivelLitros + ' L', bubX, thumbY + 10);
 }
 
 function reiniciar() {
@@ -1402,13 +1451,17 @@ const ESCENARIOS = {
         codigo: 'capacidad',
         alEntrar: function () {
             esc3LaSection.style.display = '';
-            boton3.disabled = true;
+            litrosDinamicos();
             nivelAgua = 100;
             arrastrandoNivel = false;
             arrastrandoTemp = false;
             esc3CanvasUI = true;
             document.getElementById('esc1-temp-col').style.display = 'none';
             document.getElementById('esc1-so-col').style.display = 'none';
+            ['esc1-npeces-col', 'esc1-tpeces-col'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = '';
+            });
             initBoard3();
             actualizarLineaNivel();
         },
@@ -2451,9 +2504,9 @@ function esc3getCanvasCoords(e) {
 
 function esc3hitTestTempSlider(cx, cy) {
     var w = canvas.width, h = canvas.height;
-    var left = w * 0.08, top = 12, right = w * 0.85;
+    var left = w * 0.12, top = h * 0.18, right = w * 0.75;
     var sliderH = 16;
-    if (cy >= top - 40 && cy <= top + sliderH + 40) {
+    if (cy >= top - 80 && cy <= top + sliderH + 80) {
         var t = (cx - left) / (right - left);
         if (t >= -0.2 && t <= 1.2) {
             return Math.max(10, Math.min(45, Math.round(10 + t * 35)));
@@ -2464,9 +2517,9 @@ function esc3hitTestTempSlider(cx, cy) {
 
 function esc3hitTestWaterSlider(cx, cy) {
     var w = canvas.width, h = canvas.height;
-    var sx = w * 0.91, top = h * 0.15, bottom = h * 0.85;
+    var sx = w * 0.93, top = h * 0.15, bottom = h * 0.85;
     var sliderW = 26;
-    if (cx >= sx - sliderW / 2 - 40 && cx <= sx + sliderW / 2 + 40 && cy >= top - 40 && cy <= bottom + 40) {
+    if (cx >= sx - sliderW / 2 - 80 && cx <= sx + sliderW / 2 + 80 && cy >= top - 80 && cy <= bottom + 80) {
         var t = 1 - (cy - top) / (bottom - top);
         return Math.max(0, Math.min(100, Math.round(t * 100)));
     }
@@ -3500,7 +3553,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 
 escenariosDesbloqueados.add(1);
 desbloquearTab(1);
-cambiarEscenario(3);
+cambiarEscenario(1);
 
 // Ripple effect for buttons and tabs
 document.addEventListener('click', function (e) {
