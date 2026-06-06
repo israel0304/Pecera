@@ -189,19 +189,22 @@
                     <div class="card-control">
                         <div class="row">
                             <div class="col-md">
-                                <p>Temperatura: <span id="tempVal">23</span>&deg;C</p>
+                                <p class="mb-1 fs-6 fw-bold">Temperatura: <span id="tempVal">23</span>&deg;C</p>
                                 <div class="d-flex align-items-center gap-2">
                                     <input type="range" min="0" max="50" value="23" id="temp" class="w-100" >
                                     <button id="playTemp" class="btn btn-success btn-sm" data-tooltip="Animar temperatura autom&aacute;ticamente" style="flex-shrink:0">&#9654;</button>
                                 </div>
                             </div>
-                            <div class="col-md">
+                            <div class="col-md" id="esc1-npeces-col">
                                 <p>N&uacute;mero de peces: <span id="npecesVal">1</span></p>
-                                <input type="range" min="0" max="20" value="1" id="npeces" class="w-100" data-tooltip="M&aacute;x. 20 peces">
+                                <input type="range" min="0" max="20" value="10" id="npeces" class="w-100" data-tooltip="M&aacute;x. 20 peces">
+                            </div>
+                            <div class="col-md" id="esc1-tpeces-col">
+                                <p>Tama&ntilde;o de peces: <span id="tpecesVal">1</span> cm</p>
+                                <input type="range" min="1" max="7" value="4" id="tpeces" class="w-100" data-tooltip="1-7 cm">
                             </div>
                             <div class="col-md">
-                                <p>Tama&ntilde;o de peces: <span id="tpecesVal">1</span> cm</p>
-                                <input type="range" min="1" max="7" value="1" id="tpeces" class="w-100" data-tooltip="1-7 cm">
+                                <p class="mb-1 fs-6 fw-bold">Saturaci&oacute;n de ox&iacute;geno (SO) = <span id="sat"></span></p>
                             </div>
                         </div>
                     </div>
@@ -216,7 +219,6 @@
                             </div>
                             <button id="pointLA" class="btn btn-info btn-sm" disabled>graficar punto LA</button>
                         </div>
-                        <p class="mb-1">Saturaci&oacute;n de ox&iacute;geno (SO) = <span id="sat"></span></p>
                         <div class="d-flex justify-content-center gap-2 flex-wrap">
                             <button id="point" class="btn btn-info btn-sm">graficar punto</button>
                             <button id="reset" class="btn btn-secondary btn-sm">Reiniciar</button>

@@ -317,7 +317,7 @@ class Grafica {
     }
 
     graficarPunto() {
-        this.pointColor = this.pecera.temperatura >= 22 & this.pecera.temperatura <= 28 ? '#5dc1b9' : '#fd7b7b';
+        this.pointColor = this.pecera.temperatura >= 22 & this.pecera.temperatura <= 28 ? '#3b82f6' : '#fd7b7b';
         let p = this.board.create(
             'point',
             [this.pecera.temperatura, this.pecera.saturacion],
@@ -360,9 +360,9 @@ class Grafica {
 }
 
 ///  Funciones
-cajaPeces.value = 1;
+cajaPeces.value = 10;
 cajaTemperatura.value = 23;
-cajaSize.value = 1
+cajaSize.value = 4
 
     tempValSpan.textContent = cajaTemperatura.value;
 npecesValSpan.textContent = cajaPeces.value;
@@ -558,13 +558,13 @@ function reiniciar() {
     pecera.temperatura = 23;
     pecera.calSaturacion(23);
 
-    cajaPeces.value = 1;
-    npecesValSpan.textContent = 1;
+    cajaPeces.value = 10;
+    npecesValSpan.textContent = 10;
 
-    cajaSize.value = 1;
-    tpecesValSpan.textContent = 1;
+    cajaSize.value = 4;
+    tpecesValSpan.textContent = 4;
 
-    peces = generar(Pez, 1, 1);
+    peces = generar(Pez, 10, 4);
     burbujas = generar(Burbuja, validarBurbujasIniciales(23));
 
     grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
@@ -1309,6 +1309,10 @@ const ESCENARIOS = {
             if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
             grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
             grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
+            ['esc1-npeces-col', 'esc1-tpeces-col'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
         }
     },
     2: {
@@ -1324,10 +1328,10 @@ const ESCENARIOS = {
             dataLA.style.display = 'none';
             botonLA.disabled = true;
             boton3.disabled = false;
-            pumpBroken = false;
-            document.getElementById('esc5-m-section').style.display = 'none';
-            actualizarDisplayEsc2();
-            initPecesEstanque();
+            if (grafica.curvaSO) grafica.curvaSO.setAttribute({ visible: true });
+            if (grafica.curvaLA) grafica.curvaLA.setAttribute({ visible: false });
+            grafica.puntosLA.forEach(function (p) { p.setAttribute({ visible: false }); });
+            grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
         }
     },
     3: {
