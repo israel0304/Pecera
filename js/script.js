@@ -411,7 +411,10 @@ function pecesDinamicos(e) {
     }
     npecesValSpan.textContent = cajaPeces.value;
 tpecesValSpan.textContent = cajaSize.value;
-    if (escenarioActual === 3) litrosDinamicos();
+    if (escenarioActual === 3) {
+        litrosDinamicos();
+        actualizarAdvertenciaLN();
+    }
     let nuevop = generar(Pez, cajaPeces.value, cajaSize.value);
     peces = nuevop;
 }
@@ -520,7 +523,7 @@ function actualizar() {
             var wb3 = canvas.height * 0.90;
             var wh3 = wb3 - wt3;
             var fillY3 = wb3 - wh3 * (nivelAgua / 100);
-            ctx.fillStyle = 'rgba(52, 152, 219, 0.15)';
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.3)';
             var mIzq3 = canvas.width * 0.02;
             var mDer3 = canvas.width * 0.02;
             ctx.fillRect(mIzq3, fillY3, canvas.width - mIzq3 - mDer3, wb3 - fillY3);
@@ -826,6 +829,22 @@ function crearPunto() {
 
 function litrosDinamicos() {
     textoLA.textContent = Number(cajaPeces.value) * Number(cajaSize.value) * 3;
+    actualizarAdvertenciaLN();
+}
+
+function actualizarAdvertenciaLN() {
+    var npeces = Number(cajaPeces.value);
+    var tpeces = Number(cajaSize.value);
+    var LN = npeces * tpeces * 3;
+    var L = nivelAgua * 2;
+    var warn = document.getElementById('esc3-warning');
+    var msg = document.getElementById('esc3-warning-msg');
+    if (LN > L) {
+        msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L';
+        warn.style.display = '';
+    } else {
+        warn.style.display = 'none';
+    }
 }
 
 function reiniciar3() {
@@ -1464,6 +1483,7 @@ const ESCENARIOS = {
             });
             initBoard3();
             actualizarLineaNivel();
+            actualizarAdvertenciaLN();
         },
         alSalir: function () {
             esc3CanvasUI = false;
@@ -2176,6 +2196,7 @@ esc7Btn.addEventListener('click', function () { navegarA(7); });
 if (checkNivelAgua) {
     checkNivelAgua.addEventListener('change', function () {
         actualizarLineaNivel();
+        actualizarAdvertenciaLN();
     });
 }
 
@@ -2543,6 +2564,7 @@ canvas.addEventListener('mousedown', function (e) {
         arrastrandoNivel = true;
         nivelAgua = nivel;
         actualizarLineaNivel();
+        actualizarAdvertenciaLN();
         return;
     }
 });
@@ -2566,6 +2588,7 @@ canvas.addEventListener('mousemove', function (e) {
         if (nivel >= 0) {
             nivelAgua = nivel;
             actualizarLineaNivel();
+            actualizarAdvertenciaLN();
         }
         return;
     }
@@ -2594,6 +2617,7 @@ canvas.addEventListener('touchstart', function (e) {
         arrastrandoNivel = true;
         nivelAgua = nivel;
         actualizarLineaNivel();
+        actualizarAdvertenciaLN();
         e.preventDefault();
         return;
     }
@@ -2619,6 +2643,7 @@ canvas.addEventListener('touchmove', function (e) {
         if (nivel >= 0) {
             nivelAgua = nivel;
             actualizarLineaNivel();
+            actualizarAdvertenciaLN();
         }
         e.preventDefault();
         return;
