@@ -885,12 +885,12 @@ function crearPunto() {
 
 function actualizarColorPuntoEsc3(p) {
     if (!p._originalColor) return;
-    if (escenarioActual !== 3 || !nivelAguaLine || !checkNivelAgua || !checkNivelAgua.checked) {
+    if (escenarioActual !== 3) {
         p.setAttribute({ strokecolor: p._originalColor, fillColor: p._originalColor });
         return;
     }
-    var lineY = nivelAguaLine.point1.Y();
-    if (p.Y() > lineY) {
+    var threshold = nivelAgua * 2;
+    if (p.Y() > threshold) {
         p.setAttribute({ strokecolor: '#e74c3c', fillColor: '#e74c3c' });
     } else {
         p.setAttribute({ strokecolor: p._originalColor, fillColor: p._originalColor });
