@@ -828,13 +828,13 @@ function crearGrafica() {
 }
 
 function initBoard3() {
-    grafica.board.setBoundingBox([-1, 220, 25, -10]);
+    grafica.board.setBoundingBox([-2, 220, 20, -20]);
     if (grafica.esc3Labels) {
         grafica.esc3Labels.forEach(function (l) { grafica.board.removeObject(l); });
     }
     grafica.esc3Labels = [
-        grafica.board.create('text', [10, -8, 'N° peces'], { fontSize: 13, fixed: true, cssClass: '' }),
-        grafica.board.create('text', [-0.5, 210, 'LA (litros)'], { fontSize: 13, fixed: true, cssClass: '' })
+        grafica.board.create('text', [2, -15, 'N° peces'], { fontSize: 13, fixed: true, cssClass: '' }),
+        grafica.board.create('text', [0.5, 210, 'LN (litros)'], { fontSize: 13, fixed: true, cssClass: '' })
     ];
     grafica.board.update();
 }
@@ -858,8 +858,8 @@ function actualizarLineaNivel() {
         nivelAguaLine = grafica.board.create('line', [
             [0, nivelLitros], [25, nivelLitros]
         ], {
-            strokeColor: '#3498db', strokeWidth: 2, dash: 2,
-            fixed: true, straightFirst: false, straightLast: false
+            strokeColor: '#3498db', strokeWidth: 2,
+            fixed: true
         });
         grafica.board.update();
     }
@@ -3671,7 +3671,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 
 escenariosDesbloqueados.add(1);
 desbloquearTab(1);
-cambiarEscenario(3);
+cambiarEscenario(1);
 
 // Ripple effect for buttons and tabs
 document.addEventListener('click', function (e) {
