@@ -317,7 +317,7 @@ class Pecera {
         this.image.src = './img/pecera.png';
         this.texto = textSaturacion
         this.ctx = ctx;
-        this.temperatura = temp;
+        this.temperatura = Number(temp);
         this.saturacion = this.calSaturacion(this.temperatura);
     }
 
@@ -448,11 +448,11 @@ function tempDinamica(e) {
         playBtn.classList.remove('btn-danger');
         playBtn.classList.add('btn-success');
     }
-    pecera.temperatura = cajaTemperatura.value;
+    pecera.temperatura = Number(cajaTemperatura.value);
     pecera.calSaturacion(pecera.temperatura);
     burbujasDinamicas();
     resucitarPez();
-tempValSpan.textContent = cajaTemperatura.value;
+    tempValSpan.textContent = cajaTemperatura.value;
 }
 
 function burbujasDinamicas() {
@@ -845,6 +845,17 @@ function initBoard1() {
         grafica.esc3Labels.forEach(function (l) { grafica.board.removeObject(l); });
         grafica.esc3Labels = null;
     }
+    if (grafica.curvaSO) { grafica.board.removeObject(grafica.curvaSO); grafica.curvaSO = null; }
+    if (grafica.soCheckbox) { grafica.board.removeObject(grafica.soCheckbox); grafica.soCheckbox = null; }
+    grafica.soCheckbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], { fixed: true });
+    grafica.curvaSO = grafica.board.create('functiongraph', [
+        function (x) {
+            if (grafica.soCheckbox.Value()) {
+                return -0.0001 * Math.pow(x, 3) + 0.01 * Math.pow(x, 2) - 0.39 * x + 14.57;
+            }
+            return NaN;
+        }
+    ], { strokeColor: '#3673c5', strokeWidth: 2 });
     grafica.board.update();
 }
 
@@ -1687,6 +1698,8 @@ function limpiarGrafica() {
     grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
     grafica.puntos = [];
     if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
+    if (grafica.curvaSO) { grafica.board.removeObject(grafica.curvaSO); grafica.curvaSO = null; }
+    if (grafica.soCheckbox) { grafica.board.removeObject(grafica.soCheckbox); grafica.soCheckbox = null; }
 }
 
 function actualizarTabs(n) {
