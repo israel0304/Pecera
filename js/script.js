@@ -858,7 +858,7 @@ function actualizarLineaNivel() {
         nivelAguaLine = grafica.board.create('line', [
             [0, nivelLitros], [25, nivelLitros]
         ], {
-            strokeColor: '#3498db', strokeWidth: 2,
+            strokeColor: '#3498db', strokeWidth: 2, dash: 2,
             fixed: true
         });
         grafica.board.update();
@@ -906,8 +906,8 @@ function actualizarAdvertenciaLN() {
             msg.textContent = 'Los peces han muerto por falta de agua';
             warn.style.display = '';
         } else if (contadorMuerte === -1) {
-            contadorMuerte = 10;
-            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Morirán en ' + contadorMuerte + 's';
+            contadorMuerte = 25;
+            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Podrían morir en ' + contadorMuerte + 's';
             warn.style.display = '';
             intervaloMuerte = setInterval(function () {
                 contadorMuerte--;
@@ -919,11 +919,11 @@ function actualizarAdvertenciaLN() {
                     peces.forEach(function (p) { p.morir(); });
                     msg.textContent = 'Los peces han muerto por falta de agua';
                 } else {
-                    msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Morirán en ' + contadorMuerte + 's';
+                    msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Podrían morir en ' + contadorMuerte + 's';
                 }
             }, 1000);
         } else if (contadorMuerte >= 0 && intervaloMuerte) {
-            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Morirán en ' + contadorMuerte + 's';
+            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Podrían morir en ' + contadorMuerte + 's';
             warn.style.display = '';
         }
     } else {
