@@ -348,7 +348,7 @@ class Grafica {
         if (escenarioActual === 3) {
             x = Number(cajaPeces.value);
             y = Number(cajaSize.value) * 3 * x;
-            var colores = ['#e74c3c','#e67e22','#f1c40f','#2ecc71','#3498db','#9b59b6','#1abc9c'];
+            var colores = ['#92c9ff','#46a3ff','#007df9','#003161','#0082ae','#00bbfa','#48ffff'];
             var t = Number(cajaSize.value);
             color = colores[Math.min(Math.max(t, 1), 7) - 1];
         } else {
@@ -393,6 +393,8 @@ class Grafica {
                 labelTimeout = null;
             }, 2000);
         });
+        p._originalColor = color;
+        actualizarColorPuntoEsc3(p);
         this.puntos.push(p);
     }
 
@@ -874,15 +876,31 @@ function actualizarLineaNivel() {
         });
         grafica.board.update();
     }
+    actualizarColoresPuntosEsc3();
 }
 
 function crearPunto() {
     grafica.graficarPunto();
 }
 
+function actualizarColorPuntoEsc3(p) {
+    if (!p._originalColor) return;
+    if (escenarioActual !== 3 || !nivelAguaLine || !checkNivelAgua || !checkNivelAgua.checked) {
+        p.setAttribute({ strokecolor: p._originalColor, fillColor: p._originalColor });
+        return;
+    }
+    var lineY = nivelAguaLine.point1.Y();
+    if (p.Y() > lineY) {
+        p.setAttribute({ strokecolor: '#e74c3c', fillColor: '#e74c3c' });
+    } else {
+        p.setAttribute({ strokecolor: p._originalColor, fillColor: p._originalColor });
+    }
+}
 
-
-
+function actualizarColoresPuntosEsc3() {
+    grafica.puntos.forEach(function (p) { actualizarColorPuntoEsc3(p); });
+    if (grafica && grafica.board) grafica.board.update();
+}
 
 function litrosDinamicos() {
     textoLA.textContent = Number(cajaPeces.value) * Number(cajaSize.value) * 3;
