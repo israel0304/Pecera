@@ -567,10 +567,6 @@ function actualizar() {
         }
         for (i = 0; i < peces.length; i++) {
             let pez = peces[i];
-            if (muertePorAgua && !pez.vivir && escenarioActual === 3) {
-                pez.aparecer();
-                continue;
-            }
             pez.velMax = 0.5;
             if (cursorX !== null) {
                 let dx = pez.posicion.x - cursorX;
@@ -625,14 +621,20 @@ function actualizar() {
                 p.paddingArr = p.sinAguaY;
                 p.paddingAba = p.sinAguaY;
                 if (muertePorAgua && !p.vivir) {
-                    p.posicion.y = p.sinAguaY;
+                    var target = new Vector(p.posicion.x, p.paddingArr);
+                    p.dir = Vector.res(target, p.posicion);
+                    p.dir.norm();
+                    p.dir.mul(1);
                 }
             } else {
                 p.sinAgua = false;
                 p.paddingArr = waterSurfaceY + p.dHeight / 2;
                 p.paddingAba = wb - p.dHeight / 2;
                 if (muertePorAgua && !p.vivir) {
-                    p.posicion.y = waterSurfaceY + p.dHeight / 2;
+                    var target = new Vector(p.posicion.x, p.paddingArr);
+                    p.dir = Vector.res(target, p.posicion);
+                    p.dir.norm();
+                    p.dir.mul(1);
                 }
             }
         });
@@ -935,8 +937,8 @@ function actualizarAdvertenciaLN() {
             msg.textContent = 'Los peces han muerto por falta de agua';
             warn.style.display = '';
         } else if (contadorMuerte === -1) {
-            contadorMuerte = 25;
-            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Podrían morir en ' + contadorMuerte + 's';
+            contadorMuerte = 20;
+            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Los peces podrían morir en ' + contadorMuerte + 's';
             warn.style.display = '';
             intervaloMuerte = setInterval(function () {
                 contadorMuerte--;
@@ -948,11 +950,11 @@ function actualizarAdvertenciaLN() {
                     peces.forEach(function (p) { p.morir(); });
                     msg.textContent = 'Los peces han muerto por falta de agua';
                 } else {
-                    msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Podrían morir en ' + contadorMuerte + 's';
+                    msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Los peces podrían morir en ' + contadorMuerte + 's';
                 }
             }, 1000);
         } else if (contadorMuerte >= 0 && intervaloMuerte) {
-            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Podrían morir en ' + contadorMuerte + 's';
+            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Los peces podrían morir en ' + contadorMuerte + 's';
             warn.style.display = '';
         }
     } else {
@@ -995,6 +997,7 @@ function reiniciar3() {
     if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
     if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
     restablecerZoom();
+    litrosDinamicos();
 }
 
 function pressIntro(e) {
