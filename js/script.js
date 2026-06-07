@@ -1579,6 +1579,7 @@ const ESCENARIOS = {
             if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
             if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
             boton3.disabled = false;
+            initPecesEstanque();
         }
     },
     3: {
