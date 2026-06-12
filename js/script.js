@@ -1582,6 +1582,7 @@ const ESCENARIOS = {
             if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
             if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
             boton3.disabled = false;
+            actualizarDisplayEsc2();
             initPecesEstanque();
         },
         alSalir: function () {
@@ -1746,8 +1747,8 @@ function limpiarGrafica() {
     if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
     if (grafica.curvaSO) { grafica.board.removeObject(grafica.curvaSO); grafica.curvaSO = null; }
     if (grafica.soCheckbox) { grafica.board.removeObject(grafica.soCheckbox); grafica.soCheckbox = null; }
-    if (board4) { board4.removeAllObjects(); board4 = null; }
-    if (board5) { board5.removeAllObjects(); board5 = null; }
+    if (board4) { JXG.JSXGraph.freeBoard(board4); board4 = null; }
+    if (board5) { JXG.JSXGraph.freeBoard(board5); board5 = null; }
 }
 
 function actualizarTabs(n) {
