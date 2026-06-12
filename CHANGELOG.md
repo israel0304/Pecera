@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.13.0 (no publicado)
+
+### Features
+- **Valores V/I editables inline en escenarios 2, 4 y 5** — Al hacer clic/touch en los valores de voltaje (V) o corriente (I) se muestra un `<input type="number">` inline sin bordes para editar directamente. Al confirmar, se actualiza el slider de voltaje y todos los elementos dependientes (display, burbujas, gliders, gráficas).
+  - Editar V: clamp a [0, 12] y mueve el slider
+  - Editar I: cálculo inverso según fórmula activa (`val / 0.3` para esc2/4, `val / m` para esc5)
+  - Input invisible (borderless, sin fondo, sin spin buttons) hereda estilos del texto circundante
+  - Escape descarta cambios, Enter/blur confirma
+
+### Internal
+- Nueva función `makeEditable(spanId, computeVoltage)` reutilizable para edición inline
+- Nueva clase CSS `.inline-edit-value` con estilos de input invisible
+
 ## 1.12.0 (no publicado)
 
 ### Features

@@ -72,6 +72,7 @@ Open `app.html` in any browser for the simulator. No build or server required.
 
 ### Estanque Sustentable (Escenario 2)
 - Voltage slider (0–12V) controls current (I = 0.3V, pendiente fija)
+- **Valores V/I editables inline**: al hacer clic/touch en `V = X.XX` o `I = X.XX`, se reemplaza el texto con un `<input type="number" class="inline-edit-value">` (borderless, transparente, sin spin buttons). Editar V mueve el slider; editar I invierte la fórmula para calcular V
 - Solar panel image (`img/panel_solar.png`) and pump image (`img/bomba_agua.png`)
 - Water level at 50% of canvas height; shore starts at `w * 0.6`
 - Sun brightness, bubble size/speed vary with voltage
@@ -259,3 +260,14 @@ Additionally, state variables (`particulasEsc2`, `sunWaveProgress`, `cometProgre
 
 **Mobile height** (`css/style.css:816-817`):
 - Increased `#box7` mobile `max-height` from 180px → 282px, `min-height` from 100px → 150px for a taller graph
+
+### Inline editable V/I values (2026-06-12)
+
+**Problem:** Users had to drag the voltage slider to change V or I values precisely — no direct numeric input was available for V or I in escenarios 2, 4, and 5.
+
+**Fix** (`js/script.js:1821-1862`, `css/style.css:879-897`):
+- Added reusable `makeEditable(spanId, computeVoltage)` function that replaces a `<span>` with an inline `<input type="number">` on click/touch
+- Added `makeEditable('voltVal', ...)` — clamps value to [0, 12] and updates the voltage slider
+- Added `makeEditable('corrVal', ...)` — reverse-computes voltage from current: `V = I / 0.3` for esc2/4, `V = I / m` for esc5 (escenario 5 uses `mSlider.value` for the slope)
+- Added `.inline-edit-value` CSS class: borderless, transparent background, no spin buttons, inherits parent font/color/size to appear seamless with surrounding text
+- Created input is removed on blur, Enter (confirms), or Escape (discards)

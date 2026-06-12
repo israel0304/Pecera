@@ -1818,6 +1818,49 @@ function actualizarDisplayEsc2() {
     corrVal.textContent = I.toFixed(2);
 }
 
+function makeEditable(spanId, computeVoltage) {
+    let span = document.getElementById(spanId);
+    let input = null;
+
+    function startEdit(e) {
+        e.preventDefault();
+        if (input) return;
+        input = document.createElement('input');
+        input.type = 'number';
+        input.step = '0.01';
+        input.className = 'inline-edit-value';
+        input.value = span.textContent.trim();
+        span.style.display = 'none';
+        span.parentNode.insertBefore(input, span.nextSibling);
+        input.focus();
+        input.select();
+
+        function finishEdit() {
+            let raw = input.value.trim();
+            input.remove();
+            input = null;
+            span.style.display = '';
+            if (raw === '') return;
+            let val = parseFloat(raw);
+            if (isNaN(val)) return;
+            let newV = computeVoltage(val);
+            if (newV !== null) {
+                voltSlider.value = Math.max(0, Math.min(12, newV));
+                voltSlider.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+
+        input.addEventListener('blur', finishEdit);
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+            if (e.key === 'Escape') { input.remove(); input = null; span.style.display = ''; }
+        });
+    }
+
+    span.addEventListener('click', startEdit);
+    span.addEventListener('touchstart', startEdit);
+}
+
 function initPecesEstanque() {
     pecesEstanque = [];
     if (nightStars.length === 0) {
@@ -3729,6 +3772,18 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 escenariosDesbloqueados.add(1);
 desbloquearTab(1);
 cambiarEscenario(1);
+
+// Inline editable V/I values for escenarios 2, 4, 5
+makeEditable('voltVal', function (val) {
+    return Math.max(0, Math.min(12, val));
+});
+makeEditable('corrVal', function (val) {
+    if (escenarioActual === 5) {
+        let m = Number(mSlider.value);
+        return m !== 0 ? val / m : 0;
+    }
+    return val / 0.3;
+});
 
 // Ripple effect for buttons and tabs
 document.addEventListener('click', function (e) {
