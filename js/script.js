@@ -1818,7 +1818,7 @@ function actualizarDisplayEsc2() {
     corrVal.textContent = I.toFixed(2);
 }
 
-function makeEditable(spanId, computeVoltage) {
+function makeEditable(spanId, computeValue, slider, min, max) {
     let span = document.getElementById(spanId);
     let input = null;
 
@@ -1843,10 +1843,10 @@ function makeEditable(spanId, computeVoltage) {
             if (raw === '') return;
             let val = parseFloat(raw);
             if (isNaN(val)) return;
-            let newV = computeVoltage(val);
-            if (newV !== null) {
-                voltSlider.value = Math.max(0, Math.min(12, newV));
-                voltSlider.dispatchEvent(new Event('input', { bubbles: true }));
+            let newVal = computeValue(val);
+            if (newVal !== null) {
+                slider.value = Math.max(min, Math.min(max, newVal));
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
             }
         }
 
@@ -3773,17 +3773,16 @@ escenariosDesbloqueados.add(1);
 desbloquearTab(1);
 cambiarEscenario(1);
 
-// Inline editable V/I values for escenarios 2, 4, 5
-makeEditable('voltVal', function (val) {
-    return Math.max(0, Math.min(12, val));
-});
+// Inline editable V/I/m values for escenarios 2, 4, 5
+makeEditable('voltVal', function (val) { return val; }, voltSlider, 0, 12);
 makeEditable('corrVal', function (val) {
     if (escenarioActual === 5) {
         let m = Number(mSlider.value);
         return m !== 0 ? val / m : 0;
     }
     return val / 0.3;
-});
+}, voltSlider, 0, 12);
+makeEditable('mVal', function (val) { return val; }, mSlider, 0, 5);
 
 // Ripple effect for buttons and tabs
 document.addEventListener('click', function (e) {
