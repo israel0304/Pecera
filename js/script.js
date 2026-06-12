@@ -1035,7 +1035,7 @@ function getCorriente(V) {
         let m = Number(mSlider.value);
         return m * V;
     }
-    return V / R;
+    return 0.3 * V;
 }
 
 class ParticulaAgua {
@@ -1583,6 +1583,14 @@ const ESCENARIOS = {
             if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
             boton3.disabled = false;
             initPecesEstanque();
+        },
+        alSalir: function () {
+            particulasEsc2 = [];
+            sunWaveProgress = 0;
+            cometProgress = 0;
+            cometCooldown = 0;
+            bubbleFrameCounter = 0;
+            pumpBroken = false;
         }
     },
     3: {
@@ -1640,6 +1648,14 @@ const ESCENARIOS = {
             }
             actualizarDisplayEsc2();
             initPecesEstanque();
+        },
+        alSalir: function () {
+            particulasEsc2 = [];
+            sunWaveProgress = 0;
+            cometProgress = 0;
+            cometCooldown = 0;
+            bubbleFrameCounter = 0;
+            pumpBroken = false;
         }
     },
     5: {
@@ -1669,6 +1685,14 @@ const ESCENARIOS = {
             }
             actualizarDisplayEsc2();
             initPecesEstanque();
+        },
+        alSalir: function () {
+            particulasEsc2 = [];
+            sunWaveProgress = 0;
+            cometProgress = 0;
+            cometCooldown = 0;
+            bubbleFrameCounter = 0;
+            pumpBroken = false;
         }
     },
     6: {
@@ -1722,6 +1746,8 @@ function limpiarGrafica() {
     if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
     if (grafica.curvaSO) { grafica.board.removeObject(grafica.curvaSO); grafica.curvaSO = null; }
     if (grafica.soCheckbox) { grafica.board.removeObject(grafica.soCheckbox); grafica.soCheckbox = null; }
+    if (board4) { board4.removeAllObjects(); board4 = null; }
+    if (board5) { board5.removeAllObjects(); board5 = null; }
 }
 
 function actualizarTabs(n) {
@@ -2499,10 +2525,6 @@ document.getElementById('confirmarCodigo').addEventListener('click', async funct
     } else {
         document.getElementById('codigoError').style.display = 'block';
     }
-});
-
-document.getElementById('codigoInput').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') document.getElementById('confirmarCodigo').click();
 });
 
 document.getElementById('codigoInput').addEventListener('keydown', function (e) {

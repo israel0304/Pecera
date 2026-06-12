@@ -37,7 +37,7 @@ Open `app.html` in any browser for the simulator. No build or server required.
 ### Toast Notifications
 - `mostrarToast(mensaje, tipo, duracion)` replaces all `alert()` calls
 - Types: `success`, `error`, `warning`, `info` — each with colored left border and background
-- Positioned fixed at `bottom: 80px; right: 16px`
+- Positioned fixed at `top: 16px; right: 16px`
 - Auto-dismiss with slide-out animation (default 4000ms)
 - Container: `<div id="toastContainer">` at bottom of `app.html`
 
@@ -71,7 +71,7 @@ Open `app.html` in any browser for the simulator. No build or server required.
 - "graficar punto LA" button to mark data points on LA curve
 
 ### Estanque Sustentable (Escenario 2)
-- Voltage slider (0–12V) controls current (I = V/R, R = 5Ω fixed)
+- Voltage slider (0–12V) controls current (I = 0.3V, pendiente fija)
 - Solar panel image (`img/panel_solar.png`) and pump image (`img/bomba_agua.png`)
 - Water level at 50% of canvas height; shore starts at `w * 0.6`
 - Sun brightness, bubble size/speed vary with voltage
@@ -94,7 +94,7 @@ Open `app.html` in any browser for the simulator. No build or server required.
 
 ### Estanque + Gráfica (Escenario 4)
 - Same as Estanque Sustentable with added JSXGraph plotting I vs V curve
-- Curve: `I = V / 5` (R = 5Ω fixed), red line
+- Curve: `I = 0.3V` (pendiente fija), red line
 - Green draggable glider on the curve, label shows `U (5.00, 1.50)` with 2 decimals
 - Dragging the glider updates the voltage slider in real time
 - Custom axes with ticks every 2 units and grid overlay
@@ -238,6 +238,16 @@ Navigation order: Pecera (1) → Pecera + Litros (3) → Dimensiones 3D (6) → 
 - Chrome on Android requires: HTTPS, valid manifest, active service worker on the current page, and user engagement
 
 ## Hotfixes
+
+### Current formula consistency in Estanque scenarios (2026-06-12)
+
+**Problem:** `getCorriente()` used `V / R` (R=5Ω, i.e. I=0.2V) for escenarios 2 and 4, but the JSXGraph curve in escenario 4 plotted `I = 0.3V`. The display showed `V/5` while the graph showed `0.3V` — inconsistent.
+
+Additionally, state variables (`particulasEsc2`, `sunWaveProgress`, `cometProgress`, `cometCooldown`, `bubbleFrameCounter`, `pumpBroken`) leaked across scenario switches since escenarios 2/4/5 had no `alSalir` cleanup.
+
+**Fix** (`js/script.js:1033-1039`):
+- Changed `getCorriente()` to return `0.3 * V` instead of `V / R` for escenarios 2 and 4 (escenario 5 still uses `m * V`)
+- Added `alSalir` handlers to escenarios 2, 4, and 5 resetting all transient state
 
 ### Esc7 graph width on mobile (2026-05-29)
 
