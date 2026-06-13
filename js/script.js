@@ -2204,12 +2204,10 @@ function actualizarEscenario2() {
     let boxW = pw - w * 0.12;
     let boxY = py + ph + h * 0.02;
     let line1Y = boxY + padBox + lh1;
-    let lineA = line1Y + lh3 * 1.3;
-    let lineB = lineA + lh3;
     let lineV = line1Y + lh3 * 1.3;
     let lineI = lineV + lh3;
     let lineS = lineI + lh3;
-    let boxH = ((escenarioActual === 5 ? lineS : lineB) + lh3 * 0.5 + padBox - boxY) + fs1 * 1.5;
+    let boxH = (lineS + lh3 * 0.5 + padBox - boxY) + fs1 * 1.5;
 
     ctx.fillStyle = '#fff';
     ctx.beginPath();
@@ -2220,55 +2218,25 @@ function actualizarEscenario2() {
     ctx.fillStyle = '#222';
     ctx.font = `bold ${Math.round(fs1)}px Arial`;
     ctx.fillText(`V = ${V} V  |  I = ${I.toFixed(2)} A`, px + pw / 2, line1Y);
-    if (escenarioActual === 5) {
-        let vText, vColor, iText, iColor;
-        if (V > 6) { vText = 'V: Voltaje Alto'; vColor = '#E67E22'; }
-        else if (V >= 4) { vText = 'V: Voltaje Estable'; vColor = '#2ECC71'; }
-        else { vText = 'V: Voltaje Bajo'; vColor = '#E74C3C'; }
-        if (I > 2) { iText = 'I: Corriente Alta'; iColor = '#E67E22'; }
-        else if (I >= 1) { iText = 'I: Corriente Estable'; iColor = '#2ECC71'; }
-        else { iText = 'I: Corriente Baja'; iColor = '#E74C3C'; }
-        let statusText5, statusColor5;
-        if (pumpBroken) { statusText5 = 'Bomba descompuesta'; statusColor5 = '#E74C3C'; }
-        else if (V > 6 || I > 2) { statusText5 = 'Sobrecalentamiento'; statusColor5 = '#E67E22'; }
-        else if (V >= 4 && V <= 6 && I >= 1 && I <= 2) { statusText5 = 'Funcionando bien'; statusColor5 = '#2ECC71'; }
-        else { statusText5 = 'Baja oxigenacion'; statusColor5 = '#E74C3C'; }
-        ctx.font = `bold ${Math.round(fs3)}px Arial`;
-        ctx.fillStyle = vColor;
-        ctx.fillText(vText, px + pw / 2, lineV);
-        ctx.fillStyle = iColor;
-        ctx.fillText(iText, px + pw / 2, lineI);
-        ctx.fillStyle = statusColor5;
-        ctx.fillText(statusText5, px + pw / 2, lineS);
-    } else {
-        let statusText, statusColor;
-        if (pumpBroken) {
-            statusText = 'Corriente alta - Bomba descompuesta';
-            statusColor = '#E74C3C';
-        } else {
-            let isOverheat = (V > 6);
-            let isOptimal = (V >= 4 && V <= 6);
-            if (isOverheat) {
-                statusText = 'Corriente alta - Sobrecalentamiento';
-                statusColor = '#E67E22';
-            } else if (isOptimal) {
-                statusText = 'Rango optimo - Funcionando bien';
-                statusColor = '#2ECC71';
-            } else {
-                statusText = 'Corriente baja - Baja oxigenacion';
-                statusColor = '#E74C3C';
-            }
-        }
-        ctx.fillStyle = statusColor;
-        ctx.font = `bold ${Math.round(fs3)}px Arial`;
-        let statusParts = statusText.split(' - ');
-        if (statusParts.length === 2) {
-            ctx.fillText(statusParts[0], px + pw / 2, lineA);
-            ctx.fillText('-' + statusParts[1], px + pw / 2, lineB);
-        } else {
-            ctx.fillText(statusText, px + pw / 2, lineA);
-        }
-    }
+    let vText, vColor, iText, iColor;
+    if (V > 6) { vText = 'V: Voltaje Alto'; vColor = '#E67E22'; }
+    else if (V >= 4) { vText = 'V: Voltaje Estable'; vColor = '#2ECC71'; }
+    else { vText = 'V: Voltaje Bajo'; vColor = '#E74C3C'; }
+    if (I > 2) { iText = 'I: Corriente Alta'; iColor = '#E67E22'; }
+    else if (I >= 1) { iText = 'I: Corriente Estable'; iColor = '#2ECC71'; }
+    else { iText = 'I: Corriente Baja'; iColor = '#E74C3C'; }
+    let statusText5, statusColor5;
+    if (pumpBroken) { statusText5 = 'Bomba descompuesta'; statusColor5 = '#E74C3C'; }
+    else if (V > 6 || I > 2) { statusText5 = 'Sobrecalentamiento'; statusColor5 = '#E67E22'; }
+    else if (V >= 4 && V <= 6 && I >= 1 && I <= 2) { statusText5 = 'Funcionando bien'; statusColor5 = '#2ECC71'; }
+    else { statusText5 = 'Baja oxigenacion'; statusColor5 = '#E74C3C'; }
+    ctx.font = `bold ${Math.round(fs3)}px Arial`;
+    ctx.fillStyle = vColor;
+    ctx.fillText(vText, px + pw / 2, lineV);
+    ctx.fillStyle = iColor;
+    ctx.fillText(iText, px + pw / 2, lineI);
+    ctx.fillStyle = statusColor5;
+    ctx.fillText(statusText5, px + pw / 2, lineS);
 
     // Wire from panel to pump
     ctx.strokeStyle = '#fff';
@@ -2282,7 +2250,7 @@ function actualizarEscenario2() {
     ctx.setLineDash([]);
 
     // Red glow when overheated
-    let overheat = (escenarioActual === 5) ? (V > 6 || I > 2) : (V > 6);
+    let overheat = (V > 6 || I > 2);
     if (overheat && !pumpBroken) {
         ctx.save();
         let pulse = 0.45 + Math.sin(Date.now() * 0.004) * 0.2;
