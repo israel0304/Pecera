@@ -43,6 +43,13 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (!event.request.url.startsWith('http')) return;
+  if (event.request.url.endsWith('.js')) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request).then(response => {
