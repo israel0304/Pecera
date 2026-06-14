@@ -1892,6 +1892,35 @@ function initPecesEstanque() {
     }
 }
 
+function dibujarCirculo(x, y, r, color) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+
+function dibujarIconoBurbuja(x, y, size) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(81, 209, 246, 0.5)';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + size * 0.5, y - size * 1, size * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - size * 0.2, y - size * 1.5, size * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.beginPath();
+    ctx.arc(x - size * 0.15, y - size * 0.2, size * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+}
+
 function actualizarEscenario2() {
     let w = canvas.width;
     let h = canvas.height;
@@ -2203,10 +2232,15 @@ function actualizarEscenario2() {
     let boxX = px + w * 0.06;
     let boxW = pw - w * 0.12;
     let boxY = py + ph + h * 0.02;
-    let line1Y = boxY + padBox + lh1;
-    let lineV = line1Y + lh3 * 1.3;
-    let lineI = lineV + lh3;
-    let lineS = lineI + lh3;
+    let leftX = boxX + padBox;
+    let circleR = Math.round(fs1 * 0.4);
+    let bubbleSize = Math.round(fs3 * 0.45);
+    let iconGapV = Math.round(circleR * 2.5 + 6);
+    let iconGapB = Math.round(bubbleSize * 2.5 + 6);
+    let lineTitle = boxY + padBox + lh1;
+    let lineV = lineTitle + lh3 * 1.3;
+    let lineI = lineV + lh3 * 1.3;
+    let lineS = lineI + lh3 * 1.3;
     let boxH = (lineS + lh3 * 0.5 + padBox - boxY) + fs1 * 1.5;
 
     ctx.fillStyle = '#fff';
@@ -2217,7 +2251,8 @@ function actualizarEscenario2() {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#222';
     ctx.font = `bold ${Math.round(fs1)}px Arial`;
-    ctx.fillText(`V = ${V} V  |  I = ${I.toFixed(2)} A`, px + pw / 2, line1Y);
+    ctx.fillText(`V = ${V} V  |  I = ${I.toFixed(2)} A`, px + pw / 2, lineTitle);
+
     let vText, vColor, iText, iColor;
     if (V > 6) { vText = 'V: Voltaje Alto'; vColor = '#E67E22'; }
     else if (V >= 4) { vText = 'V: Voltaje Estable'; vColor = '#2ECC71'; }
@@ -2230,13 +2265,21 @@ function actualizarEscenario2() {
     else if (V > 6 || I > 2) { statusText5 = 'Sobrecalentamiento'; statusColor5 = '#E67E22'; }
     else if (V >= 4 && V <= 6 && I >= 1 && I <= 2) { statusText5 = 'Funcionando bien'; statusColor5 = '#2ECC71'; }
     else { statusText5 = 'Baja oxigenacion'; statusColor5 = '#E74C3C'; }
-    ctx.font = `bold ${Math.round(fs3)}px Arial`;
+
+    ctx.textAlign = 'left';
+    ctx.font = `bold ${Math.round(fs1)}px Arial`;
+    dibujarCirculo(leftX, lineV - lh1 * 0.35, circleR, vColor);
     ctx.fillStyle = vColor;
-    ctx.fillText(vText, px + pw / 2, lineV);
+    ctx.fillText(vText, leftX + iconGapV, lineV);
+
+    dibujarCirculo(leftX, lineI - lh1 * 0.35, circleR, iColor);
     ctx.fillStyle = iColor;
-    ctx.fillText(iText, px + pw / 2, lineI);
+    ctx.fillText(iText, leftX + iconGapV, lineI);
+
+    ctx.font = `bold ${Math.round(fs3)}px Arial`;
+    dibujarIconoBurbuja(leftX, lineS - fs3 * 0.20, bubbleSize);
     ctx.fillStyle = statusColor5;
-    ctx.fillText(statusText5, px + pw / 2, lineS);
+    ctx.fillText(statusText5, leftX + iconGapB, lineS);
 
     // Wire from panel to pump
     ctx.strokeStyle = '#fff';
@@ -3740,7 +3783,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 
 escenariosDesbloqueados.add(1);
 desbloquearTab(1);
-cambiarEscenario(1);
+cambiarEscenario(2);
 
 // Inline editable V/I/m values for escenarios 2, 4, 5
 makeEditable('voltVal', function (val) { return val; }, voltSlider, 0, 12);
