@@ -1041,7 +1041,7 @@ function getCorriente(V) {
 class ParticulaAgua {
     constructor(pumpX, pumpY, voltaje) {
         let factor = 0.3 + 0.7 * (voltaje / 12);
-        this.radius = aleatorio(8, 16) * factor;
+        this.radius = aleatorio(8, 16) * factor * 1.5;
         this.x = pumpX + aleatorio(-15, 15);
         this.y = pumpY;
         this.speedY = aleatorio(1, 3) * factor;
@@ -2343,14 +2343,14 @@ function actualizarEscenario2() {
         }
         bubbleFrameCounter++;
         if (oneBubble) {
-            if (bubbleFrameCounter % 3 === 0) {
+            if (bubbleFrameCounter % 50 === 0) {
                 particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
             }
         } else if (overheat) {
             particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
             particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
         } else {
-            if (bubbleFrameCounter % 2 === 0) {
+            if (bubbleFrameCounter % 4 === 0) {
                 particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
             }
         }
