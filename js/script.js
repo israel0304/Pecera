@@ -2224,8 +2224,8 @@ function actualizarEscenario2() {
     // White info box below panel
     let fontScale = w / canvas.clientWidth;
     let isSmall = canvas.clientWidth < 600;
-    let fs1 = Math.max((isSmall ? 13 : 18) * fontScale, isSmall ? 13 : 18);
-    let fs3 = Math.max((isSmall ? 12 : 16) * fontScale, isSmall ? 12 : 16);
+    let fs1 = Math.max((isSmall ? 11 : 15) * fontScale, isSmall ? 11 : 15);
+    let fs3 = Math.max((isSmall ? 10 : 13) * fontScale, isSmall ? 10 : 13);
     let lh1 = fs1 * 1;
     let lh3 = fs3 * 1.2;
     let padBox = fs1 * 1.5;
