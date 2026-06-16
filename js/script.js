@@ -1172,13 +1172,9 @@ let cursorX = null, cursorY = null;
 
 // Soccer ball state
 let ballX = null, ballY = null;
-let ballVx = 0, ballVy = 0;
-let golAnimado = false;
-let golTimer = 0;
-const BALL_FRICCION = 0.94;
-const BALL_RADIO_KICK = 70;
-const BALL_RADIO_DRIBBLE = 35;
-const BALL_FUERZA_KICK = 4;
+let ballVx = 0;
+let golPausa = 0;
+let scoreMX = 0, scoreBR = 0;
 
 // Escenario 4 state
 let board4 = null;
@@ -1689,7 +1685,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
-            ballX = null; ballVx = 0; ballVy = 0; golAnimado = false;
+            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreBR = 0;
         }
     },
     3: {
@@ -1755,7 +1751,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
-            ballX = null; ballVx = 0; ballVy = 0; golAnimado = false;
+            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreBR = 0;
         }
     },
     5: {
@@ -1793,7 +1789,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
-            ballX = null; ballVx = 0; ballVy = 0; golAnimado = false;
+            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreBR = 0;
         }
     },
     6: {
@@ -1983,10 +1979,10 @@ function makeEditable(spanId, computeValue, slider, min, max) {
 function initPecesEstanque() {
     pecesEstanque = [];
     let w = canvas.width, h = canvas.height;
-    ballX = aleatorio(w * 0.12, w * 0.50);
-    ballY = aleatorio(h * 0.65, h * 0.85);
-    ballVx = 0; ballVy = 0;
-    golAnimado = false; golTimer = 0;
+    ballX = aleatorio(w * 0.15, w * 0.50);
+    ballY = h * 0.59;
+    ballVx = 0; golPausa = 0;
+    scoreMX = 0; scoreBR = 0;
     if (nightStars.length === 0) {
         for (let i = 0; i < 40; i++) {
             nightStars.push({
@@ -2007,8 +2003,9 @@ function initPecesEstanque() {
         pez.paddingDer = canvas.width * 0.60 - pez.dWidth - 5;
         pez.paddingArr = canvas.height * 0.6 + 5;
         pez.paddingAba = canvas.height - pez.dHeight - 5;
+        let midX = (canvas.width * 0.07 + canvas.width * 0.60) / 2;
         pez.posicion = new Vector(
-            aleatorio(pez.paddingIzq, pez.paddingDer + pez.dWidth),
+            aleatorio(pez.especie.id === 'mx' ? canvas.width * 0.07 : midX, pez.especie.id === 'mx' ? midX : canvas.width * 0.60),
             aleatorio(pez.paddingArr, pez.paddingAba + pez.dHeight)
         );
         pecesEstanque.push(pez);
@@ -2257,7 +2254,31 @@ function actualizarEscenario2() {
     let pumpX = w * 0.50, pumpY = h * 0.8;
 
     // Peces decorativos en el agua frontal
-    for (let pez of pecesEstanque) {
+    let nPeces = pecesEstanque.length;
+    // Pre-pass: closest fish to ball
+    let closestIdx = -1;
+    let closestDistSq = Infinity;
+    if (ballX !== null && golPausa === 0) {
+        for (let i = 0; i < nPeces; i++) {
+            let dx = ballX - pecesEstanque[i].posicion.x;
+            let dy = ballY - pecesEstanque[i].posicion.y;
+            let d = dx * dx + dy * dy;
+            if (d < closestDistSq) { closestDistSq = d; closestIdx = i; }
+        }
+    }
+    // Pre-pass: same-team neighbor count (60px radius)
+    let teamCounts = new Array(nPeces).fill(0);
+    for (let i = 0; i < nPeces; i++) {
+        for (let j = 0; j < nPeces; j++) {
+            if (i === j) continue;
+            if (pecesEstanque[i].especie.id !== pecesEstanque[j].especie.id) continue;
+            let dx = pecesEstanque[i].posicion.x - pecesEstanque[j].posicion.x;
+            let dy = pecesEstanque[i].posicion.y - pecesEstanque[j].posicion.y;
+            if (dx * dx + dy * dy < 3600) teamCounts[i]++;
+        }
+    }
+    for (let i = 0; i < nPeces; i++) {
+        let pez = pecesEstanque[i];
         pez.velMax = 0.5;
         let fleeing = false;
         if (cursorX !== null) {
@@ -2280,66 +2301,107 @@ function actualizarEscenario2() {
             pez.dir = away;
             fleeing = true;
         }
+        // Chase ball — solo el pez más cercano
+        if (!fleeing && i === closestIdx && closestDistSq < 40000 && ballX !== null && golPausa === 0) {
+            let dx = ballX - pez.posicion.x;
+            let dy = ballY - pez.posicion.y;
+            let toward = new Vector(dx, dy);
+            toward.norm();
+            toward.mul(3);
+            toward.x += (Math.random() - 0.5) * 0.5;
+            toward.y += (Math.random() - 0.5) * 0.5;
+            pez.dir = toward;
+            fleeing = true;
+        }
         if (!fleeing && Math.random() < 0.008) {
             pez.dir = new Vector(signo() * Math.random() * 3, signo() * Math.random() * 2);
             pez.dir.norm();
+        }
+        // Separación entre peces (con densidad por equipo)
+        for (let j = 0; j < nPeces; j++) {
+            if (i === j) continue;
+            let other = pecesEstanque[j];
+            let dx = pez.posicion.x - other.posicion.x;
+            let dy = pez.posicion.y - other.posicion.y;
+            let distSq = dx * dx + dy * dy;
+            if (distSq < 1600) {
+                let repel = new Vector(dx, dy);
+                repel.norm();
+                let sameTeamBonus = (pez.especie.id === other.especie.id) ? teamCounts[i] * 0.15 : 0;
+                repel.mul(0.5 + sameTeamBonus);
+                pez.dir.x += repel.x;
+                pez.dir.y += repel.y;
+            }
         }
         pez.nadar();
         pez.aparecer();
     }
 
     // Soccer ball physics & rendering
+    // Soccer ball — surface float, pass, goals
     if (ballX !== null && ballY !== null) {
-        // Friction
-        ballVx *= BALL_FRICCION;
-        ballVy *= BALL_FRICCION;
-
-        // Interaction with fish (kick + dribble)
-        for (let pez of pecesEstanque) {
-            let dx = ballX - pez.posicion.x;
-            let dy = ballY - pez.posicion.y;
-            let dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < BALL_RADIO_DRIBBLE && dist > 0) {
-                let aheadX = pez.posicion.x + (pez.dir.x / (Math.abs(pez.dir.x) || 0.01)) * 15;
-                let aheadY = pez.posicion.y + (pez.dir.y / (Math.abs(pez.dir.y) || 0.01)) * 10;
-                ballX += (aheadX - ballX) * 0.15;
-                ballY += (aheadY - ballY) * 0.15;
-                ballVx += pez.velocidad.x * 0.3;
-                ballVy += pez.velocidad.y * 0.3;
-            } else if (dist < BALL_RADIO_KICK && dist > 0) {
-                let fuerza = BALL_FUERZA_KICK * (1 - dist / BALL_RADIO_KICK) * 0.5;
-                ballVx += (dx / dist) * fuerza;
-                ballVy += (dy / dist) * fuerza;
+        if (golPausa > 0) {
+            golPausa--;
+            if (golPausa === 0) {
+                ballX = w * 0.35; ballY = h * 0.59; ballVx = 0;
             }
-        }
+        } else {
+            // Surface bob
+            ballY = h * 0.59 + Math.sin(Date.now() * 0.003) * 2;
 
-        // Bounce off water boundaries
-        let minX = w * 0.07, maxX = w * 0.60;
-        let minY = h * 0.6, maxY = h - 20;
-        if (ballX < minX) { ballX = minX; ballVx = -ballVx * 0.7; }
-        if (ballX > maxX) { ballX = maxX; ballVx = -ballVx * 0.7; }
-        if (ballY < minY) { ballY = minY; ballVy = -ballVy * 0.7; }
-        if (ballY > maxY) { ballY = maxY; ballVy = -ballVy * 0.7; }
-
-        // Goal detection
-        if (!golAnimado) {
-            let gw = w * 0.10;
-            let gh = imgGoal.complete ? gw * (imgGoal.naturalHeight / imgGoal.naturalWidth) : gw * 0.8;
-            let goalY = h * 0.48, goalH = gh;
-            if ((ballX < w * 0.05 + gw * 0.3 && ballX > w * 0.02 && ballY > goalY && ballY < goalY + goalH) ||
-                (ballX > w * 0.60 - gw * 0.3 && ballX < w * 0.63 && ballY > goalY && ballY < goalY + goalH)) {
-                golAnimado = true;
-                golTimer = 60;
-                mostrarToast('¡GOOOL!', 'success', 3000);
+            // Pass when a fish touches the ball
+            let startIdx = Math.floor(Math.random() * pecesEstanque.length);
+            for (let i = 0; i < pecesEstanque.length; i++) {
+                let pez = pecesEstanque[(startIdx + i) % pecesEstanque.length];
+                let dx = ballX - pez.posicion.x;
+                let dy = ballY - pez.posicion.y;
+                if (dx * dx + dy * dy < 2500) {
+                    let id = pez.especie.id;
+                    if (id === 'mx') {
+                        if (ballX > w * 0.47) ballVx = 15;
+                        else if (ballVx < 5) ballVx = 5;
+                    }
+                    if (id === 'br') {
+                        if (ballX < w * 0.20) ballVx = -15;
+                        else if (ballVx > -5) ballVx = -5;
+                    }
+                    break;
+                }
             }
-        }
 
-        if (golAnimado) {
-            golTimer--;
-            if (golTimer <= 0) {
-                ballX = w * 0.35; ballY = h * 0.75;
-                ballVx = 0; ballVy = 0;
-                golAnimado = false;
+            // Friction
+            ballVx *= 0.97;
+            ballX += ballVx;
+
+            // Goal BR (BR scores — MX's goal on left)
+            if (ballX < w * 0.07 + 5) {
+                scoreBR++;
+                mostrarToast('¡GOOOL! MX ' + scoreMX + ' - ' + scoreBR + ' BR', 'success', 3000);
+                golPausa = 60;
+                ballX = w * 0.07;
+                ballY = h * 0.47;
+                ballVx = 0;
+                for (let pez of pecesEstanque) {
+                    pez.posicion.x = aleatorio(pez.especie.id === 'mx' ? w * 0.07 : w * 0.335, pez.especie.id === 'mx' ? w * 0.335 : w * 0.60);
+                    pez.posicion.y = aleatorio(h * 0.57, h * 0.80);
+                    pez.dir = new Vector(signo() * Math.random() * 3, signo() * Math.random() * 2);
+                    pez.dir.norm();
+                }
+            }
+            // Goal MX (MX scores — BR's goal on right)
+            if (ballX > w * 0.60 - 5) {
+                scoreMX++;
+                mostrarToast('¡GOOOL! MX ' + scoreMX + ' - ' + scoreBR + ' BR', 'success', 3000);
+                golPausa = 60;
+                ballX = w * 0.65;
+                ballY = h * 0.47;
+                ballVx = 0;
+                for (let pez of pecesEstanque) {
+                    pez.posicion.x = aleatorio(pez.especie.id === 'mx' ? w * 0.07 : w * 0.335, pez.especie.id === 'mx' ? w * 0.335 : w * 0.60);
+                    pez.posicion.y = aleatorio(h * 0.57, h * 0.80);
+                    pez.dir = new Vector(signo() * Math.random() * 3, signo() * Math.random() * 2);
+                    pez.dir.norm();
+                }
             }
         }
 
@@ -2361,6 +2423,88 @@ function actualizarEscenario2() {
             ctx.stroke();
         }
     }
+
+    // Scoreboard (top-right)
+    let sbY = h * 0.02;
+    let sbFs = Math.max(20, Math.round(w * 0.028));
+    let sbPad = sbFs * 0.6;
+    let flagW = sbFs * 0.8, flagH = sbFs * 0.6;
+    let sbCircleR = sbFs * 0.3;
+    let gap = sbFs * 0.4;
+    let scoreText = 'MX ' + scoreMX + ' - ' + scoreBR + ' BR';
+    ctx.font = 'bold ' + sbFs + 'px Arial';
+    let textW = ctx.measureText(scoreText).width;
+    let totalW = flagW + gap + sbCircleR * 2 + gap + textW + gap + sbCircleR * 2 + gap + flagW + sbPad * 2;
+    let sbX = w - totalW - sbPad;
+
+    // Background pill
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.beginPath();
+    ctx.roundRect(sbX, sbY, totalW, sbFs * 1.8, sbFs * 0.5);
+    ctx.fill();
+
+    let cx = sbX + sbPad;
+
+    // MX flag — green, white, red stripes + brown circle
+    let stripeW = flagW / 3;
+    let flagY = sbY + sbFs * 0.5;
+    let flagYM = flagY + flagH / 2;
+    ctx.fillStyle = '#006847';
+    ctx.fillRect(cx, flagY, stripeW, flagH);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(cx + stripeW, flagY, stripeW, flagH);
+    ctx.fillStyle = '#CE1126';
+    ctx.fillRect(cx + stripeW * 2, flagY, stripeW, flagH);
+    ctx.fillStyle = '#8B4513';
+    ctx.beginPath();
+    ctx.arc(cx + flagW / 2, flagYM, flagH * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    cx += flagW + gap;
+
+    // Green circle (MX uniform)
+    ctx.fillStyle = '#006847';
+    ctx.beginPath();
+    ctx.arc(cx + sbCircleR, sbY + sbFs * 0.9, sbCircleR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    cx += sbCircleR * 2 + gap;
+
+    // Score text
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(scoreText, cx, sbY + sbFs * 0.9);
+    cx += textW + gap;
+
+    // Yellow circle (BR uniform)
+    ctx.fillStyle = '#FEDF00';
+    ctx.beginPath();
+    ctx.arc(cx + sbCircleR, sbY + sbFs * 0.9, sbCircleR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    cx += sbCircleR * 2 + gap;
+
+    // BR flag
+    ctx.fillStyle = '#009739';
+    ctx.fillRect(cx, sbY + sbFs * 0.5, flagW, flagH);
+    ctx.fillStyle = '#FEDF00';
+    ctx.beginPath();
+    ctx.arc(cx + flagW / 2, sbY + sbFs * 0.8, flagH * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#012169';
+    ctx.beginPath();
+    ctx.arc(cx + flagW / 2, sbY + sbFs * 0.8, flagH * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + flagW, sbY + sbFs * 0.5 - flagH * 0.1);
+    ctx.lineTo(cx + flagW, sbY + sbFs * 0.5 + flagH);
+    ctx.stroke();
 
     // Ground / shore (left side)
     ctx.fillStyle = '#8B7355';
