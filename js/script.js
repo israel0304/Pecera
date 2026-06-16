@@ -4172,7 +4172,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 
 escenariosDesbloqueados.add(1);
 desbloquearTab(1);
-cambiarEscenario(2);
+cambiarEscenario(1);
 
 // Inline editable V/I/m values for escenarios 2, 4, 5
 makeEditable('voltVal', function (val) { return val; }, voltSlider, 0, 12);
