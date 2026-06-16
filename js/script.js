@@ -34,6 +34,10 @@ imgPanel.src = './img/panel_solar.png';
 imgBomba.src = './img/bomba_agua.png';
 let imgBombaIssue = new Image();
 imgBombaIssue.src = './img/bomba_agua_issue.png';
+let imgGoal = new Image();
+imgGoal.src = './img/soccer-goal.png';
+let imgBall = new Image();
+imgBall.src = './img/soccer-ball.png';
 
 /** @species Available fish species for 2D canvas fish.
  *  Each species defines a unique skin image and behavioral parameters.
@@ -1166,6 +1170,16 @@ let cometProgress = 0;
 let cometCooldown = 0;
 let cursorX = null, cursorY = null;
 
+// Soccer ball state
+let ballX = null, ballY = null;
+let ballVx = 0, ballVy = 0;
+let golAnimado = false;
+let golTimer = 0;
+const BALL_FRICCION = 0.94;
+const BALL_RADIO_KICK = 70;
+const BALL_RADIO_DRIBBLE = 35;
+const BALL_FUERZA_KICK = 4;
+
 // Escenario 4 state
 let board4 = null;
 let curve4 = null;
@@ -1675,6 +1689,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
+            ballX = null; ballVx = 0; ballVy = 0; golAnimado = false;
         }
     },
     3: {
@@ -1740,6 +1755,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
+            ballX = null; ballVx = 0; ballVy = 0; golAnimado = false;
         }
     },
     5: {
@@ -1777,6 +1793,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
+            ballX = null; ballVx = 0; ballVy = 0; golAnimado = false;
         }
     },
     6: {
@@ -1965,6 +1982,11 @@ function makeEditable(spanId, computeValue, slider, min, max) {
 
 function initPecesEstanque() {
     pecesEstanque = [];
+    let w = canvas.width, h = canvas.height;
+    ballX = aleatorio(w * 0.12, w * 0.50);
+    ballY = aleatorio(h * 0.65, h * 0.85);
+    ballVx = 0; ballVy = 0;
+    golAnimado = false; golTimer = 0;
     if (nightStars.length === 0) {
         for (let i = 0; i < 40; i++) {
             nightStars.push({
@@ -2139,6 +2161,18 @@ function actualizarEscenario2() {
     ctx.fillStyle = waterGrad;
     ctx.fillRect(0, h * 0.45, w, h * 0.5);
 
+    // Soccer goals (on the grass above the water)
+    let gw = w * 0.10;
+    if (imgGoal.complete && imgGoal.naturalWidth > 0) {
+        let gh = gw * (imgGoal.naturalHeight / imgGoal.naturalWidth);
+        // Left goal
+        ctx.drawImage(imgGoal, w * 0.02, h * 0.48, gw, gh);
+        // Right goal (flipped horizontally)
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(imgGoal, -(w * 0.03 + gw), h * 0.48, gw, gh);
+        ctx.restore();
+    }
 
     // Trapecio decorativo base
     ctx.fillStyle = '#655139';
@@ -2252,6 +2286,77 @@ function actualizarEscenario2() {
         }
         pez.nadar();
         pez.aparecer();
+    }
+
+    // Soccer ball physics & rendering
+    if (ballX !== null && ballY !== null) {
+        // Friction
+        ballVx *= BALL_FRICCION;
+        ballVy *= BALL_FRICCION;
+
+        // Interaction with fish (kick + dribble)
+        for (let pez of pecesEstanque) {
+            let dx = ballX - pez.posicion.x;
+            let dy = ballY - pez.posicion.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < BALL_RADIO_DRIBBLE && dist > 0) {
+                let aheadX = pez.posicion.x + (pez.dir.x / (Math.abs(pez.dir.x) || 0.01)) * 15;
+                let aheadY = pez.posicion.y + (pez.dir.y / (Math.abs(pez.dir.y) || 0.01)) * 10;
+                ballX += (aheadX - ballX) * 0.15;
+                ballY += (aheadY - ballY) * 0.15;
+                ballVx += pez.velocidad.x * 0.3;
+                ballVy += pez.velocidad.y * 0.3;
+            } else if (dist < BALL_RADIO_KICK && dist > 0) {
+                let fuerza = BALL_FUERZA_KICK * (1 - dist / BALL_RADIO_KICK) * 0.5;
+                ballVx += (dx / dist) * fuerza;
+                ballVy += (dy / dist) * fuerza;
+            }
+        }
+
+        // Bounce off water boundaries
+        let minX = w * 0.07, maxX = w * 0.60;
+        let minY = h * 0.6, maxY = h - 20;
+        if (ballX < minX) { ballX = minX; ballVx = -ballVx * 0.7; }
+        if (ballX > maxX) { ballX = maxX; ballVx = -ballVx * 0.7; }
+        if (ballY < minY) { ballY = minY; ballVy = -ballVy * 0.7; }
+        if (ballY > maxY) { ballY = maxY; ballVy = -ballVy * 0.7; }
+
+        // Goal detection
+        if (!golAnimado) {
+            let gw = w * 0.10;
+            let gh = imgGoal.complete ? gw * (imgGoal.naturalHeight / imgGoal.naturalWidth) : gw * 0.8;
+            let goalY = h * 0.48, goalH = gh;
+            if ((ballX < w * 0.05 + gw * 0.3 && ballX > w * 0.02 && ballY > goalY && ballY < goalY + goalH) ||
+                (ballX > w * 0.60 - gw * 0.3 && ballX < w * 0.63 && ballY > goalY && ballY < goalY + goalH)) {
+                golAnimado = true;
+                golTimer = 60;
+                mostrarToast('¡GOOOL!', 'success', 3000);
+            }
+        }
+
+        if (golAnimado) {
+            golTimer--;
+            if (golTimer <= 0) {
+                ballX = w * 0.35; ballY = h * 0.75;
+                ballVx = 0; ballVy = 0;
+                golAnimado = false;
+            }
+        }
+
+        // Draw ball
+        let ballR = w * 0.015;
+        if (imgBall.complete && imgBall.naturalWidth > 0) {
+            let ballD = ballR * 2;
+            ctx.drawImage(imgBall, ballX - ballR, ballY - ballR, ballD, ballD);
+        } else {
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
     }
 
     // Ground / shore (left side)
