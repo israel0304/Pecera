@@ -2166,11 +2166,11 @@ function actualizarEscenario2() {
     if (imgGoal.complete && imgGoal.naturalWidth > 0) {
         let gh = gw * (imgGoal.naturalHeight / imgGoal.naturalWidth);
         // Left goal
-        ctx.drawImage(imgGoal, w * 0.02, h * 0.48, gw, gh);
+        ctx.drawImage(imgGoal, w * 0.02, h * 0.35, gw, gh);
         // Right goal (flipped horizontally)
         ctx.save();
         ctx.scale(-1, 1);
-        ctx.drawImage(imgGoal, -(w * 0.03 + gw), h * 0.48, gw, gh);
+        ctx.drawImage(imgGoal, -(w * 0.60 + gw), h * 0.35, gw, gh);
         ctx.restore();
     }
 
@@ -2346,8 +2346,11 @@ function actualizarEscenario2() {
         // Draw ball
         let ballR = w * 0.015;
         if (imgBall.complete && imgBall.naturalWidth > 0) {
-            let ballD = ballR * 2;
-            ctx.drawImage(imgBall, ballX - ballR, ballY - ballR, ballD, ballD);
+            let a = imgBall.naturalWidth / imgBall.naturalHeight;
+            let bw, bh;
+            if (a > 1) { bw = ballR * 2 * a; bh = ballR * 2; }
+            else       { bw = ballR * 2;      bh = ballR * 2 / a; }
+            ctx.drawImage(imgBall, ballX - bw / 2, ballY - bh / 2, bw, bh);
         } else {
             ctx.fillStyle = '#fff';
             ctx.beginPath();
@@ -4025,7 +4028,7 @@ document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
 
 escenariosDesbloqueados.add(1);
 desbloquearTab(1);
-cambiarEscenario(1);
+cambiarEscenario(2);
 
 // Inline editable V/I/m values for escenarios 2, 4, 5
 makeEditable('voltVal', function (val) { return val; }, voltSlider, 0, 12);
