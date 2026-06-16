@@ -123,7 +123,7 @@ class Pez {
         this.canvas = canvas;
         this.ctx = ctx;
         this.image = image;
-        this.image.src = './img/pez-neon_todos.png';
+        this.image.src = './img/pez-neon-todos.png';
         this.size = Number(t) + 7;
         this.dWidth = (canvas.width * this.size) / 100
         this.dHeight = this.dWidth / 2;
