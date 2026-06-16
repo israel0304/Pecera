@@ -34,6 +34,13 @@ imgPanel.src = './img/panel_solar.png';
 imgBomba.src = './img/bomba_agua.png';
 let imgBombaIssue = new Image();
 imgBombaIssue.src = './img/bomba_agua_issue.png';
+
+const ESPECIES = [
+    { id: 'default', nombre: 'Alternativo',  skin: './img/pez-neon-todos.png',    tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
+    { id: 'mx',      nombre: 'Selección Mexicana', skin: './img/pez-neon-todos-mx.png', tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
+    { id: 'br',      nombre: 'Selección Brasileña',skin: './img/pez-neon-todos-br.png', tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
+];
+
 let contenedorCanvas = document.getElementById('contenedorCanvas');
 let contenedorGrafica = document.getElementById('contenedorGrafica');
 
@@ -119,11 +126,13 @@ class Vector {
 
 
 class Pez {
-    constructor(t) {
+    constructor(t, especieId) {
         this.canvas = canvas;
         this.ctx = ctx;
-        this.image = image;
-        this.image.src = './img/pez-neon-todos.png';
+        const especie = ESPECIES.find(e => e.id === (especieId || 'default')) || ESPECIES[0];
+        this.especie = especie;
+        this.image = new Image();
+        this.image.src = especie.skin;
         this.size = Number(t) + 7;
         this.dWidth = (canvas.width * this.size) / 100
         this.dHeight = this.dWidth / 2;
@@ -146,7 +155,7 @@ class Pez {
         this.velocidad.limit(0.4);
         this.aceleracion = new Vector(0.01, 0.01);
         this.dir = new Vector(signo() * Math.random() * canvas.width / 2, signo() * Math.random() * canvas.height / 2);
-        this.velMax = 0.5;
+        this.velMax = especie.velMax;
 
     }
 
@@ -412,7 +421,7 @@ npecesValSpan.textContent = cajaPeces.value;
 
 ;
 let pecera = new Pecera(cajaTemperatura.value);
-let peces = generar(Pez, cajaPeces.value, cajaSize.value);
+let peces = generarPeces(Number(cajaPeces.value), Number(cajaSize.value));
 let burbujas = generar(Burbuja, validarBurbujasIniciales(cajaTemperatura.value));
 
 
@@ -438,7 +447,7 @@ tpecesValSpan.textContent = cajaSize.value;
         litrosDinamicos();
         actualizarAdvertenciaLN();
     }
-    let nuevop = generar(Pez, cajaPeces.value, cajaSize.value);
+    let nuevop = generarPeces(Number(cajaPeces.value), Number(cajaSize.value));
     peces = nuevop;
 }
 
@@ -490,6 +499,30 @@ function generar(obj, n, param) {
     for (i = 0; i < n; i++) {
         p[i] = new obj(param);
     }
+    return p;
+}
+
+function generarPeces(n, t, especies) {
+    if (n <= 0) return [];
+    let ids = [];
+
+    if (Array.isArray(especies)) {
+        if (!especies.length) return [];
+        let k = especies.length;
+        for (let i = 0; i < n; i++)
+            ids.push(especies[Math.floor(i * k / n)]);
+    } else if (typeof especies === 'object' && especies !== null) {
+        for (let [id, count] of Object.entries(especies))
+            for (let j = 0; j < count; j++)
+                ids.push(id);
+    } else {
+        for (let i = 0; i < n; i++)
+            ids.push('default');
+    }
+
+    let p = [];
+    for (let i = 0; i < n; i++)
+        p[i] = new Pez(t, ids[i]);
     return p;
 }
 
@@ -782,7 +815,7 @@ function reiniciar() {
     cajaSize.value = 4;
     tpecesValSpan.textContent = 4;
 
-    peces = generar(Pez, 10, 4);
+    peces = generarPeces(10, 4);
     burbujas = generar(Burbuja, validarBurbujasIniciales(23));
 
     grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
@@ -987,7 +1020,7 @@ function reiniciar3() {
     cajaSize.value = 1;
     tpecesValSpan.textContent = 1;
 
-    peces = generar(Pez, 1, 1);
+    peces = generarPeces(1, 1);
     burbujas = generar(Burbuja, validarBurbujasIniciales(23));
 
     grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
@@ -1876,7 +1909,7 @@ function initPecesEstanque() {
     }
     let n = Math.floor(aleatorio(15, 25));
     for (let i = 0; i < n; i++) {
-        let pez = new Pez(0);
+        let pez = new Pez(0, 'default');
         pez.size = 4;
         pez.dWidth = (canvas.width * pez.size) / 100;
         pez.dHeight = pez.dWidth / 2;
