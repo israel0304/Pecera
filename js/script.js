@@ -50,6 +50,7 @@ const ESPECIES = [
     { id: 'default', nombre: 'Alternativo',  skin: './img/pez-neon-todos.png',    tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
     { id: 'mx',      nombre: 'Selección Mexicana', skin: './img/pez-neon-todos-mx.png', tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
     { id: 'br',      nombre: 'Selección Brasileña',skin: './img/pez-neon-todos-br.png', tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
+    { id: 'kr',      nombre: 'Selección Coreana', skin: './img/pez-neon-todos-kr.png', tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
 ];
 
 let contenedorCanvas = document.getElementById('contenedorCanvas');
@@ -548,7 +549,7 @@ function generarPeces(n, t, especies) {
                 ids.push(id);
     } else {
         for (let i = 0; i < n; i++)
-            ids.push('default');
+            ids.push(i < Math.ceil(n / 2) ? 'mx' : 'kr');
     }
 
     let p = [];
@@ -1174,7 +1175,7 @@ let cursorX = null, cursorY = null;
 let ballX = null, ballY = null;
 let ballVx = 0;
 let golPausa = 0;
-let scoreMX = 0, scoreBR = 0;
+let scoreMX = 0, scoreKR = 0;
 
 // Escenario 4 state
 let board4 = null;
@@ -1685,7 +1686,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
-            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreBR = 0;
+            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreKR = 0;
         }
     },
     3: {
@@ -1751,7 +1752,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
-            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreBR = 0;
+            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreKR = 0;
         }
     },
     5: {
@@ -1789,7 +1790,7 @@ const ESCENARIOS = {
             cometCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
-            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreBR = 0;
+            ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreKR = 0;
         }
     },
     6: {
@@ -1982,7 +1983,7 @@ function initPecesEstanque() {
     ballX = aleatorio(w * 0.15, w * 0.50);
     ballY = h * 0.59;
     ballVx = 0; golPausa = 0;
-    scoreMX = 0; scoreBR = 0;
+    scoreMX = 0; scoreKR = 0;
     if (nightStars.length === 0) {
         for (let i = 0; i < 40; i++) {
             nightStars.push({
@@ -1995,7 +1996,7 @@ function initPecesEstanque() {
     }
     let n = Math.floor(aleatorio(15, 25));
     for (let i = 0; i < n; i++) {
-        let pez = new Pez(0, 'default');
+        let pez = new Pez(0, i < Math.ceil(n / 2) ? 'mx' : 'kr');
         pez.size = 4;
         pez.dWidth = (canvas.width * pez.size) / 100;
         pez.dHeight = pez.dWidth / 2;
@@ -2361,7 +2362,7 @@ function actualizarEscenario2() {
                         if (ballX > w * 0.47) ballVx = 15;
                         else if (ballVx < 5) ballVx = 5;
                     }
-                    if (id === 'br') {
+                    if (id === 'kr') {
                         if (ballX < w * 0.20) ballVx = -15;
                         else if (ballVx > -5) ballVx = -5;
                     }
@@ -2373,10 +2374,10 @@ function actualizarEscenario2() {
             ballVx *= 0.97;
             ballX += ballVx;
 
-            // Goal BR (BR scores — MX's goal on left)
+            // Goal KR (KR scores — MX's goal on left)
             if (ballX < w * 0.07 + 5) {
-                scoreBR++;
-                mostrarToast('¡GOOOL! MX ' + scoreMX + ' - ' + scoreBR + ' BR', 'success', 3000);
+                scoreKR++;
+                mostrarToast('¡GOOOL! MX ' + scoreMX + ' - ' + scoreKR + ' KR', 'success', 3000);
                 golPausa = 60;
                 ballX = w * 0.07;
                 ballY = h * 0.47;
@@ -2388,10 +2389,10 @@ function actualizarEscenario2() {
                     pez.dir.norm();
                 }
             }
-            // Goal MX (MX scores — BR's goal on right)
+            // Goal MX (MX scores — KR's goal on right)
             if (ballX > w * 0.60 - 5) {
                 scoreMX++;
-                mostrarToast('¡GOOOL! MX ' + scoreMX + ' - ' + scoreBR + ' BR', 'success', 3000);
+                mostrarToast('¡GOOOL! MX ' + scoreMX + ' - ' + scoreKR + ' KR', 'success', 3000);
                 golPausa = 60;
                 ballX = w * 0.65;
                 ballY = h * 0.47;
@@ -2431,7 +2432,7 @@ function actualizarEscenario2() {
     let flagW = sbFs * 0.8, flagH = sbFs * 0.6;
     let sbCircleR = sbFs * 0.3;
     let gap = sbFs * 0.4;
-    let scoreText = 'MX ' + scoreMX + ' - ' + scoreBR + ' BR';
+    let scoreText = 'MX ' + scoreMX + ' - ' + scoreKR + ' KR';
     ctx.font = 'bold ' + sbFs + 'px Arial';
     let textW = ctx.measureText(scoreText).width;
     let totalW = flagW + gap + sbCircleR * 2 + gap + textW + gap + sbCircleR * 2 + gap + flagW + sbPad * 2;
@@ -2478,8 +2479,8 @@ function actualizarEscenario2() {
     ctx.fillText(scoreText, cx, sbY + sbFs * 0.9);
     cx += textW + gap;
 
-    // Yellow circle (BR uniform)
-    ctx.fillStyle = '#FEDF00';
+    // Red circle (KR uniform)
+    ctx.fillStyle = '#FF0000';
     ctx.beginPath();
     ctx.arc(cx + sbCircleR, sbY + sbFs * 0.9, sbCircleR, 0, Math.PI * 2);
     ctx.fill();
@@ -2488,23 +2489,53 @@ function actualizarEscenario2() {
     ctx.stroke();
     cx += sbCircleR * 2 + gap;
 
-    // BR flag
-    ctx.fillStyle = '#009739';
+    // KR flag — White background with Taegeuk and trigrams
+    ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(cx, sbY + sbFs * 0.5, flagW, flagH);
-    ctx.fillStyle = '#FEDF00';
+    let fx = cx, fy = sbY + sbFs * 0.5;
+    let fcx = fx + flagW / 2, fcy = fy + flagH / 2;
+    let r = flagH * 0.28;
+    // Taegeuk - semicírculo rojo (superior)
+    ctx.fillStyle = '#C62828';
     ctx.beginPath();
-    ctx.arc(cx + flagW / 2, sbY + sbFs * 0.8, flagH * 0.3, 0, Math.PI * 2);
+    ctx.arc(fcx, fcy, r, Math.PI, 0);
     ctx.fill();
-    ctx.fillStyle = '#012169';
+    // Taegeuk - semicírculo azul (inferior)
+    ctx.fillStyle = '#1565C0';
     ctx.beginPath();
-    ctx.arc(cx + flagW / 2, sbY + sbFs * 0.8, flagH * 0.15, 0, Math.PI * 2);
+    ctx.arc(fcx, fcy, r, 0, Math.PI);
     ctx.fill();
-    ctx.strokeStyle = '#888';
-    ctx.lineWidth = 1;
+    // Círculo azul pequeño sobre rojo
+    ctx.fillStyle = '#1565C0';
     ctx.beginPath();
-    ctx.moveTo(cx + flagW, sbY + sbFs * 0.5 - flagH * 0.1);
-    ctx.lineTo(cx + flagW, sbY + sbFs * 0.5 + flagH);
-    ctx.stroke();
+    ctx.arc(fcx, fcy - r * 0.5, r * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    // Círculo rojo pequeño sobre azul
+    ctx.fillStyle = '#C62828';
+    ctx.beginPath();
+    ctx.arc(fcx, fcy + r * 0.5, r * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    // Trigramas negros
+    ctx.fillStyle = '#000';
+    let barW = flagW * 0.13;
+    let barH = flagH * 0.04;
+    let gapB = barH * 0.5;
+    function dibujarTrigramas(tx, ty, barras) {
+        for (let i = 0; i < 3; i++) {
+            ctx.fillRect(tx, ty + i * (barH + gapB), barW, barH);
+            if (barras[i] === 0) {
+                ctx.clearRect(tx + barW * 0.38, ty + i * (barH + gapB), barW * 0.28, barH);
+            }
+        }
+    }
+    // Superior izquierda (☰ Geon - 3 continuas)
+    dibujarTrigramas(fx + flagW * 0.08, fy + flagH * 0.08, [1, 1, 1]);
+    // Superior derecha (☷ Gon - 3 partidas)
+    dibujarTrigramas(fx + flagW * 0.78, fy + flagH * 0.08, [0, 0, 0]);
+    // Inferior izquierda (☵ Gam - partida, continua, partida)
+    dibujarTrigramas(fx + flagW * 0.08, fy + flagH * 0.72, [0, 1, 0]);
+    // Inferior derecha (☲ Ri - continua, partida, continua)
+    dibujarTrigramas(fx + flagW * 0.78, fy + flagH * 0.72, [1, 0, 1]);
 
     // Ground / shore (left side)
     ctx.fillStyle = '#8B7355';
@@ -3865,11 +3896,12 @@ function iniciarPeces3D() {
     let H = Math.max(1, getDimH());
     let numPeces = Math.min(10, Math.max(3, Math.floor((L * W * H) / 50)));
     for (let i = 0; i < numPeces; i++) {
-        peces3D.push(crearPez3D(L, W, H));
+        let especie = Math.random() < 0.5 ? 'mx' : 'kr';
+        peces3D.push(crearPez3D(L, W, H, especie));
     }
 }
 
-function crearPez3D(L, W, H) {
+function crearPez3D(L, W, H, especieId) {
     let group = new THREE.Group();
 
     // Body with vertex colors for two-tone neon pattern
@@ -3882,13 +3914,10 @@ function crearPez3D(L, W, H) {
         let y = pos.getY(i);
         let zAbs = Math.abs(pos.getZ(i));
         if (y > 0.05 && y < 0.2 && zAbs > 0.08) {
-            // Cyan stripe on upper flanks
             cArr[i * 3] = 0; cArr[i * 3 + 1] = 0.83; cArr[i * 3 + 2] = 1;
         } else if (y < -0.05 && zAbs > 0.08) {
-            // Red belly
             cArr[i * 3] = 1; cArr[i * 3 + 1] = 0.27; cArr[i * 3 + 2] = 0.27;
         } else {
-            // Dark body base
             cArr[i * 3] = 0.17; cArr[i * 3 + 1] = 0.24; cArr[i * 3 + 2] = 0.31;
         }
     }
@@ -3931,7 +3960,8 @@ function crearPez3D(L, W, H) {
             Math.random() * (H - margin * 2) + margin,
             (Math.random() - 0.5) * (W - margin * 2)
         ),
-        phase: Math.random() * Math.PI * 2
+        phase: Math.random() * Math.PI * 2,
+        especie: especieId
     };
 }
 
