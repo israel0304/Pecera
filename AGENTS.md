@@ -16,7 +16,7 @@ Open `app.html` in any browser for the simulator. No build or server required.
 - `js/OrbitControls.js` - Camera controls for 3D scene
 - `css/style.css` - Styling for simulator
 - `css/landing.css` - Neon theme, glassmorphism, bento grid for landing page
-- `img/` - Fish, tank, solar panel, pump images, and phone screenshots
+- `img/` - Fish, tank, solar panel, pump images, and phone screenshots (species skins: `pez-neon-todos.png`, `pez-neon-todos-mx.png`, `pez-neon-todos-br.png`)
 
 ## UI/UX Design (v1.11.0)
 
@@ -41,6 +41,43 @@ Open `app.html` in any browser for the simulator. No build or server required.
 - Auto-dismiss with slide-out animation (default 4000ms)
 - Container: `<div id="toastContainer">` at bottom of `app.html`
 
+### Species System (v1.14.0)
+- `ESPECIES` array (`script.js:38-42`) with 3 species: `default` (Alternativo, `pez-neon-todos.png`), `mx` (Selección Mexicana, `pez-neon-todos-mx.png`), `br` (Selección Brasileña, `pez-neon-todos-br.png`)
+- `Pez(t, especieId)` constructor accepts `especieId` as second param; fallback to `'default'` if falsy
+- `generarPeces(n, t, especies)` replaces `generar()` for fish:
+  - **Array** of IDs: distributes evenly (e.g., `['mx','br']` with n=4 → `['mx','mx','br','br']`)
+  - **Object** `{id: count}`: exact counts per species
+  - **Falsy/omitted**: all `'default'`
+- Old `generar(obj, n, param)` still used for `Burbuja` only
+- `this.image.src` loaded from `especie.skin` per fish instance
+- 3D fish (`crearPez3D`) do NOT use species system — hardcoded neon vertex colors
+
+### Scenario Lifecycle (`alEntrar` / `alSalir`)
+Each scenario in `ESCENARIOS` (`script.js:1585-1774`) can define:
+- `alEntrar()` — called when entering the scenario. Sets up UI, graphs, fish, 3D scene
+- `alSalir()` — cleanup when leaving. Resets transient state variables to prevent cross-scenario leaks (e.g., `particulasEsc2`, `sunWaveProgress`, `pumpBroken`, `esc3CanvasUI`, `nivelAguaLine`)
+
+### Key Functions
+| Function | Location | Purpose |
+|----------|----------|---------|
+| `cambiarEscenario(n)` | `:1807` | Central switch: calls `prevCfg.alSalir()`, `limpiarGrafica()`, toggles UI visibility, canvas/graph CSS classes, cleans Three.js, resets zoom, calls `cfg.alEntrar()` |
+| `navegar(dir)` | `:2545` | Navigate forward/backward in `getOrden()`; shows code modal if destination locked |
+| `navegarA(destino)` | `:2579` | Navigate directly to a scenario number (tab click); same unlock check |
+| `getOrden()` | `:2525` | Returns `[1, 3, 6, 7, 2, 4, 5]` — canonical navigation order |
+| `getSiguiente(n)` / `getAnterior(n)` | `:2529-2537` | Next/previous in `getOrden()` |
+| `desbloquearTab(n)` | `:1798` | Removes `scenario-tab--locked` class, enables button, clears badge |
+| `normalizarCodigo(str)` | `:2539` | Case/accent/punctuation-insensitive normalization (NFD decomposition) |
+| `obtenerCodigos()` | `:2569` | Builds `"from→to"` → `"code"` map from `ESCENARIOS` for code validation |
+| `actualizar()` | `:570` | Main `requestAnimationFrame` loop: clears canvas, applies zoom/pan transforms, dispatches per-scenario render |
+| `restablecerZoom()` | `:2645` | Resets `zoomScale=1`, `panX=0`, `panY=0`, touch/mouse state |
+| `screenToBuffer(clientX, clientY)` | `:2625` | Converts screen coords to buffer coords accounting for zoom/pan |
+| `alerta()` | `:553` | Kills all fish (`vivir=false`), shows warning toast |
+| `enfermar()` | `:560` | Sets all living fish to `salud='enfermo'` |
+| `resucitarPez()` | `:495` | Revives all dead fish, randomizes direction |
+| `toggleTempPlay()` | `:833` | Toggles auto temperature ramp (→50°C, +1/500ms) |
+| `makeEditable(spanId, computeValue, slider, min, max)` | `:1855` | Inline editable V/I values in escenarios 2/4/5 |
+| `mostrarToast(mensaje, tipo, duracion)` | `:538` | Toast notification system (types: success, error, warning, info) |
+
 ### Navigation Bar (bottom sticky)
 - `#navWrap` — fixed at bottom with `backdrop-filter: blur(12px)`, glass effect
 - Shows "Siguiente Escenario" button to advance through navigation order
@@ -64,11 +101,18 @@ Open `app.html` in any browser for the simulator. No build or server required.
 - JSXGraph plots SO curve in separate container
 
 ### Pecera + Litros (Escenario 3)
-- Extension of Pecera that adds a "Litros de agua necesaria" checkbox toggle
-- Checkbox switches between Oxygen Saturation (SO) and Liters of Water (LA) views
+- Extension of Pecera that integrates **canvas-drawn controls** alongside JSXGraph
+- On enter, hides HTML temperature/SO controls and shows `esc3CanvasUI = true`
+- **Canvas temperature slider** — horizontal, top area, blue gradient track, range 10–50°C, white circular thumb with floating `XX°C` label
+- **Canvas water level slider** — vertical, right edge, 0–100%, blue track, `XX L` floating label (liters = level × 2)
+- **Water overlay** — semi-transparent blue fill `rgba(52,152,219,0.3)` drawn at water level height
+- **Fish behavior**: if water level < fish height and LN > L, fish show `sinAgua` sprite; death on critically low water
+- Drag support: mouse (mousedown/mousemove/mouseup) and touch (touchstart/touchmove/touchend, 1 finger)
 - LA formula: `LA = npeces × tpeces × 3` (liters of water needed per fish)
-- JSXGraph plots LA curve (linear, orange) alongside SO controls
+- Checkbox "Visualizar nivel del agua" shows horizontal reference line at `y = nivelAgua × 2` on graph
+- JSXGraph plots LA curve (linear, orange) alongside SO curve
 - "graficar punto LA" button to mark data points on LA curve
+- `alSalir`: sets `esc3CanvasUI = false`, resets `muertePorAgua`, restores HTML controls visibility
 
 ### Estanque Sustentable (Escenario 2)
 - Voltage slider (0–12V) controls current (I = 0.3V, pendiente fija)

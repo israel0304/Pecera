@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.14.0 (no publicado)
+
+### Features
+- **Sistema de especies para peces 2D** — Nuevo array `ESPECIES` con 3 skins: Alternativo (`pez-neon-todos.png`), Selección Mexicana (`pez-neon-todos-mx.png`), Selección Brasileña (`pez-neon-todos-br.png`)
+- **`generarPeces(n, t, especies)`** — Reemplaza `generar()` para peces: acepta array (distribución equitativa), objeto `{id: count}`, o fallback a `'default'`
+- **Constructor `Pez`** — Segundo parámetro `especieId` selecciona especie del array; `this.image.src` se carga desde `especie.skin`
+- **Distribución por defecto** — Todos los peces se crean con especie `'default'` (Alternativo) a menos que se especifique otra
+
+### Internal
+- `generar()` se mantiene para objetos `Burbuja` (no afectado)
+- Las especies tienen propiedades `tamanoBase`, `velMax`, `tempMin`, `tempMax`, `tempOptimo` (actualmente iguales entre especies, preparado para personalización)
+
+### Documentation
+- Actualización de README.md, AGENTS.md y CHANGELOG.md con documentación del sistema de especies
+
 ## 1.13.0 (no publicado)
 
 ### Features

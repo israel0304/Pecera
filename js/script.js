@@ -35,6 +35,13 @@ imgBomba.src = './img/bomba_agua.png';
 let imgBombaIssue = new Image();
 imgBombaIssue.src = './img/bomba_agua_issue.png';
 
+/** @species Available fish species for 2D canvas fish.
+ *  Each species defines a unique skin image and behavioral parameters.
+ *  - `default`: Alternativo (original neon tetra skin)
+ *  - `mx`: Selección Mexicana
+ *  - `br`: Selección Brasileña
+ *  Pez constructor accepts especieId to select from this array.
+ *  3D fish (crearPez3D) ignore species — use hardcoded vertex colors. */
 const ESPECIES = [
     { id: 'default', nombre: 'Alternativo',  skin: './img/pez-neon-todos.png',    tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
     { id: 'mx',      nombre: 'Selección Mexicana', skin: './img/pez-neon-todos-mx.png', tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
@@ -126,6 +133,9 @@ class Vector {
 
 
 class Pez {
+    /** @param {number} t - Fish size offset (actual size = t + 7)
+     *  @param {string} [especieId='default'] - Species ID from ESPECIES array.
+     *  Skin image and velMax are loaded from the matching species entry. */
     constructor(t, especieId) {
         this.canvas = canvas;
         this.ctx = ctx;
@@ -487,6 +497,8 @@ function validarBurbujasIniciales(b) {
     }
 }
 
+/** @function resucitarPez
+ *  Revives all dead fish (vivir=true), randomizes direction. */
 function resucitarPez() {
     for (let i = 0; i < peces.length; i++) {
         peces[i].vivir = true;
@@ -494,6 +506,12 @@ function resucitarPez() {
     }
 }
 
+/** @function generar
+ *  Generic factory for non-fish objects (Burbuja).
+ *  Use generarPeces() for fish (supports species distribution).
+ *  @param {class} obj - Class constructor
+ *  @param {number} n - Number of instances
+ *  @param {*} param - Parameter passed to constructor */
 function generar(obj, n, param) {
     let p = [];
     for (i = 0; i < n; i++) {
@@ -502,6 +520,15 @@ function generar(obj, n, param) {
     return p;
 }
 
+/** @function generarPeces
+ *  Creates n fish of size t with given species distribution.
+ *  @param {number} n - Number of fish to create
+ *  @param {number} t - Size offset (passed to Pez constructor)
+ *  @param {Array|Object} [especies] - Species distribution:
+ *    Array: evenly distributes IDs across n fish
+ *    Object {id: count}: exact counts per species
+ *    Falsy/omitted: all 'default'
+ *  @returns {Pez[]} Array of Pez instances */
 function generarPeces(n, t, especies) {
     if (n <= 0) return [];
     let ids = [];
@@ -535,6 +562,11 @@ function signo() {
     return s;
 }
 
+/** @function mostrarToast
+ *  Shows a Material-style toast notification.
+ *  @param {string} mensaje - Message text
+ *  @param {('success'|'error'|'warning'|'info')} [tipo='info'] - Toast type
+ *  @param {number} [duracion=4000] - Auto-dismiss time in ms */
 function mostrarToast(mensaje, tipo, duracion) {
     tipo = tipo || 'info';
     duracion = duracion || 4000;
@@ -550,6 +582,8 @@ function mostrarToast(mensaje, tipo, duracion) {
     }, duracion);
 }
 
+/** @function alerta
+ *  Kills all fish (vivir=false), shows warning toast. */
 function alerta() {
     mostrarToast("Precauci\u00f3n: Todos los peces van a morir", 'warning');
     for (i = 0; i < peces.length; i++) {
@@ -557,6 +591,9 @@ function alerta() {
         peces[i].salud = 'sano';
     }
 }
+/** @function enfermar
+ *  Sets all living fish health to 'enfermo'.
+ *  Shows error toast if all fish are already dead. */
 function enfermar() {
     if (peces[0].vivir === true)
         for (i = 0; i < peces.length; i++) {
@@ -567,6 +604,10 @@ function enfermar() {
 
 }
 
+/** @function actualizar
+ *  Main render loop (requestAnimationFrame). Clears canvas, applies zoom/pan
+ *  transforms via ctx.save/translate/scale/restore, dispatches per-scenario
+ *  rendering (Pecera, Estanque) and Esc3 canvas UI overlay. */
 function actualizar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
@@ -825,6 +866,9 @@ function reiniciar() {
 
 
 
+/** @function toggleTempPlay
+ *  Toggles automatic temperature ramp from current value up to 50°C
+ *  (+1°C per 500ms). Button icon toggles ▶/⏸ and color (green/red). */
 function toggleTempPlay() {
     if (isPlaying) {
         clearInterval(tempInterval);
@@ -1063,6 +1107,12 @@ let esc3LaSection = document.getElementById('esc3-la-section');
 
 let R = 5;
 
+/** @function getCorriente
+ *  Returns electrical current I for a given voltage V.
+ *  Escenario 5: I = m × V (m from mSlider).
+ *  Escenarios 2 and 4: I = 0.3 × V.
+ *  @param {number} V - Voltage value
+ *  @returns {number} Computed current I */
 function getCorriente(V) {
     if (escenarioActual === 5) {
         let m = Number(mSlider.value);
@@ -1795,6 +1845,9 @@ function actualizarTabs(n) {
     if (active) active.classList.add('scenario-tab--active');
 }
 
+/** @function desbloquearTab
+ *  Unlocks a scenario tab: removes --locked class, enables button, clears badge.
+ *  @param {number} n - Scenario number to unlock */
 function desbloquearTab(n) {
     let el = document.getElementById('esc' + n + '-btn');
     if (!el) return;
@@ -1804,6 +1857,11 @@ function desbloquearTab(n) {
     if (badge) badge.textContent = '';
 }
 
+/** @function cambiarEscenario
+ *  Central switch function. Calls prev scenario's alSalir(), limpiarGrafica(),
+ *  toggles UI visibility, sets canvas/graph CSS classes, cleans Three.js,
+ *  resets zoom/pan, then calls new scenario's alEntrar().
+ *  @param {number} n - Target scenario number (1-7) */
 function cambiarEscenario(n) {
     var prevCfg = ESCENARIOS[escenarioActual];
     if (prevCfg && prevCfg.alSalir) prevCfg.alSalir();
@@ -1852,6 +1910,16 @@ function actualizarDisplayEsc2() {
     corrVal.textContent = I.toFixed(2);
 }
 
+/** @function makeEditable
+ *  Makes a <span> inline-editable by replacing it with an <input type="number">
+ *  on click/touch. Used for V and I values in escenarios 2, 4, 5.
+ *  On blur/Enter: calls computeValue(val), clamps to [min, max], updates slider.
+ *  Escape: discards changes.
+ *  @param {string} spanId - ID of the <span> to make editable
+ *  @param {function} computeValue - (val) => sliderValue
+ *  @param {HTMLElement} slider - Slider element to update
+ *  @param {number} min - Clamp minimum
+ *  @param {number} max - Clamp maximum */
 function makeEditable(spanId, computeValue, slider, min, max) {
     let span = document.getElementById(spanId);
     let input = null;
@@ -2522,26 +2590,44 @@ document.getElementById('checkFranjas').addEventListener('change', function () {
     toggleFranjas(this.checked);
 });
 
+/** @function getOrden
+ *  @returns {number[]} Canonical scenario navigation order */
 function getOrden() {
     return [1, 3, 6, 7, 2, 4, 5];
 }
 
+/** @function getSiguiente
+ *  @param {number} n - Current scenario number
+ *  @returns {number} Next scenario in getOrden() order */
 function getSiguiente(n) {
     let o = getOrden();
     return o[(o.indexOf(n) + 1) % o.length];
 }
 
+/** @function getAnterior
+ *  @param {number} n - Current scenario number
+ *  @returns {number} Previous scenario in getOrden() order */
 function getAnterior(n) {
     let o = getOrden();
     return o[(o.indexOf(n) - 1 + o.length) % o.length];
 }
 
+/** @function normalizarCodigo
+ *  Normalizes a secret code string for case-insensitive,
+ *  accent-insensitive, punctuation-insensitive comparison.
+ *  Uses NFD decomposition to strip diacritical marks.
+ *  @param {string} str - Raw input string
+ *  @returns {string} Normalized string (e.g. "Dimensiónes!" → "dimensiones") */
 function normalizarCodigo(str) {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }
 
 let escenariosDesbloqueados = new Set();
 
+/** @function navegar
+ *  Navigate forward (1) or backward (-1) in getOrden().
+ *  Shows code modal if destination scenario is locked.
+ *  @param {number} dir - Direction: 1 (forward) or -1 (backward) */
 function navegar(dir) {
     let cfg = ESCENARIOS[escenarioActual];
     if (!cfg) return;
@@ -2566,6 +2652,10 @@ function navegar(dir) {
     new bootstrap.Modal(document.getElementById('codigoModal')).show();
 }
 
+/** @function obtenerCodigos
+ *  Builds a map of "from→to" → "code" from ESCENARIOS config
+ *  for validating secret code entries against navigation transitions.
+ *  @returns {Promise<Object>} Map of "from→to" strings to code strings */
 async function obtenerCodigos() {
     let map = {};
     for (let [n, cfg] of Object.entries(ESCENARIOS)) {
@@ -2576,6 +2666,10 @@ async function obtenerCodigos() {
 
 let pendingDestino = null;
 
+/** @function navegarA
+ *  Navigate directly to a scenario number (tab click).
+ *  Shows code modal if destination is locked.
+ *  @param {number} destino - Scenario number to navigate to */
 function navegarA(destino) {
     if (escenariosDesbloqueados.has(destino)) {
         cambiarEscenario(destino);
@@ -2622,6 +2716,13 @@ document.getElementById('codigoInput').addEventListener('keydown', function (e) 
 let zoomScale = 1, panX = 0, panY = 0;
 const ZOOM_MIN = 0.3, ZOOM_MAX = 5;
 
+/** @function screenToBuffer
+ *  Converts screen coordinates to canvas buffer coordinates
+ *  accounting for current zoomScale and panX/panY.
+ *  Used so fish flee correctly from cursor/touch at any zoom level.
+ *  @param {number} clientX - Screen X coordinate
+ *  @param {number} clientY - Screen Y coordinate
+ *  @returns {{x: number, y: number}} Buffer coordinates */
 function screenToBuffer(clientX, clientY) {
     let rect = canvas.getBoundingClientRect();
     let rawX = (clientX - rect.left) * (canvas.width / rect.width);
@@ -2642,6 +2743,9 @@ canvas.addEventListener('wheel', function (e) {
     zoomScale = newScale;
 });
 
+/** @function restablecerZoom
+ *  Resets zoomScale to 1, panX/panY to 0, and clears all
+ *  mouse/touch tracking state. Called on scenario change and Reiniciar. */
 function restablecerZoom() {
     zoomScale = 1;
     panX = 0;

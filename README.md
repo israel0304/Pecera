@@ -15,19 +15,28 @@ Simula una pecera con peces que nadan libremente. La temperatura controla la sat
 **Controles:** temperatura (0–50 °C), número de peces (0–20), tamaño de pez (1–7 cm)
 
 ### Pecera + Litros
-Extensión de Pecera que agrega un cálculo de litros de agua necesarios. Incluye un checkbox "Litros de agua necesaria" que alterna entre la vista de Saturación de Oxígeno (SO) y la de Litros de Agua (LA).
+Extensión de Pecera que integra controles **dibujados directamente en el canvas** además de la gráfica JSXGraph. Al activar este escenario, los controles HTML de temperatura y saturación se ocultan y aparecen sliders visuales en el canvas.
 
+**Canvas UI:**
+- **Slider horizontal de temperatura** (parte superior del canvas, 10–50°C) con track degradado azul y thumb circular con label flotante `XX°C`
+- **Slider vertical de nivel de agua** (borde derecho, 0–100%) con track azul y label `XX L` (litros = nivel × 2)
+- **Overlay de agua semitransparente** (relleno azul `rgba(52,152,219,0.3)`) que sube/baja con el nivel
+- **Comportamiento de peces**: si el nivel de agua es menor que el alto del pez y LN > L, los peces muestran animación `sinAgua` (sprite de fuera del agua). Si el nivel baja demasiado, los peces mueren por falta de agua
+- Arrastre por mouse y táctil (1 dedo) en ambos sliders
+
+**Gráfica JSXGraph:**
 - **Fórmula LA:** `LA = cantidad_peces × tamaño_peces × 3`
 - Curva LA lineal (color naranja) en JSXGraph
+- Checkbox "Visualizar nivel del agua" muestra una línea horizontal de referencia en `y = nivelAgua × 2`
 - Botón "graficar punto LA" para marcar puntos en la curva
 - Requiere código secreto `"litros"` para navegar entre escenarios
 
-**Controles:** temperatura (0–50 °C), número de peces (0–20), tamaño de pez (1–7 cm), checkbox LA, botón punto LA
+**Controles:** temperatura (canvas slider), número de peces (0–20), tamaño de pez (1–7 cm), checkbox LA, botón punto LA
 
 ### Estanque Sustentable
 Simula un sistema de bombeo de agua con energía solar. El estanque se renderiza como un **prisma 3D isométrico** con paredes, base y cara frontal de agua semitransparente. Un panel solar alimenta una bomba; el voltaje controla el brillo del sol, el tamaño/velocidad de las burbujas y el estado del sistema.
 
-**Controles:** voltaje (0–12 V, slider), resistencia fija R = 5 Ω (I = V / R)
+**Controles:** voltaje (0–12 V, slider), corriente I = 0.3V (pendiente fija)
 
 **Renderizado del estanque (prisma 3D):**
 
@@ -70,7 +79,7 @@ Estanque Sustentable con una gráfica JSXGraph que muestra la curva I vs V (rect
 
 - Glider siempre visible con etiqueta permanente `U (5.00, 1.50)` con 2 decimales
 - Arrastrar el glider actualiza el slider de voltaje en tiempo real
-- Curva: `I = V / 5` (R = 5 Ω fijo)
+- Curva: `I = 0.3V` (pendiente fija)
 - Ejes personalizados con ticks cada 2 unidades y cuadrícula de fondo
 - Zoom con rueda del mouse o botones +/- (rango 0.5x–5x)
 
@@ -142,11 +151,30 @@ El escenario inicial (Pecera) está desbloqueado por defecto.
 | Clase | Descripción |
 |-------|-------------|
 | `Vector` | Matemática vectorial 2D (suma, resta, mult., div., magnitud, normalización, límite) |
-| `Pez` | Pez con posición, velocidad, aceleración, natación, rebote, salud (sano/enfermo/muerto) |
+| `Pez` | Pez con posición, velocidad, aceleración, natación, rebote, salud (sano/enfermo/muerto). Acepta `especieId` en constructor para seleccionar skin del array `ESPECIES` |
 | `Burbuja` | Burbujas con posición aleatoria, movimiento ascendente y deriva sinusoidal |
 | `Pecera` | Renderizado del fondo y cálculo de saturación de oxígeno (función cúbica) |
 | `Grafica` | Wrapper de JSXGraph para graficar la curva SO y puntos de datos |
 | `ParticulaAgua` | Partículas de agua (burbujas) para la fuente del estanque sustentable |
+
+## Sistema de Especies
+
+El array `ESPECIES` (`script.js:38-42`) define las skins disponibles para los peces 2D:
+
+| id | nombre | skin |
+|----|--------|------|
+| `'default'` | Alternativo | `./img/pez-neon-todos.png` |
+| `'mx'` | Selección Mexicana | `./img/pez-neon-todos-mx.png` |
+| `'br'` | Selección Brasileña | `./img/pez-neon-todos-br.png` |
+
+- **`Pez(t, especieId)`** — El constructor recibe `especieId` como segundo parámetro; si es `undefined`/`null`, usa `'default'`
+- **`generarPeces(n, t, especies)`** — Crea `n` peces de tamaño `t`. El parámetro `especies` puede ser:
+  - **Array** → distribuye equitativamente (ej: `['mx','br']` con n=4 da `['mx','mx','br','br']`)
+  - **Objeto** → `{id: count}` crea exactamente esa cantidad (ej: `{mx:3, br:2}`)
+  - **Falsy/omitido** → todos los peces usan `'default'`
+- Por defecto, todos los escenarios crean peces con `'default'` (Alternativo)
+- La propiedad `this.image.src` de cada `Pez` se carga desde `especie.skin` al instanciarse
+- Los peces 3D (Three.js) no usan el sistema de especies; usan colores neón por vértices
 
 ## Tecnologías
 
@@ -180,13 +208,20 @@ Pecera/
 │   ├── screenshot-grafica.jpg
 │   ├── screenshot-3d.jpg
 │   ├── incremento.jpg
-│   ├── pez-neon_todos.png
+│   ├── pez-neon-todos.png
+│   ├── pez-neon-todos-mx.png
+│   ├── pez-neon-todos-br.png
 │   ├── pecera.png
 │   ├── panel_solar.png
 │   ├── bomba_agua.png
-│   └── bomba_agua_issue.png
+│   ├── bomba_agua_issue.png
+│   ├── icon-144.png
+│   ├── icon-192.png
+│   └── icon-512.png
 ├── AGENTS.md          # Instrucciones para opencode
 ├── CHANGELOG.md       # Historial de cambios
+├── manifest.json      # PWA manifest
+├── sw.js              # Service Worker
 └── README.md
 ```
 
@@ -215,6 +250,7 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.10.0 | Zoom y paneo en canvas 2D (scroll + clic sostenido, pinch + arrastre táctil 2 dedos), coordenadas de cursor corregidas con zoom |
 | v1.11.0 | Landing page con Three.js 3D, Escenario 7 (Incremento de Capacidad), toast notifications, rediseño UI Material Design, tooltips, nav bar inferior, burbujas más grandes, `getCorriente()` para esc5, navegación reordenada |
 | v1.12.0 | PWA dinámico (base path automático, manifest Blob URL con origin, SW con scope dinámico), meta tags iOS, filtro SW para chrome-extension, iconos actualizados, rename landing→index / index→app |
+| v1.14.0 | Sistema de especies: `ESPECIES` array, `generarPeces()`, `Pez.especieId`, 3 skins (Alternativo, MX, BR) |
 
 ## Historial de cambios
 
