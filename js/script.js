@@ -38,6 +38,8 @@ let imgGoal = new Image();
 imgGoal.src = './img/soccer-goal.png';
 let imgBall = new Image();
 imgBall.src = './img/soccer-ball.png';
+let imgStadium = new Image();
+imgStadium.src = './img/soccer-stadium.png';
 
 /** @species Available fish species for 2D canvas fish.
  *  Each species defines a unique skin image and behavioral parameters.
@@ -2149,6 +2151,15 @@ function actualizarEscenario2() {
             ctx.arc(cometX, cometY, 4, 0, Math.PI * 2);
             ctx.fill();
         }
+    }
+
+    // Stadium silhouette on horizon
+    if (imgStadium.complete && imgStadium.naturalWidth > 0) {
+        let sw = w * 0.5;
+        let sh = sw * (imgStadium.naturalHeight / imgStadium.naturalWidth);
+        let sx = (w - sw) / 4.8;
+        let sy = h * 0.53 - sh;
+        ctx.drawImage(imgStadium, sx, sy, sw, sh);
     }
 
     // Grass 
