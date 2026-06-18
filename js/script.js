@@ -2302,36 +2302,36 @@ function actualizarEscenario2() {
             ctx.arc(cometX, cometY, 4, 0, Math.PI * 2);
             ctx.fill();
         }
+    }
 
-        // Fireworks
-        for (let fw of fireworks) {
-            if (fw.phase === 'rising') {
-                for (let i = 0; i < fw.trail.length; i++) {
-                    let a = (i / fw.trail.length) * 0.4;
-                    ctx.fillStyle = `rgba(255, 255, 255, ${a})`;
-                    ctx.beginPath();
-                    ctx.arc(fw.trail[i].x, fw.trail[i].y, 1.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.fillStyle = '#FFF';
+    // Fireworks
+    for (let fw of fireworks) {
+        if (fw.phase === 'rising') {
+            for (let i = 0; i < fw.trail.length; i++) {
+                let a = (i / fw.trail.length) * 0.4;
+                ctx.fillStyle = `rgba(255, 255, 255, ${a})`;
                 ctx.beginPath();
-                ctx.arc(fw.x, fw.y, 2.5, 0, Math.PI * 2);
+                ctx.arc(fw.trail[i].x, fw.trail[i].y, 1.5, 0, Math.PI * 2);
                 ctx.fill();
-            } else {
-                for (let p of fw.particles) {
-                    if (p.life <= 0) continue;
-                    let a = p.life / p.maxLife;
-                    let alpha = Math.max(0, a);
-                    ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha})`;
+            }
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.arc(fw.x, fw.y, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            for (let p of fw.particles) {
+                if (p.life <= 0) continue;
+                let a = p.life / p.maxLife;
+                let alpha = Math.max(0, a);
+                ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * Math.max(0.2, alpha), 0, Math.PI * 2);
+                ctx.fill();
+                if (p.trailX !== null) {
+                    ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha * 0.3})`;
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size * Math.max(0.2, alpha), 0, Math.PI * 2);
+                    ctx.arc(p.trailX, p.trailY, p.size * alpha * 0.5, 0, Math.PI * 2);
                     ctx.fill();
-                    if (p.trailX !== null) {
-                        ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha * 0.3})`;
-                        ctx.beginPath();
-                        ctx.arc(p.trailX, p.trailY, p.size * alpha * 0.5, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
                 }
             }
         }
@@ -2540,6 +2540,12 @@ function actualizarEscenario2() {
             golPausa--;
             if (golPausa === 0) {
                 ballX = w * 0.35; ballY = h * 0.59; ballVx = 0;
+                for (let pez of pecesEstanque) {
+                    pez.posicion.x = aleatorio(pez.especie.id === 'mx' ? w * 0.07 : w * 0.335, pez.especie.id === 'mx' ? w * 0.335 : w * 0.60);
+                    pez.posicion.y = aleatorio(h * 0.57, h * 0.80);
+                    pez.dir = new Vector(signo() * Math.random() * 3, signo() * Math.random() * 2);
+                    pez.dir.norm();
+                }
             }
         } else {
             // Surface bob
@@ -2571,33 +2577,21 @@ function actualizarEscenario2() {
 
             // Goal KR (KR scores — MX's goal on left)
             if (ballX < w * 0.07 + 5) {
-                scoreKR++;
-                mostrarToast('¡GOOOL! MX ' + scoreMX + ' - ' + scoreKR + ' KR', 'success', 3000);
-                golPausa = 60;
+                mostrarToast('¡GOOOL!', 'success', 3000);
+                golPausa = 300;
                 ballX = w * 0.07;
                 ballY = h * 0.47;
                 ballVx = 0;
-                for (let pez of pecesEstanque) {
-                    pez.posicion.x = aleatorio(pez.especie.id === 'mx' ? w * 0.07 : w * 0.335, pez.especie.id === 'mx' ? w * 0.335 : w * 0.60);
-                    pez.posicion.y = aleatorio(h * 0.57, h * 0.80);
-                    pez.dir = new Vector(signo() * Math.random() * 3, signo() * Math.random() * 2);
-                    pez.dir.norm();
-                }
+                for (let i = 0; i < 32; i++) fireworks.push(spawnFirework(w, h));
             }
             // Goal MX (MX scores — KR's goal on right)
             if (ballX > w * 0.60 - 5) {
-                scoreMX++;
-                mostrarToast('¡GOOOL! MX ' + scoreMX + ' - ' + scoreKR + ' KR', 'success', 3000);
-                golPausa = 60;
+                mostrarToast('¡GOOOL!', 'success', 3000);
+                golPausa = 300;
                 ballX = w * 0.65;
                 ballY = h * 0.47;
                 ballVx = 0;
-                for (let pez of pecesEstanque) {
-                    pez.posicion.x = aleatorio(pez.especie.id === 'mx' ? w * 0.07 : w * 0.335, pez.especie.id === 'mx' ? w * 0.335 : w * 0.60);
-                    pez.posicion.y = aleatorio(h * 0.57, h * 0.80);
-                    pez.dir = new Vector(signo() * Math.random() * 3, signo() * Math.random() * 2);
-                    pez.dir.norm();
-                }
+                for (let i = 0; i < 32; i++) fireworks.push(spawnFirework(w, h));
             }
         }
 
@@ -2971,16 +2965,19 @@ function actualizarEscenario2() {
         if (fireworkCooldown > 0) {
             fireworkCooldown--;
         } else {
-            fireworks.push(spawnFirework(w, h));
-            fireworkCooldown = 80 + Math.floor(Math.random() * 140);
+            let count = 2 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < count; i++) {
+                fireworks.push(spawnFirework(w, h));
+            }
+            fireworkCooldown = 30 + Math.floor(Math.random() * 60);
         }
-        updateFireworks(w, h);
     } else {
         cometProgress = 0;
         cometCooldown = 0;
-        fireworks = [];
         fireworkCooldown = 0;
     }
+
+    updateFireworks(w, h);
 
 }
 
