@@ -1171,6 +1171,8 @@ let sunWaveProgress = 0;
 let nightStars = [];
 let cometProgress = 0;
 let cometCooldown = 0;
+let fireworks = [];
+let fireworkCooldown = 0;
 let cursorX = null, cursorY = null;
 
 // Soccer ball state
@@ -1686,6 +1688,8 @@ const ESCENARIOS = {
             sunWaveProgress = 0;
             cometProgress = 0;
             cometCooldown = 0;
+            fireworks = [];
+            fireworkCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
             ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreKR = 0;
@@ -1752,6 +1756,8 @@ const ESCENARIOS = {
             sunWaveProgress = 0;
             cometProgress = 0;
             cometCooldown = 0;
+            fireworks = [];
+            fireworkCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
             ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreKR = 0;
@@ -1790,6 +1796,8 @@ const ESCENARIOS = {
             sunWaveProgress = 0;
             cometProgress = 0;
             cometCooldown = 0;
+            fireworks = [];
+            fireworkCooldown = 0;
             bubbleFrameCounter = 0;
             pumpBroken = false;
             ballX = null; ballVx = 0; golPausa = 0; scoreMX = 0; scoreKR = 0;
@@ -2044,6 +2052,149 @@ function dibujarIconoBurbuja(x, y, size) {
     ctx.restore();
 }
 
+// Firework color palette
+const FW_COLORS = [
+    { r: 255, g: 50, b: 50 },    // red
+    { r: 255, g: 215, b: 0 },    // gold
+    { r: 50, g: 255, b: 50 },    // green
+    { r: 50, g: 150, b: 255 },   // blue
+    { r: 180, g: 50, b: 255 },   // purple
+    { r: 255, g: 100, b: 200 },  // pink
+    { r: 0, g: 255, b: 255 },    // cyan
+    { r: 255, g: 255, b: 255 },  // white
+];
+
+function spawnFirework(w, h) {
+    let x = aleatorio(w * 0.15, w * 0.85);
+    let y = h * 0.85;
+    let color = FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)];
+    let color2 = FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)];
+    let types = ['classic', 'dual', 'crackle', 'willow', 'ring'];
+    let type = types[Math.floor(Math.random() * types.length)];
+    let fw = {
+        x: x, y: y,
+        vx: aleatorio(-1, 1),
+        vy: aleatorio(-6, -4),
+        phase: 'rising',
+        trail: [],
+        type: type,
+        color: color,
+        color2: color2,
+        particles: []
+    };
+    // Vary speed randomly per firework
+    fw.vy -= Math.random() * 2;
+    return fw;
+}
+
+function spawnExplosion(fw, w, h) {
+    let c1 = fw.color, c2 = fw.color2;
+    let count, speed, spread, gravity, trailChance;
+    switch (fw.type) {
+        case 'classic':
+            count = Math.floor(aleatorio(60, 80));
+            speed = aleatorio(2, 6);
+            spread = Math.PI * 2;
+            gravity = 0.03;
+            trailChance = 0;
+            break;
+        case 'dual':
+            count = Math.floor(aleatorio(80, 100));
+            speed = aleatorio(2, 5);
+            spread = Math.PI * 2;
+            gravity = 0.03;
+            trailChance = 0;
+            break;
+        case 'crackle':
+            count = Math.floor(aleatorio(100, 130));
+            speed = aleatorio(2, 7);
+            spread = Math.PI * 2;
+            gravity = 0.04;
+            trailChance = 0.3;
+            break;
+        case 'willow':
+            count = Math.floor(aleatorio(40, 50));
+            speed = aleatorio(1, 3);
+            spread = Math.PI * 2;
+            gravity = 0.01;
+            trailChance = 0.8;
+            break;
+        case 'ring':
+            count = 40;
+            speed = aleatorio(4, 5);
+            spread = Math.PI * 2;
+            gravity = 0;
+            trailChance = 0;
+            break;
+    }
+    for (let i = 0; i < count; i++) {
+        let angle = (i / count) * spread + (fw.type === 'ring' ? 0 : aleatorio(-0.1, 0.1));
+        let spd = fw.type === 'ring' ? speed : speed * aleatorio(0.6, 1.4);
+        let col = (fw.type === 'dual' && i % 2 === 0) ? c2 : c1;
+        // Crackle: 30% small fast particles
+        if (fw.type === 'crackle' && i < count * 0.3) {
+            spd *= 1.5;
+            fw.particles.push({
+                x: fw.x, y: fw.y,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd,
+                life: Math.floor(aleatorio(15, 30)),
+                maxLife: 30,
+                size: aleatorio(1, 2),
+                r: 255, g: 255, b: 200,
+                trailX: null, trailY: null
+            });
+        } else {
+            fw.particles.push({
+                x: fw.x, y: fw.y,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd,
+                life: Math.floor(aleatorio(30, 60)),
+                maxLife: 60,
+                size: aleatorio(2, 4),
+                r: col.r, g: col.g, b: col.b,
+                trailX: null, trailY: null,
+                hasTrail: Math.random() < trailChance
+            });
+        }
+    }
+}
+
+function updateFireworks(w, h) {
+    for (let i = fireworks.length - 1; i >= 0; i--) {
+        let fw = fireworks[i];
+        if (fw.phase === 'rising') {
+            fw.x += fw.vx;
+            fw.y += fw.vy;
+            fw.vy += 0.02;
+            fw.trail.push({ x: fw.x, y: fw.y });
+            if (fw.trail.length > 12) fw.trail.shift();
+            if (fw.y < h * 0.15) {
+                fw.phase = 'exploding';
+                spawnExplosion(fw, w, h);
+            }
+        } else {
+            let alive = false;
+            for (let p of fw.particles) {
+                if (p.life <= 0) continue;
+                alive = true;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.03;
+                p.vx *= 0.98;
+                p.life--;
+                if (p.hasTrail) {
+                    p.trailX = p.x - p.vx * 0.5;
+                    p.trailY = p.y - p.vy * 0.5;
+                }
+            }
+            if (!alive) {
+                fireworks.splice(i, 1);
+            }
+        }
+    }
+}
+
 function actualizarEscenario2() {
     let w = canvas.width;
     let h = canvas.height;
@@ -2150,6 +2301,39 @@ function actualizarEscenario2() {
             ctx.beginPath();
             ctx.arc(cometX, cometY, 4, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        // Fireworks
+        for (let fw of fireworks) {
+            if (fw.phase === 'rising') {
+                for (let i = 0; i < fw.trail.length; i++) {
+                    let a = (i / fw.trail.length) * 0.4;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${a})`;
+                    ctx.beginPath();
+                    ctx.arc(fw.trail[i].x, fw.trail[i].y, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.arc(fw.x, fw.y, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                for (let p of fw.particles) {
+                    if (p.life <= 0) continue;
+                    let a = p.life / p.maxLife;
+                    let alpha = Math.max(0, a);
+                    ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * Math.max(0.2, alpha), 0, Math.PI * 2);
+                    ctx.fill();
+                    if (p.trailX !== null) {
+                        ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha * 0.3})`;
+                        ctx.beginPath();
+                        ctx.arc(p.trailX, p.trailY, p.size * alpha * 0.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
         }
     }
 
@@ -2783,9 +2967,19 @@ function actualizarEscenario2() {
         } else {
             cometProgress = 0.01;
         }
+        // Fireworks logic
+        if (fireworkCooldown > 0) {
+            fireworkCooldown--;
+        } else {
+            fireworks.push(spawnFirework(w, h));
+            fireworkCooldown = 80 + Math.floor(Math.random() * 140);
+        }
+        updateFireworks(w, h);
     } else {
         cometProgress = 0;
         cometCooldown = 0;
+        fireworks = [];
+        fireworkCooldown = 0;
     }
 
 }
