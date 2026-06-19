@@ -1,5 +1,25 @@
 # Changelog
 
+## feature/mundial — Versión Mundialista
+
+Rama temática con contenido futbolero para el Mundial. Creada a partir de `main` posterior a v1.14.0.
+**No fusionada a main** — disponible como rama `feature/mundial` y tag `mundial-2026`.
+
+### Features
+- **Sistema de equipos MX/KR** — Peces divididos en dos equipos con skins distintivos: Selección Mexicana (`mx`) y Selección de Corea (`kr`, imagen `pez-neon-todos-kr.png`)
+- **Balón de fútbol** — Flota en la superficie del estanque (`img/soccer-ball.png`); los peces MX empujan a la derecha y los KR a la izquierda
+- **Porterías** — Dos porterías en los extremos del estanque (`img/soccer-goal.png`)
+- **Mecánica de goles** — Al entrar el balón en una portería: pausa de ~5s, 32 fuegos artificiales simultáneos, reubicación de peces y balón
+- **Fuegos artificiales** — Explosión multicolor al anotar gol (tipos: classic, dual, crackle, willow, ring)
+- **Estadio** — Silueta de estadio en el horizonte (`img/soccer-stadium.png`)
+- **Marcador** — Tablero `MX X - X KR` en esquina superior derecha del canvas
+
+### Files changed
+- `js/script.js` — +504 líneas (mecánica de balón, porterías, goles, fuegos artificiales, estadio, marcador)
+- `img/pez-neon-todos-kr.png`, `img/soccer-ball.png`, `img/soccer-goal.png`, `img/soccer-stadium.png` — Assets gráficos
+
+---
+
 ## 1.14.0 (no publicado)
 
 ### Features
