@@ -315,3 +315,36 @@ Additionally, state variables (`particulasEsc2`, `sunWaveProgress`, `cometProgre
 - Added `makeEditable('corrVal', ...)` — reverse-computes voltage from current: `V = I / 0.3` for esc2/4, `V = I / m` for esc5 (escenario 5 uses `mSlider.value` for the slope)
 - Added `.inline-edit-value` CSS class: borderless, transparent background, no spin buttons, inherits parent font/color/size to appear seamless with surrounding text
 - Created input is removed on blur, Enter (confirms), or Escape (discards)
+
+## feature/mundial — Versión Mundialista
+
+Rama temporal (`feature/mundial`) con temática futbolera. **No está en `main`** — conservada para actualizaciones futuras.
+Tag de referencia: `mundial-2026`.
+
+### Assets (img/)
+| Archivo | Descripción |
+|---------|-------------|
+| `pez-neon-todos-kr.png` | Skin Corea |
+| `soccer-ball.png` | Balón de fútbol |
+| `soccer-goal.png` | Portería |
+| `soccer-stadium.png` | Silueta de estadio |
+
+### Soccer Ball
+- Flota en la superficie del estanque (oscilación senoidal en Y)
+- Los peces MX empujan el balón hacia la derecha; los KR hacia la izquierda
+- Gol en portería izquierda (x < 7% ancho): anota KR
+- Gol en portería derecha (x > 60% ancho): anota MX
+- Al marcar gol: `golPausa = 300` (~5s), 32 fuegos artificiales, reubicación de peces y balón
+
+### Fireworks
+- 32 fuegos artificiales simultáneos por gol
+- Tipos: classic, dual, crackle, willow, ring
+- Visibles tanto de día como de noche (render fuera del bloque `if (V === 0)`)
+
+### Scoreboard
+- Formato `"MX X - X KR"` en esquina superior derecha del canvas
+- Sin acumulación de puntos (siempre 0-0)
+
+### Branches
+- `feature/mundial` — rama activa para desarrollo mundialista
+- Tag `mundial-2026` — punto de referencia permanente

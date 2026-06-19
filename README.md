@@ -252,6 +252,17 @@ El proyecto usa etiquetas (`tags`) con formato `Pecera_vX.Y.Z` siguiendo [SemVer
 | v1.12.0 | PWA dinámico (base path automático, manifest Blob URL con origin, SW con scope dinámico), meta tags iOS, filtro SW para chrome-extension, iconos actualizados, rename landing→index / index→app |
 | v1.14.0 | Sistema de especies: `ESPECIES` array, `generarPeces()`, `Pez.especieId`, 3 skins (Alternativo, MX, BR) |
 
+## Versión Mundialista (feature/mundial)
+
+Rama temporal con temática futbolera para el Mundial. **No está en `main`**.
+- **Balón de fútbol** que flota en el estanque y los peces lo empujan
+- **Dos equipos**: MX empuja derecha, KR empuja izquierda
+- **Porterías** en ambos extremos con mecánica de goles
+- **32 fuegos artificiales** al anotar gol
+- **Estadio** y **marcador** MX-KR
+
+Acceso: `git checkout feature/mundial` o `git checkout mundial-2026` (tag permanente)
+
 ## Historial de cambios
 
 Ver [`CHANGELOG.md`](CHANGELOG.md) para el registro completo de versiones.
