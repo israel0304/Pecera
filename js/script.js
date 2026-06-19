@@ -5,468 +5,3952 @@ let boton3 = document.getElementById("point");
 let cajaPeces = document.getElementById("npeces");
 let cajaTemperatura = document.getElementById("temp");
 let textSaturacion = document.getElementById("sat");
-let rowHeight = document.getElementById('contenedor').getBoundingClientRect();
+let tempValSpan = document.getElementById("tempVal");
+let npecesValSpan = document.getElementById("npecesVal");
+let tpecesValSpan = document.getElementById("tpecesVal");
 let btnReset = document.getElementById('reset');
 let cajaSize = document.getElementById('tpeces');
+let playBtn = document.getElementById('playTemp');
+let tempInterval = null;
+let isPlaying = false;
+let escenarioActual = 2;
+let box = document.getElementById('box');
+let grafica = null;
+let nivelAgua = 100;
+const aguaCapacidadMax = 200;
+let arrastrandoTemp = false;
+let arrastrandoNivel = false;
+let esc3CanvasUI = false;
+let nivelAguaLine = null;
+var contadorMuerte = -1;
+var intervaloMuerte = null;
+var muertePorAgua = false;
 
 let image = new Image();
 let imgPecera = new Image();
-canvas.width=innerWidth;
-canvas.height=canvas.width/2
+let imgPanel = new Image();
+let imgBomba = new Image();
+imgPanel.src = './img/panel_solar.png';
+imgBomba.src = './img/bomba_agua.png';
+let imgBombaIssue = new Image();
+imgBombaIssue.src = './img/bomba_agua_issue.png';
+
+/** @species Available fish species for 2D canvas fish.
+ *  Each species defines a unique skin image and behavioral parameters.
+ *  - `default`: Alternativo (original neon tetra skin)
+ *  - `mx`: Selección Mexicana
+ *  - `br`: Selección Brasileña
+ *  Pez constructor accepts especieId to select from this array.
+ *  3D fish (crearPez3D) ignore species — use hardcoded vertex colors. */
+const ESPECIES = [
+    { id: 'default', nombre: 'Alternativo',  skin: './img/pez-neon-todos.png',    tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
+    { id: 'mx',      nombre: 'Selección Mexicana', skin: './img/pez-neon-todos-mx.png', tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
+    { id: 'br',      nombre: 'Selección Brasileña',skin: './img/pez-neon-todos-br.png', tamanoBase: 4, velMax: 0.5, tempMin: 22, tempMax: 28, tempOptimo: [22, 28] },
+];
+
+let contenedorCanvas = document.getElementById('contenedorCanvas');
+let contenedorGrafica = document.getElementById('contenedorGrafica');
+
+function redimensionarCanvas() {
+    canvas.width = 1600;
+    if (canvas.classList.contains('canvas--estanque')) {
+        canvas.height = Math.round(1600 * 2 / 3);
+    } else {
+        canvas.height = 800;
+    }
+}
+redimensionarCanvas();
 
 // event listeers
 boton3.addEventListener('click', crearPunto);
-cajaPeces.addEventListener('change',pecesDinamicos);
-cajaTemperatura.addEventListener('change', tempDinamica);
+cajaPeces.addEventListener('input', pecesDinamicos);
+cajaTemperatura.addEventListener('input', tempDinamica);
 cajaTemperatura.addEventListener('keydown', pressIntro);
-cajaSize.addEventListener('change', pecesDinamicos);
-btnReset.addEventListener('click', reiniciar);
+cajaSize.addEventListener('input', pecesDinamicos);
+btnReset.addEventListener('click', function () {
+    if (escenarioActual === 3) reiniciar3();
+    else reiniciar();
+});
+playBtn.addEventListener('click', toggleTempPlay);
 
 
 
 // clases
 
 class Vector {
-    constructor(x,y){
-         this.x=x;
-         this.y=y;
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
     }
 
-    add(v){
-         this.x = this.x + v.x;
-         this.y = this.y + v.y;
+    add(v) {
+        this.x = this.x + v.x;
+        this.y = this.y + v.y;
     }
 
-    res(v){
-         this.x = this.x - v.x;
-         this.y = this.y - v.y;
+    res(v) {
+        this.x = this.x - v.x;
+        this.y = this.y - v.y;
     }
 
-    mul(n){
-       this.x = this.x * n;
-       this.y = this.y * n;
+    mul(n) {
+        this.x = this.x * n;
+        this.y = this.y * n;
     }
 
-    div(n){
+    div(n) {
         this.x = this.x / n;
         this.y = this.y / n;
-     }
-
-
-    mag(){
-        return Math.sqrt(Math.pow(this.x,2)+Math.pow(this.y,2))
     }
-    norm(){
-         let m = this.mag();
-         if(m>0){
+
+
+    mag() {
+        return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2))
+    }
+    norm() {
+        let m = this.mag();
+        if (m > 0) {
             this.div(m);
-         }
+        }
     }
-    limit(h){
-        if (this.mag()>h){
+    limit(h) {
+        if (this.mag() > h) {
             this.norm();
             this.mul(h);
         }
     }
 
-    static add(v1,v2){
-        let v3 = new Vector(v1.x+v2.x,v1.y+v2.y);
+    static add(v1, v2) {
+        let v3 = new Vector(v1.x + v2.x, v1.y + v2.y);
         return v3;
     }
 
-    static res(v1,v2){
-        let v3 = new Vector(v1.x-v2.x,v1.y-v2.y);
+    static res(v1, v2) {
+        let v3 = new Vector(v1.x - v2.x, v1.y - v2.y);
         return v3;
     }
-   }
+}
 
 
-class Pez { 
-    constructor(t){
+class Pez {
+    /** @param {number} t - Fish size offset (actual size = t + 7)
+     *  @param {string} [especieId='default'] - Species ID from ESPECIES array.
+     *  Skin image and velMax are loaded from the matching species entry. */
+    constructor(t, especieId) {
         this.canvas = canvas;
         this.ctx = ctx;
-        this.image = image;
-        this.image.src = './img/pez-neon_todos.png';
-        this.size = Number(t)+7;
-        this.dWidth = (this.canvas.width * this.size)/100 //aleatorio((this.canvas.width * 8)/100,(this.canvas.width * 15)/100);
-        this.dHeight = this.dWidth/2;
+        const especie = ESPECIES.find(e => e.id === (especieId || 'default')) || ESPECIES[0];
+        this.especie = especie;
+        this.image = new Image();
+        this.image.src = especie.skin;
+        this.size = Number(t) + 7;
+        this.dWidth = (canvas.width * this.size) / 100
+        this.dHeight = this.dWidth / 2;
         this.sWidth = 540;
         this.sHeight = 290;
         this.sy = 0
         this.imageDirection = 'izquierda';
         this.vivir = true;
         this.salud = 'sano'
+        this.sinAgua = false;
         // Area de nado
-        this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.dWidth;
-        this.paddingIzq = (this.canvas.width * 5)/100;
-        this.paddingArr = (this.canvas.height * 11)/100;
-        this.paddingAba = this.canvas.height - ((this.canvas.height * 11)/100) - this.dHeight;
+        this.paddingDer = canvas.width - ((canvas.width * 5) / 100) - this.dWidth;
+        this.paddingIzq = (canvas.width * 5) / 100;
+        this.paddingArr = (canvas.height * 11) / 100;
+        this.paddingAba = canvas.height - ((canvas.height * 11) / 100) - this.dHeight;
 
         // Valores de nado 
-        this.posicion = new Vector(this.validarPosicionX(),this.validarPosicionY());
-        this.velocidad = new Vector(0,0);
+        this.posicion = new Vector(this.validarPosicionX(), this.validarPosicionY());
+        this.velocidad = new Vector(0, 0);
         this.velocidad.limit(0.4);
-        this.aceleracion = new Vector(0.01,0.01);  
-        this.dir = new Vector(signo()*Math.random()*canvas.width/2,signo()*Math.random()*canvas.height/2); 
-        
+        this.aceleracion = new Vector(0.01, 0.01);
+        this.dir = new Vector(signo() * Math.random() * canvas.width / 2, signo() * Math.random() * canvas.height / 2);
+        this.velMax = especie.velMax;
+
     }
 
     aparecer() {
         this.enfermar();
+        this.aplicarSinAgua();
         // Dirección del pez
-        if( this.aceleracion.x < 0){
+        if (this.aceleracion.x < 0) {
             this.imageDirection = 'izquierda';
-        }else if(this.aceleracion.x > 0){
+        } else if (this.aceleracion.x > 0) {
             this.imageDirection = 'derecha';
         }
-        
+
         // Direccion de imagen Pez
         // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-        
-        if(this.imageDirection==='derecha' & this.vivir===true){
-            this.ctx.drawImage(this.image,0,this.sy,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
-        }else if(this.imageDirection==='derecha' & this.vivir===false){
-            this.ctx.drawImage(this.image,this.sWidth*2,0,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
+
+        if (this.imageDirection === 'derecha' & this.vivir === true) {
+            if (this.sinAgua) {
+                this.ctx.drawImage(this.image, this.sWidth * 2, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            } else {
+                this.ctx.drawImage(this.image, 0, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            }
+        } else if (this.imageDirection === 'derecha' & this.vivir === false) {
+            this.ctx.drawImage(this.image, this.sWidth * 2, 0, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
         }
 
-        if (this.imageDirection==='izquierda' & this.vivir===true){
-            this.ctx.drawImage(this.image,this.sWidth,this.sy,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
-        }else if(this.imageDirection==='izquierda' & this.vivir===false){
-            this.ctx.drawImage(this.image,this.sWidth*3,0,this.sWidth,this.sHeight,this.posicion.x,this.posicion.y,this.dWidth,this.dHeight);
+        if (this.imageDirection === 'izquierda' & this.vivir === true) {
+            if (this.sinAgua) {
+                this.ctx.drawImage(this.image, this.sWidth * 3, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            } else {
+                this.ctx.drawImage(this.image, this.sWidth, this.sy, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
+            }
+        } else if (this.imageDirection === 'izquierda' & this.vivir === false) {
+            this.ctx.drawImage(this.image, this.sWidth * 3, 0, this.sWidth, this.sHeight, this.posicion.x, this.posicion.y, this.dWidth, this.dHeight);
         }
-    } 
+    }
 
 
-    nadar(){
+    nadar() {
         this.aceleracion = this.dir;
         this.velocidad.add(this.aceleracion);
-        this.velocidad.limit(0.5);
+        this.velocidad.limit(this.velMax);
         this.posicion.add(this.velocidad);
         this.chocar();
     }
-  
+
 
     chocar() {
 
-        if(this.posicion.x > this.paddingDer || this.posicion.x < this.paddingIzq) {
+        if (this.posicion.x > this.paddingDer) {
             this.velocidad.x = -this.velocidad.x;
             this.aceleracion.x = -this.aceleracion.x;
+            this.posicion.x = this.paddingDer;
         }
-        if(this.posicion.y > this.paddingAba || this.posicion.y < this.paddingArr) {
+        if (this.posicion.x < this.paddingIzq) {
+            this.velocidad.x = -this.velocidad.x;
+            this.aceleracion.x = -this.aceleracion.x;
+            this.posicion.x = this.paddingIzq;
+        }
+        if (this.posicion.y > this.paddingAba) {
             this.velocidad.y = -this.velocidad.y;
             this.aceleracion.y = -this.aceleracion.y;
+            this.posicion.y = this.paddingAba;
+        }
+        if (this.posicion.y < this.paddingArr) {
+            this.velocidad.y = -this.velocidad.y;
+            this.aceleracion.y = -this.aceleracion.y;
+            this.posicion.y = this.paddingArr;
         }
 
     }
 
-    enfermar(){
-        if (this.salud === 'enfermo'){
+    enfermar() {
+        if (this.salud === 'enfermo') {
             this.sy = 290
-            this.dWidth = aleatorio((this.canvas.width * this.size)/100,(this.canvas.width * this.size*(18/20))/100);
-            this.dHeight = this.dWidth/2;
-        }else{
+            this.dWidth = aleatorio((canvas.width * this.size) / 100, (canvas.width * this.size * (18 / 20)) / 100);
+            this.dHeight = this.dWidth / 2;
+        } else {
             this.sy = 0
-            this.dWidth = (this.canvas.width * this.size)/100
-            this.dHeight = this.dWidth/2;
+            this.dWidth = (canvas.width * this.size) / 100
+            this.dHeight = this.dWidth / 2;
         }
     }
 
-    morir(){
+    aplicarSinAgua() {
+        if (this.sinAgua && this.vivir) {
+            this.dWidth = aleatorio((canvas.width * this.size) / 100, (canvas.width * this.size * (18 / 20)) / 100);
+            this.dHeight = this.dWidth / 2;
+            this.sy = 0;
+        }
+    }
+
+    morir() {
         this.vivir = false;
-        let pMuerto=new Vector(this.posicion.x,this.paddingArr);//cambia direccion de vector en posicion.y a -1
-        this.dir = Vector.res(pMuerto,this.posicion);
+        let pMuerto = new Vector(this.posicion.x, this.paddingArr);//cambia direccion de vector en posicion.y a -1
+        this.dir = Vector.res(pMuerto, this.posicion);
         this.dir.norm();
         this.dir.mul(1);
         this.nadar();
 
     }
 
-    validarPosicionX(){
-        let valx = aleatorio(this.paddingIzq,this.paddingDer);
+    validarPosicionX() {
+        let valx = aleatorio(this.paddingIzq, this.paddingDer);
         return valx;
     }
 
-    validarPosicionY(){
-        let valy = aleatorio(this.paddingArr,this.paddingAba);
+    validarPosicionY() {
+        let valy = aleatorio(this.paddingArr, this.paddingAba);
         return valy;
     }
-    
+
 }
 
 class Burbuja {
     constructor() {
-      this.canvas = canvas;
-      this.canvas.width = canvas.width;
-      this.canvas.height = canvas.height;
-      this.radius = aleatorio((this.canvas.width * 0.3)/100, (this.canvas.height * 2)/100);
-      // Area de burbujas
-      this.paddingDer = this.canvas.width - ((this.canvas.width * 5)/100) - this.radius;
-      this.paddingIzq = (this.canvas.width * 5)/100;
-      this.paddingArr = (this.canvas.height * 12)/100;
-      this.paddingAba = this.canvas.height - ((this.canvas.height * 11)/100) - this.radius;
-      //Posición burbuja
-      this.x = aleatorio(this.paddingIzq, this.paddingDer);
-      this.y = aleatorio(this.paddingArr, this.paddingAba);
-      this.speedX = aleatorio(-4, 4);
-      this.speedY = aleatorio(1, 1);
-      
+        this.canvas = canvas;
+        this.radius = aleatorio((canvas.width * 0.3) / 100, (canvas.height * 2) / 100);
+        // Area de burbujas
+        this.paddingDer = canvas.width - ((canvas.width * 5) / 100) - this.radius;
+        this.paddingIzq = (canvas.width * 5) / 100;
+        this.paddingArr = (canvas.height * 12) / 100;
+        this.paddingAba = canvas.height - ((canvas.height * 11) / 100) - this.radius;
+        //Posición burbuja
+        this.x = aleatorio(this.paddingIzq, this.paddingDer);
+        this.y = aleatorio(this.paddingArr, this.paddingAba);
+        this.speedX = aleatorio(-4, 4);
+        this.speedY = aleatorio(1, 1);
+
     }
     reset = () => {
-      if (this.y < this.paddingArr) {
-        this.y = this.paddingAba;
-        this.x = aleatorio(0,canvas.width);
-      }
-      if(this.x > this.paddingDer){
-        this.x = this.paddingIzq;
-      }
-      if(this.x < this.paddingIzq){
-        this.x = this.paddingDer;
-      }
+        if (this.y < this.paddingArr) {
+            this.y = this.paddingAba;
+            this.x = aleatorio(0, canvas.width);
+        }
+        if (this.x > this.paddingDer) {
+            this.x = this.paddingIzq;
+        }
+        if (this.x < this.paddingIzq) {
+            this.x = this.paddingDer;
+        }
     };
     move = () => {
-      this.y -= this.speedY;
-      this.speedX+=0.01;
-      this.x += Math.cos(this.speedX);
+        this.y -= this.speedY;
+        this.speedX += 0.01;
+        this.x += Math.cos(this.speedX);
     };
     draw = () => {
-      this.move();
-      this.reset();
-      ctx.fillStyle = "#51d1f6";
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.closePath();
-      ctx.fillStyle = "white";
-      ctx.beginPath();
-      ctx.arc(this.x-2, this.y-3, this.radius/4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.closePath();
+        this.move();
+        this.reset();
+        ctx.fillStyle = "#51d1f6";
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(this.x - 2, this.y - 3, this.radius / 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
     };
-  }
+}
 
 
 class Pecera {
-    constructor(temp){
-        this.ancho = canvas.width;
-        this.alto = canvas.width/2;
+    constructor(temp) {
         this.image = imgPecera;
         this.image.src = './img/pecera.png';
         this.texto = textSaturacion
         this.ctx = ctx;
-        this.temperatura = temp;
+        this.temperatura = Number(temp);
         this.saturacion = this.calSaturacion(this.temperatura);
     }
 
-    aparecer(){
+    aparecer() {
         this.saturacion = this.calSaturacion(this.temperatura);
-        this.texto.innerHTML = this.saturacion;      
-        this.ctx.drawImage(this.image,0,0,this.ancho,this.alto); 
+        this.texto.innerHTML = this.saturacion;
+        this.ctx.drawImage(this.image, 0, 0, canvas.width, canvas.height);
     }
 
-    calSaturacion(t){
-        this.sat = -0.0001*(Math.pow(t,3))+0.01*(Math.pow(t,2))-0.39*(t)+14.57
+    calSaturacion(t) {
+        this.sat = -0.0001 * (Math.pow(t, 3)) + 0.01 * (Math.pow(t, 2)) - 0.39 * (t) + 14.57
         return parseFloat(this.sat.toFixed(2));
     }
 
 }
 
-class Grafica{
-    constructor(id,idRowParent,pecera,paramJSX){
+class Grafica {
+    constructor(id, pecera, paramJSX) {
         this.id = id
-        this.board = JXG.JSXGraph.initBoard(this.id,paramJSX);
         this.place = document.getElementById(this.id);
-        this.idRowParent = document.getElementById(idRowParent);
-        this.height = this.idRowParent.getBoundingClientRect().height;
         this.pecera = pecera;
-        this.place.style.height = `${this.height}px`;
+        this.board = JXG.JSXGraph.initBoard(this.id, paramJSX);
+        this.puntos = [];
     }
 
-    graficarPunto(){
-        this.pointColor = this.pecera.temperatura >= 22 & this.pecera.temperatura <= 28?'#5dc1b9':'#fd7b7b';
-        this.board.create(
-            'point', 
-            [this.pecera.temperatura,this.pecera.saturacion],
+    graficarPunto() {
+        var x, y, color;
+        if (escenarioActual === 3) {
+            x = Number(cajaPeces.value);
+            y = Number(cajaSize.value) * 3 * x;
+            var colores = ['#92c9ff','#46a3ff','#007df9','#003161','#0082ae','#00bbfa','#48ffff'];
+            var t = Number(cajaSize.value);
+            color = colores[Math.min(Math.max(t, 1), 7) - 1];
+        } else {
+            x = this.pecera.temperatura;
+            y = this.pecera.saturacion;
+            color = x >= 22 && x <= 28 ? '#3b82f6' : '#fd7b7b';
+        }
+        this.pointColor = color;
+        let p = this.board.create(
+            'point',
+            [x, y],
             {
-                name:'', 
-                strokecolor: this.pointColor,
-                fillColor: this.pointColor,
-                fixed : true
+                name: '',
+                strokecolor: color,
+                fillColor: color,
+                fixed: true
             }
-            ); 
+        );
+        let label = this.board.create('text',
+            [
+                function () { return p.X() + 0.3; },
+                function () { return p.Y() + 1.5; },
+                '(' + x.toFixed(1) + ', ' + y.toFixed(1) + ')'
+            ],
+            { visible: false, fontSize: 12, fixed: true, cssClass: '' }
+        );
+        let labelTimeout = null;
+        p.on('over', function () {
+            label.setAttribute({ visible: true });
+            if (labelTimeout) { clearTimeout(labelTimeout); labelTimeout = null; }
+        });
+        p.on('out', function () {
+            if (!labelTimeout) {
+                label.setAttribute({ visible: false });
+            }
+        });
+        p.on('down', function () {
+            label.setAttribute({ visible: true });
+            if (labelTimeout) clearTimeout(labelTimeout);
+            labelTimeout = setTimeout(function () {
+                label.setAttribute({ visible: false });
+                labelTimeout = null;
+            }, 2000);
+        });
+        p._originalColor = color;
+        actualizarColorPuntoEsc3(p);
+        this.puntos.push(p);
     }
 
- }
+}
 
 ///  Funciones
-cajaPeces.value=1;
-cajaTemperatura.value=23;
-cajaSize.value = 1
+cajaPeces.value = 10;
+cajaTemperatura.value = 23;
+cajaSize.value = 4
+
+    tempValSpan.textContent = cajaTemperatura.value;
+npecesValSpan.textContent = cajaPeces.value;
+    tpecesValSpan.textContent = cajaSize.value;
 
 
 ;
 let pecera = new Pecera(cajaTemperatura.value);
-let peces = generar(Pez,cajaPeces.value,cajaSize.value);
-let burbujas = generar (Burbuja,validarBurbujasIniciales(cajaTemperatura.value));
+let peces = generarPeces(Number(cajaPeces.value), Number(cajaSize.value));
+let burbujas = generar(Burbuja, validarBurbujasIniciales(cajaTemperatura.value));
 
 
 
 
-function pecesDinamicos(e){
+function pecesDinamicos(e) {
     e.preventDefault();
-    if(cajaPeces.value < 0){
-        alert('Los peces no pueden menores a 0');
+    if (cajaPeces.value < 0) {
+        mostrarToast('Los peces no pueden ser menores a 0', 'error');
         cajaPeces.value = 0;
     }
-    if(cajaSize.value>7){
-        alert('Los peces no pueden ser mayores a 7 cm');
+    if (cajaSize.value > 7) {
+        mostrarToast('Los peces no pueden ser mayores a 7 cm', 'error');
         cajaSize.value = 7;
     }
-    if(cajaSize.value<0){
-        alert('Los peces no pueden ser menores a 0 cm');
+    if (cajaSize.value < 0) {
+        mostrarToast('Los peces no pueden ser menores a 0 cm', 'error');
         cajaSize.value = 0;
     }
-    let nuevop = generar(Pez,cajaPeces.value,cajaSize.value);
-        peces = nuevop;
+    npecesValSpan.textContent = cajaPeces.value;
+tpecesValSpan.textContent = cajaSize.value;
+    if (escenarioActual === 3) {
+        litrosDinamicos();
+        actualizarAdvertenciaLN();
+    }
+    let nuevop = generarPeces(Number(cajaPeces.value), Number(cajaSize.value));
+    peces = nuevop;
 }
 
-function tempDinamica(e){
-    pecera.temperatura = cajaTemperatura.value;
+function tempDinamica(e) {
+    if (isPlaying && e && e.type === 'input' && e.isTrusted) {
+        clearInterval(tempInterval);
+        isPlaying = false;
+        playBtn.textContent = '▶';
+        playBtn.classList.remove('btn-danger');
+        playBtn.classList.add('btn-success');
+    }
+    pecera.temperatura = Number(cajaTemperatura.value);
     pecera.calSaturacion(pecera.temperatura);
     burbujasDinamicas();
-    pressIntro(e);
     resucitarPez();
+    tempValSpan.textContent = cajaTemperatura.value;
 }
 
-function burbujasDinamicas(){
+function burbujasDinamicas() {
     let nuevasBurbujas = Math.floor(pecera.saturacion);
-    if (pecera.temperatura<22){
-        burbujas = generar (Burbuja,nuevasBurbujas*50);
-    }else if(pecera.temperatura>28){
-        burbujas = generar (Burbuja,nuevasBurbujas-5);
-    } else{
-        burbujas = generar (Burbuja,nuevasBurbujas+50)
-    }
-}
-
-function validarBurbujasIniciales(b){
-    if (b<22){
-        return Math.floor(pecera.saturacion)*50
-    }else if(b>28){
-        return Math.floor(pecera.saturacion)-5
+    if (pecera.temperatura < 22) {
+        burbujas = generar(Burbuja, nuevasBurbujas * 50);
+    } else if (pecera.temperatura > 28) {
+        burbujas = generar(Burbuja, nuevasBurbujas - 5);
     } else {
-        return Math.floor(pecera.saturacion)+50
+        burbujas = generar(Burbuja, nuevasBurbujas + 50)
     }
 }
 
-function resucitarPez(){
+function validarBurbujasIniciales(b) {
+    if (b < 22) {
+        return Math.floor(pecera.saturacion) * 50
+    } else if (b > 28) {
+        return Math.floor(pecera.saturacion) - 5
+    } else {
+        return Math.floor(pecera.saturacion) + 50
+    }
+}
+
+/** @function resucitarPez
+ *  Revives all dead fish (vivir=true), randomizes direction. */
+function resucitarPez() {
     for (let i = 0; i < peces.length; i++) {
         peces[i].vivir = true;
-        peces[i].dir = new Vector(signo()*Math.random()*canvas.width/2,signo()*Math.random()*canvas.height/2);   
-    } 
+        peces[i].dir = new Vector(signo() * Math.random() * canvas.width / 2, signo() * Math.random() * canvas.height / 2);
+    }
 }
 
-function generar(obj,n,param){
+/** @function generar
+ *  Generic factory for non-fish objects (Burbuja).
+ *  Use generarPeces() for fish (supports species distribution).
+ *  @param {class} obj - Class constructor
+ *  @param {number} n - Number of instances
+ *  @param {*} param - Parameter passed to constructor */
+function generar(obj, n, param) {
     let p = [];
-    for(i=0;i<n;i++){
+    for (i = 0; i < n; i++) {
         p[i] = new obj(param);
     }
     return p;
 }
 
-function aleatorio(min,max){
-    return Math.floor(Math.random() * (max-min) + min);
+/** @function generarPeces
+ *  Creates n fish of size t with given species distribution.
+ *  @param {number} n - Number of fish to create
+ *  @param {number} t - Size offset (passed to Pez constructor)
+ *  @param {Array|Object} [especies] - Species distribution:
+ *    Array: evenly distributes IDs across n fish
+ *    Object {id: count}: exact counts per species
+ *    Falsy/omitted: all 'default'
+ *  @returns {Pez[]} Array of Pez instances */
+function generarPeces(n, t, especies) {
+    if (n <= 0) return [];
+    let ids = [];
+
+    if (Array.isArray(especies)) {
+        if (!especies.length) return [];
+        let k = especies.length;
+        for (let i = 0; i < n; i++)
+            ids.push(especies[Math.floor(i * k / n)]);
+    } else if (typeof especies === 'object' && especies !== null) {
+        for (let [id, count] of Object.entries(especies))
+            for (let j = 0; j < count; j++)
+                ids.push(id);
+    } else {
+        for (let i = 0; i < n; i++)
+            ids.push('default');
+    }
+
+    let p = [];
+    for (let i = 0; i < n; i++)
+        p[i] = new Pez(t, ids[i]);
+    return p;
 }
 
-function signo(){
-    let s = aleatorio(0,2)==0?-1:1;
+function aleatorio(min, max) {
+    return Math.floor(Math.random() * (max - min) + min);
+}
+
+function signo() {
+    let s = aleatorio(0, 2) == 0 ? -1 : 1;
     return s;
 }
 
-function alerta(){
-    alert("¡Precaución!\nTodos Los peces van a morir");
-    for(i=0;i<peces.length;i++){
-        peces[i].vivir=false;
-        peces[i].salud='sano';
-    }
-}
-function enfermar(){
-    if(peces[0].vivir === true)
-    for(i=0;i<peces.length;i++){
-        peces[i].salud='enfermo';
-    }else{
-        alert('Los peces ya estan muertos, ¡no pueden enfermar!');
-    }
-    
+/** @function mostrarToast
+ *  Shows a Material-style toast notification.
+ *  @param {string} mensaje - Message text
+ *  @param {('success'|'error'|'warning'|'info')} [tipo='info'] - Toast type
+ *  @param {number} [duracion=4000] - Auto-dismiss time in ms */
+function mostrarToast(mensaje, tipo, duracion) {
+    tipo = tipo || 'info';
+    duracion = duracion || 4000;
+    let container = document.getElementById('toastContainer');
+    if (!container) return;
+    let toast = document.createElement('div');
+    toast.className = 'custom-toast custom-toast--' + tipo;
+    toast.textContent = mensaje;
+    container.appendChild(toast);
+    setTimeout(function () {
+        toast.classList.add('toast--dismissing');
+        setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }, duracion);
 }
 
-function actualizar(){
-    ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
-    pecera.aparecer();
-    
-    for(i=0;i<burbujas.length;i++){
-        burbujas[i].draw();
+/** @function alerta
+ *  Kills all fish (vivir=false), shows warning toast. */
+function alerta() {
+    mostrarToast("Precauci\u00f3n: Todos los peces van a morir", 'warning');
+    for (i = 0; i < peces.length; i++) {
+        peces[i].vivir = false;
+        peces[i].salud = 'sano';
     }
-    
-    for(i=0;i<peces.length;i++){
-        peces[i].aparecer();
-
-        if(pecera.temperatura<22){
+}
+/** @function enfermar
+ *  Sets all living fish health to 'enfermo'.
+ *  Shows error toast if all fish are already dead. */
+function enfermar() {
+    if (peces[0].vivir === true)
+        for (i = 0; i < peces.length; i++) {
             peces[i].salud = 'enfermo';
-            peces[i].nadar();
-        }else{
-            peces[i].salud = 'sano';
-            peces[i].nadar();
-        }
- 
-        if(pecera.temperatura>28){
-            peces[i].nadar();
-            peces[i].morir();
-             }else{
-            peces[i].nadar();
-         }  
-     }
+        } else {
+        mostrarToast('Los peces ya estan muertos, no pueden enfermar', 'error');
+    }
 
-    
-    
+}
+
+/** @function actualizar
+ *  Main render loop (requestAnimationFrame). Clears canvas, applies zoom/pan
+ *  transforms via ctx.save/translate/scale/restore, dispatches per-scenario
+ *  rendering (Pecera, Estanque) and Esc3 canvas UI overlay. */
+function actualizar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(panX, panY);
+    ctx.scale(zoomScale, zoomScale);
+    if (escenarioActual === 1 || escenarioActual === 3) {
+        pecera.aparecer();
+        if (esc3CanvasUI) {
+            var wt3 = canvas.height * 0.15;
+            var wb3 = canvas.height * 0.90;
+            var wh3 = wb3 - wt3;
+            var fillY3 = wb3 - wh3 * (nivelAgua / 100);
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.3)';
+            var mIzq3 = canvas.width * 0.02;
+            var mDer3 = canvas.width * 0.02;
+            ctx.fillRect(mIzq3, fillY3, canvas.width - mIzq3 - mDer3, wb3 - fillY3);
+        }
+        for (i = 0; i < burbujas.length; i++) {
+            if (esc3CanvasUI) {
+                if (nivelAgua > 1) {
+                    burbujas[i].move();
+                    if (burbujas[i].y < fillY3) {
+                        burbujas[i].y = wb3 - Math.random() * (wb3 - fillY3);
+                    }
+                    burbujas[i].reset();
+                    burbujas[i].draw();
+                }
+            } else {
+                burbujas[i].draw();
+            }
+        }
+        for (i = 0; i < peces.length; i++) {
+            let pez = peces[i];
+            pez.velMax = 0.5;
+            if (cursorX !== null) {
+                let dx = pez.posicion.x - cursorX;
+                let dy = pez.posicion.y - cursorY;
+                if (dx * dx + dy * dy < 40000) {
+                    let away = new Vector(dx, dy);
+                    away.norm();
+                    away.mul(5);
+                    pez.dir = away;
+                    pez.velMax = 4;
+                }
+            }
+            pez.aparecer();
+            if (pecera.temperatura < 22) {
+                pez.salud = 'enfermo';
+                pez.nadar();
+            } else {
+                pez.salud = 'sano';
+                pez.nadar();
+            }
+            if (pecera.temperatura > 28) {
+                pez.nadar();
+                pez.morir();
+            } else {
+                if (!pez.vivir && !(muertePorAgua && escenarioActual === 3)) {
+                pez.vivir = true;
+                if (escenarioActual === 3) {
+                    pez.dir = new Vector((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+                    pez.dir.norm();
+                }
+            }
+                pez.nadar();
+            }
+        }
+    } else if (escenarioActual === 2 || escenarioActual === 4 || escenarioActual === 5) {
+        actualizarEscenario2();
+    }
+    if (esc3CanvasUI) {
+        var wt = canvas.height * 0.15;
+        var wb = canvas.height * 0.85;
+        var wh = wb - wt;
+        var waterSurfaceY = wb - wh * (nivelAgua / 100);
+        var npeces3 = Number(cajaPeces.value);
+        var tpeces3 = Number(cajaSize.value);
+        var LN3 = npeces3 * tpeces3 * 3;
+        var L3 = nivelAgua * 2;
+        peces.forEach(function (p) {
+            var aguaHeight = wb - waterSurfaceY;
+            if (aguaHeight < p.dHeight && LN3 > L3) {
+                p.sinAguaY = waterSurfaceY - p.dHeight / 2;
+                p.sinAgua = true;
+                p.paddingArr = p.sinAguaY;
+                p.paddingAba = p.sinAguaY;
+                if (muertePorAgua && !p.vivir) {
+                    var target = new Vector(p.posicion.x, p.paddingArr);
+                    p.dir = Vector.res(target, p.posicion);
+                    p.dir.norm();
+                    p.dir.mul(1);
+                }
+            } else {
+                p.sinAgua = false;
+                p.paddingArr = waterSurfaceY + p.dHeight / 2;
+                p.paddingAba = wb - p.dHeight / 2;
+                if (muertePorAgua && !p.vivir) {
+                    var target = new Vector(p.posicion.x, p.paddingArr);
+                    p.dir = Vector.res(target, p.posicion);
+                    p.dir.norm();
+                    p.dir.mul(1);
+                }
+            }
+        });
+    }
+
+    ctx.restore();
+
+    if (esc3CanvasUI) {
+        dibujarEsc3UI();
+    }
+
+    if (escenarioActual === 6 && threeRenderer) {
+        threeControls.update();
+        animarOlas();
+        animarPeces3D();
+        threeRenderer.render(threeScene, threeCamera);
+    }
+
     requestAnimationFrame(actualizar);
 }
 
 requestAnimationFrame(actualizar);
 
-function reiniciar(){
-    window.location.reload();
+function dibujarEsc3UI() {
+    var w = canvas.width, h = canvas.height;
+
+    // --- Temperature slider (horizontal, top) ---
+    var sl = w * 0.12, sr = w * 0.75, st = h * 0.18, sh = 16;
+    var tempVal = Number(cajaTemperatura.value);
+    var tFrac = Math.max(0, Math.min(1, (tempVal - 10) / 35));
+    var thumbX = sl + tFrac * (sr - sl);
+    var nivelLitros = nivelAgua * 2;
+    ctx.fillStyle = '#ddd';
+    ctx.beginPath();
+    ctx.roundRect(sl, st, sr - sl, sh, 8);
+    ctx.fill();
+    var grad = ctx.createLinearGradient(sl, 0, sr, 0);
+    grad.addColorStop(0, '#0d47a1');
+    grad.addColorStop(tFrac, '#0d47a1');
+    grad.addColorStop(Math.min(tFrac + 0.001, 1), '#e2e8f0');
+    grad.addColorStop(1, '#e2e8f0');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(sl, st, sr - sl, sh, 8);
+    ctx.fill();
+    // Thumb
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 4;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(thumbX, st + sh / 2, 42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = '#0d47a1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(thumbX, st + sh / 2, 42, 0, Math.PI * 2);
+    ctx.stroke();
+    // Floating label above thumb
+    var bubY = st + sh / 2 - 70;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = '#0d47a1';
+    ctx.beginPath();
+    ctx.roundRect(thumbX - 65, bubY - 24, 130, 48, 10);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 40px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(tempVal + '°C', thumbX, bubY + 10);
+
+    // --- SO label (below temp slider) ---
+    var so = pecera.saturacion.toFixed(2);
+    ctx.fillStyle = '#0d47a1';
+    ctx.font = 'bold 30px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('SO: ' + so + ' mg/L', sl, st + sh + 38);
+
+    // --- Water level slider (vertical, right) ---
+    var sx = w * 0.95, stop = h * 0.15, sbottom = h * 0.85, sw = 20;
+    var nFrac = nivelAgua / 100;
+    var thumbY = sbottom - nFrac * (sbottom - stop);
+    ctx.fillStyle = '#ddd';
+    ctx.beginPath();
+    ctx.roundRect(sx - sw / 2, stop, sw, sbottom - stop, 6);
+    ctx.fill();
+    var vgrad = ctx.createLinearGradient(0, sbottom, 0, stop);
+    vgrad.addColorStop(0, '#0d47a1');
+    vgrad.addColorStop(nFrac, '#0d47a1');
+    vgrad.addColorStop(Math.min(nFrac + 0.001, 1), '#e2e8f0');
+    vgrad.addColorStop(1, '#e2e8f0');
+    ctx.fillStyle = vgrad;
+    ctx.beginPath();
+    ctx.roundRect(sx - sw / 2, stop, sw, sbottom - stop, 6);
+    ctx.fill();
+    // Thumb
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 4;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(sx, thumbY, 42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = '#0d47a1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(sx, thumbY, 42, 0, Math.PI * 2);
+    ctx.stroke();
+    // Floating label to the left of thumb
+    var bubX = sx - 130;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = '#0d47a1';
+    ctx.beginPath();
+    ctx.roundRect(bubX - 75, thumbY - 24, 150, 48, 10);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 40px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    var nivelLitros = nivelAgua * 2;
+    ctx.fillText(nivelLitros + ' L', bubX, thumbY + 10);
+}
+
+function reiniciar() {
+    clearInterval(tempInterval);
+    isPlaying = false;
+    playBtn.textContent = '▶';
+    playBtn.classList.remove('btn-danger');
+    playBtn.classList.add('btn-success');
+
+    cajaTemperatura.value = 23;
+    tempValSpan.textContent = 23;
+    pecera.temperatura = 23;
+    pecera.calSaturacion(23);
+
+    cajaPeces.value = 10;
+    npecesValSpan.textContent = 10;
+
+    cajaSize.value = 4;
+    tpecesValSpan.textContent = 4;
+
+    peces = generarPeces(10, 4);
+    burbujas = generar(Burbuja, validarBurbujasIniciales(23));
+
+    grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
+    grafica.puntos = [];
+    restablecerZoom();
+}
+
+
+
+/** @function toggleTempPlay
+ *  Toggles automatic temperature ramp from current value up to 50°C
+ *  (+1°C per 500ms). Button icon toggles ▶/⏸ and color (green/red). */
+function toggleTempPlay() {
+    if (isPlaying) {
+        clearInterval(tempInterval);
+        isPlaying = false;
+        playBtn.textContent = '▶';
+        playBtn.classList.remove('btn-danger');
+        playBtn.classList.add('btn-success');
+    } else {
+        isPlaying = true;
+        playBtn.textContent = '⏸';
+        playBtn.classList.remove('btn-success');
+        playBtn.classList.add('btn-danger');
+        tempInterval = setInterval(() => {
+            if (cajaTemperatura.value >= 50) {
+                toggleTempPlay();
+                return;
+            }
+            cajaTemperatura.value = parseInt(cajaTemperatura.value) + 1;
+            tempDinamica({ type: 'input' });
+        }, 500);
+    }
 }
 
 
 
 //////////JSXGraph
 
-let grafica = new Grafica('box','contenedor',pecera,
-{
-    boundingbox: [-5, 40, 55, -5], 
-    axis:true,
-    showCopyright: false,
-}
+grafica = new Grafica('box', pecera,
+    {
+        boundingbox: [-5, 40, 55, -5],
+        axis: true,
+        showCopyright: false,
+    }
 );
 
-function crearGrafica(){
-    var checkbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], {fixed : true})
-    grafica.board.create('functiongraph', [
-        function(x){
-            if(checkbox.Value()){
-                return -0.0001*(Math.pow(x,3))+0.01*(Math.pow(x,2))-0.39*(x)+14.57
-            }
-        }
-    ], {strokecolor:'#3673c5',strokeWidth:2});
+function crearGrafica() {
+    initBoard1();
 }
 
-function crearPunto(){
+function initBoard3() {
+    grafica.board.setBoundingBox([-2, 220, 20, -20]);
+    if (grafica.esc3Labels) {
+        grafica.esc3Labels.forEach(function (l) { grafica.board.removeObject(l); });
+    }
+    grafica.esc3Labels = [
+        grafica.board.create('text', [2, -15, 'N° peces'], { fontSize: 13, fixed: true, cssClass: '' }),
+        grafica.board.create('text', [0.5, 210, 'LN (litros)'], { fontSize: 13, fixed: true, cssClass: '' })
+    ];
+    grafica.board.update();
+}
+
+function initBoard1() {
+    grafica.board.setBoundingBox([-5, 40, 55, -5]);
+    if (grafica.esc3Labels) {
+        grafica.esc3Labels.forEach(function (l) { grafica.board.removeObject(l); });
+        grafica.esc3Labels = null;
+    }
+    if (grafica.curvaSO) { grafica.board.removeObject(grafica.curvaSO); grafica.curvaSO = null; }
+    if (grafica.soCheckbox) { grafica.board.removeObject(grafica.soCheckbox); grafica.soCheckbox = null; }
+    grafica.soCheckbox = grafica.board.create('checkbox', [40, 35, 'Mostrar gráfico'], { fixed: true });
+    grafica.curvaSO = grafica.board.create('functiongraph', [
+        function (x) {
+            if (grafica.soCheckbox.Value()) {
+                return -0.0001 * Math.pow(x, 3) + 0.01 * Math.pow(x, 2) - 0.39 * x + 14.57;
+            }
+            return NaN;
+        }
+    ], { strokeColor: '#3673c5', strokeWidth: 2 });
+    grafica.board.update();
+}
+
+function actualizarLineaNivel() {
+    if (nivelAguaLine) {
+        grafica.board.removeObject(nivelAguaLine);
+        nivelAguaLine = null;
+    }
+    if (checkNivelAgua && checkNivelAgua.checked && escenarioActual === 3) {
+        var nivelLitros = nivelAgua * 2;
+        nivelAguaLine = grafica.board.create('line', [
+            [0, nivelLitros], [25, nivelLitros]
+        ], {
+            strokeColor: '#3498db', strokeWidth: 2, dash: 2,
+            fixed: true
+        });
+        grafica.board.update();
+    }
+    actualizarColoresPuntosEsc3();
+}
+
+function crearPunto() {
     grafica.graficarPunto();
 }
 
-function pressIntro(e){
-    if(e.keyCode === 13){
-    crearPunto();
+function actualizarColorPuntoEsc3(p) {
+    if (!p._originalColor) return;
+    if (escenarioActual !== 3) {
+        p.setAttribute({ strokecolor: p._originalColor, fillColor: p._originalColor });
+        return;
+    }
+    var threshold = nivelAgua * 2;
+    if (p.Y() > threshold) {
+        p.setAttribute({ strokecolor: '#e74c3c', fillColor: '#e74c3c' });
+    } else {
+        p.setAttribute({ strokecolor: p._originalColor, fillColor: p._originalColor });
+    }
+}
+
+function actualizarColoresPuntosEsc3() {
+    grafica.puntos.forEach(function (p) { actualizarColorPuntoEsc3(p); });
+    if (grafica && grafica.board) grafica.board.update();
+}
+
+function litrosDinamicos() {
+    textoLA.textContent = Number(cajaPeces.value) * Number(cajaSize.value) * 3;
+    actualizarAdvertenciaLN();
+}
+
+function detenerContadorMuerte() {
+    if (intervaloMuerte) {
+        clearInterval(intervaloMuerte);
+        intervaloMuerte = null;
+    }
+    contadorMuerte = -1;
+}
+
+function revivirPeces() {
+    peces.forEach(function (p) {
+        p.vivir = true;
+        p.dir = new Vector((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+        p.dir.norm();
+    });
+}
+
+function actualizarAdvertenciaLN() {
+    var npeces = Number(cajaPeces.value);
+    var tpeces = Number(cajaSize.value);
+    var LN = npeces * tpeces * 3;
+    var L = nivelAgua * 2;
+    var warn = document.getElementById('esc3-warning');
+    var msg = document.getElementById('esc3-warning-msg');
+    if (LN > L) {
+        if (muertePorAgua) {
+            msg.textContent = 'Los peces han muerto por falta de agua';
+            warn.style.display = '';
+        } else if (contadorMuerte === -1) {
+            contadorMuerte = 20;
+            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Los peces podrían morir en ' + contadorMuerte + 's';
+            warn.style.display = '';
+            intervaloMuerte = setInterval(function () {
+                contadorMuerte--;
+                if (contadorMuerte <= 0) {
+                    clearInterval(intervaloMuerte);
+                    intervaloMuerte = null;
+                    muertePorAgua = true;
+                    contadorMuerte = -1;
+                    peces.forEach(function (p) { p.morir(); });
+                    msg.textContent = 'Los peces han muerto por falta de agua';
+                } else {
+                    msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Los peces podrían morir en ' + contadorMuerte + 's';
+                }
+            }, 1000);
+        } else if (contadorMuerte >= 0 && intervaloMuerte) {
+            msg.textContent = 'Los ' + npeces + ' peces de ' + tpeces + 'cm no pueden vivir en el acuario con ' + L + 'L. Los peces podrían morir en ' + contadorMuerte + 's';
+            warn.style.display = '';
+        }
+    } else {
+        if (muertePorAgua) {
+            muertePorAgua = false;
+            revivirPeces();
+        }
+        detenerContadorMuerte();
+        warn.style.display = 'none';
+    }
+}
+
+function reiniciar3() {
+    detenerContadorMuerte();
+    muertePorAgua = false;
+    clearInterval(tempInterval);
+    isPlaying = false;
+    playBtn.textContent = '▶';
+    playBtn.classList.remove('btn-danger');
+    playBtn.classList.add('btn-success');
+
+    cajaTemperatura.value = 23;
+    tempValSpan.textContent = 23;
+    pecera.temperatura = 23;
+    pecera.calSaturacion(23);
+
+    cajaPeces.value = 1;
+    npecesValSpan.textContent = 1;
+
+    cajaSize.value = 1;
+    tpecesValSpan.textContent = 1;
+
+    peces = generarPeces(1, 1);
+    burbujas = generar(Burbuja, validarBurbujasIniciales(23));
+
+    grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
+    grafica.puntos = [];
+
+    boton3.disabled = false;
+    if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
+    if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
+    restablecerZoom();
+    litrosDinamicos();
+}
+
+function pressIntro(e) {
+    if (e.keyCode === 13) {
+        crearPunto();
     }
 }
 crearGrafica();
+// ============================================
+// ESCENARIO 2: Sistema Sustentable
+// ============================================
+
+// DOM refs
+let voltSlider = document.getElementById('voltaje');
+let voltVal = document.getElementById('voltVal');
+let corrVal = document.getElementById('corrVal');
+let potVal = document.getElementById('potVal');
+let odVal = document.getElementById('odVal');
+let btnPointOD = document.getElementById('point-od');
+let btnResetEsc2 = document.getElementById('reset-esc2');
+let esc1Btn = document.getElementById('esc1-btn');
+let esc3Btn = document.getElementById('esc3-btn');
+let esc4Btn = document.getElementById('esc4-btn');
+let esc2Btn = document.getElementById('esc2-btn');
+let esc1Controls = document.getElementById('esc1-controls');
+let esc2Controls = document.getElementById('esc2-controls');
+let textoLA = document.getElementById('LA');
+let checkNivelAgua = document.getElementById('checkNivelAgua');
+let esc3LaSection = document.getElementById('esc3-la-section');
+
+let R = 5;
+
+/** @function getCorriente
+ *  Returns electrical current I for a given voltage V.
+ *  Escenario 5: I = m × V (m from mSlider).
+ *  Escenarios 2 and 4: I = 0.3 × V.
+ *  @param {number} V - Voltage value
+ *  @returns {number} Computed current I */
+function getCorriente(V) {
+    if (escenarioActual === 5) {
+        let m = Number(mSlider.value);
+        return m * V;
+    }
+    return 0.3 * V;
+}
+
+class ParticulaAgua {
+    constructor(pumpX, pumpY, voltaje) {
+        let factor = 0.3 + 0.7 * (voltaje / 12);
+        this.radius = aleatorio(8, 16) * factor * 1.5;
+        this.x = pumpX + aleatorio(-15, 15);
+        this.y = pumpY;
+        this.speedY = aleatorio(1, 3) * factor;
+        this.phase = Math.random() * Math.PI * 2;
+    }
+
+    move() {
+        this.y -= this.speedY;
+        this.phase += 0.03;
+        this.x += Math.sin(this.phase) * 0.4;
+    }
+
+    draw() {
+        ctx.fillStyle = 'rgba(81, 209, 246, 0.5)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    get vivo() {
+        return this.y > canvas.height * 0.55;
+    }
+}
+
+// Escenario 2 state
+let particulasEsc2 = [];
+let pumpBroken = false;
+let pecesEstanque = [];
+let bubbleFrameCounter = 0;
+let sunWaveProgress = 0;
+let nightStars = [];
+let cometProgress = 0;
+let cometCooldown = 0;
+let cursorX = null, cursorY = null;
+
+// Escenario 4 state
+let board4 = null;
+let curve4 = null;
+let glider4 = null;
+let label4 = null;
+
+let board5 = null;
+let curve5 = null;
+let glider5 = null;
+let label5 = null;
+let mSlider = document.getElementById('mSlider');
+let mVal = document.getElementById('mVal');
+let esc5Btn = document.getElementById('esc5-btn');
+let esc7Btn = document.getElementById('esc7-btn');
+let bandaAzul = null;
+let bandaVerde = null;
+let bandaAmarilla = null;
+let bandaVerdeFuerte = null;
+let bandaRoja = null;
+let franjasUnlocked = false;
+
+function initBoard4() {
+    if (board4) return;
+    let box4 = document.getElementById('box4');
+    board4 = JXG.JSXGraph.initBoard('box4', {
+        boundingbox: [-2, 15, 15, -2],
+        axis: false,
+        showCopyright: false,
+        showNavigation: true,
+        zoom: { wheel: true, min: 0.5, max: 5 },
+    });
+    board4.create('axis', [[-5, 0], [55, 0]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: {
+            majorHeight: 20,
+            drawLabels: true,
+            insertTicks: true,
+            ticksDistance: 2,
+            minorTicks: 0
+        }
+    });
+    board4.create('axis', [[0, -2], [0, 20]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: {
+            majorHeight: 20,
+            drawLabels: true,
+            insertTicks: true,
+            ticksDistance: 2,
+            minorTicks: 0
+        }
+    });
+    board4.create('grid', [{
+        ticksDistance: 2,
+        drawLabels: false,
+        minorTicks: 0,
+        majorHeight: -1
+    }]);
+    curve4 = board4.create('functiongraph', [
+        function (x) { return 0.3 * x; }
+    ], { strokecolor: '#E74C3C', strokeWidth: 2 });
+    let V = Number(voltSlider.value);
+    glider4 = board4.create('glider', [V, 0.3 * V, curve4], {
+        name: '',
+        strokecolor: '#2ECC71',
+        fillColor: '#2ECC71',
+        size: 6
+    });
+    label4 = board4.create('text',
+        [
+            function () { return glider4.X() + 0.4; },
+            function () { return glider4.Y() + 0.8; },
+            function () { return 'U (' + glider4.X().toFixed(2) + ', ' + glider4.Y().toFixed(2) + ')'; }
+        ],
+        { visible: true, fontSize: 10, fixed: true }
+    );
+    glider4.on('drag', function () {
+        let V = parseFloat(glider4.X().toFixed(2));
+        voltSlider.value = V;
+        actualizarDisplayEsc2();
+    });
+}
+
+function getEsc7Factor(dim) {
+    if (dim === 'ancho') return FIXED_LARGO * FIXED_ALTO / 1000;
+    if (dim === 'alto') return FIXED_LARGO * FIXED_ANCHO / 1000;
+    if (dim === 'largo') return FIXED_ANCHO * FIXED_ALTO / 1000;
+    return 0;
+}
+
+var ESC7_COLORS = {
+    ancho: {
+        refLine: '#454545',
+        segHoriz: '#9957de',
+        segVert: '#454545',
+        labelDeltaVal: '#9957de',
+        labelDeltaCap: '#454545',
+        fishPoint: '#2027d3',
+        fishLine: '#2027d3',
+    },
+    alto: {
+        refLine: '#21a6ff',
+        segHoriz: '#3fd840',
+        segVert: '#9d9d9d',
+        labelDeltaVal: '#3fd840',
+        labelDeltaCap: '#9d9d9d',
+        fishPoint: '#2027d3',
+        fishLine: '#2027d3',
+    },
+    largo: {
+        refLine: '#fd214d',
+        segHoriz: '#FEB347',
+        segVert: '#fee44f',
+        labelDeltaVal: '#FEB347',
+        labelDeltaCap: '#fee44f',
+        fishPoint: '#2027d3',
+        fishLine: '#2027d3',
+    }
+};
+
+function initBoard7() {
+    if (board7) return;
+    board7 = JXG.JSXGraph.initBoard('box7', {
+        boundingbox: [-2, 15, 15, -2],
+        axis: false,
+        showCopyright: false,
+        showNavigation: true,
+        zoom: { wheel: true },
+    });
+    board7.create('axis', [[-5, 0], [55, 0]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: { majorHeight: 20, drawLabels: true, insertTicks: true, ticksDistance: 2, minorTicks: 0 }
+    });
+    board7.create('axis', [[0, -2], [0, 20]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: { majorHeight: 20, drawLabels: true, insertTicks: true, ticksDistance: 2, minorTicks: 0 }
+    });
+
+
+    // Reference line through (v1, c1) and (v2, c2)
+    ref7Pt1 = board7.create('point', [0, 0], { fixed: true, visible: false });
+    ref7Pt2 = board7.create('point', [1, 0.3], { fixed: true, visible: false });
+    refLine7 = board7.create('line', [ref7Pt1, ref7Pt2], {
+        strokeColor: '#888', strokeWidth: 2
+    });
+
+    // Points (both visible)
+    p1_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#352B3D', fillColor: '#352B3D', size: 1, label: {visible: false} });
+    p2_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#352B3D', fillColor: '#352B3D', size: 1, label: {visible: false} });
+    p4_7 = board7.create('point', [0, 0], { fixed: true, visible: true, strokecolor: '#352B3D', fillColor: '#352B3D', size: 1, label: {visible: false} });
+
+    // Horizontal segment from (v1, c1) to (v2, c1)
+    segHoriz7 = board7.create('segment', [p1_7, p4_7], {
+        strokeColor: '#2980B9', strokeWidth: 3
+    });
+
+    // Vertical segment from (v2, c1) to (v2, c2)
+    vert7 = board7.create('segment', [p4_7, p2_7], {
+        strokeColor: '#E74C3C', strokeWidth: 2.5
+    });
+
+    // Labels (hidden by default, shown on correct answer)
+    labelDeltaVal = board7.create('text', [0, 0, ''], { visible: false, fontSize: 13, strokeColor: '#2980B9', highlight: false, fixed: true });
+    labelDeltaCap = board7.create('text', [0, 0, ''], { visible: false, fontSize: 13, strokeColor: '#E74C3C', highlight: false, fixed: true });
+
+    // Fish point + horizontal line (hidden by default)
+    fishPoint7 = board7.create('point', [0, 0], {
+        fixed: true, visible: false,
+        strokecolor: '#FF8C00', fillColor: '#FF8C00', size: 4
+    });
+    fishLineH7p1 = board7.create('point', [0, 0], { fixed: true, visible: false });
+    fishLineH7p2 = board7.create('point', [0, 0], { fixed: true, visible: false });
+    fishLineH7 = board7.create('line', [fishLineH7p1, fishLineH7p2], {
+        strokeColor: '#2980B9', strokeWidth: 1.5, dash: 1, visible: false
+    });
+}
+
+function actualizarGraficaEsc7(v1, v2, c1, c2) {
+    if (!board7) return;
+    let show = v2 > v1;
+    if (p1_7) p1_7.setPosition(JXG.COORDS_BY_USER, [v1, c1]);
+    if (p2_7) p2_7.setPosition(JXG.COORDS_BY_USER, [v2, c2]);
+    if (p4_7) p4_7.setPosition(JXG.COORDS_BY_USER, [v2, c1]);
+    if (ref7Pt1) ref7Pt1.setPosition(JXG.COORDS_BY_USER, [v1, c1]);
+    if (ref7Pt2) ref7Pt2.setPosition(JXG.COORDS_BY_USER, [v2, c2]);
+    if (p1_7) p1_7.setAttribute({visible: show});
+    if (p2_7) p2_7.setAttribute({visible: show});
+    if (p4_7) p4_7.setAttribute({visible: show});
+    if (segHoriz7) segHoriz7.setAttribute({visible: show});
+    if (vert7) vert7.setAttribute({visible: show});
+    if (refLine7) refLine7.setAttribute({visible: show});
+    board7.update();
+}
+
+function actualizarEsc7() {
+    let v1 = Number(esc7Val1.value);
+    let v2 = Number(esc7Val2.value);
+    let factor = getEsc7Factor(esc7DimActual);
+    let c1 = v1 * factor;
+    let c2 = v2 * factor;
+    esc7Cap1.textContent = c1.toFixed(3);
+    esc7Cap2.textContent = c2.toFixed(3);
+
+    if (labelDeltaVal) labelDeltaVal.setAttribute({visible: false});
+    if (labelDeltaCap) labelDeltaCap.setAttribute({visible: false});
+
+    validarEsc7Valores();
+    actualizarGraficaEsc7(v1, v2, c1, c2);
+
+    if (v2 <= v1) {
+        if (fishPoint7) fishPoint7.setAttribute({visible: false});
+        if (fishLineH7) fishLineH7.setAttribute({visible: false});
+    } else if (fishPoint7 && fishPoint7.getAttribute && fishPoint7.getAttribute('visible')) {
+        verificarFish7();
+    }
+
+    if (esc7BtnVal.disabled) {
+        esc7BtnVal.innerHTML = 'Validar';
+        esc7BtnVal.disabled = false;
+        esc7BtnVal.classList.replace('btn-outline-success', 'btn-success');
+        esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+    }
+    if (esc7BtnCap.disabled) {
+        esc7BtnCap.innerHTML = 'Validar';
+        esc7BtnCap.disabled = false;
+        esc7BtnCap.classList.replace('btn-outline-success', 'btn-success');
+        esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+    }
+}
+
+function verificarFish7() {
+    let on = esc7IncluirPeces.checked;
+    document.getElementById('esc7FishSection').style.display = on ? '' : 'none';
+    if (!on) {
+        if (fishPoint7) fishPoint7.setAttribute({visible: false});
+        if (fishLineH7) fishLineH7.setAttribute({visible: false});
+        return;
+    }
+    let count = Number(esc7FishCount.value) || 0;
+    let size = Number(esc7FishSize.value) || 0;
+    let LA = count * size * 3;
+    esc7FishLA.textContent = LA.toFixed(2);
+    if (LA > 0 && fishPoint7) {
+        let v1 = Number(esc7Val1.value) || 0;
+        let v2 = Number(esc7Val2.value) || 0;
+        if (v2 > v1) {
+            let factor = getEsc7Factor(esc7DimActual);
+            let c1 = v1 * factor, c2 = v2 * factor;
+            let pend = (c2 - c1) / (v2 - v1);
+            let x = v1 + (LA - c1) / pend;
+            fishPoint7.setPosition(JXG.COORDS_BY_USER, [x, LA]);
+            fishPoint7.setAttribute({visible: true});
+            fishPoint7.setLabel('(' + x.toFixed(3) + ', ' + LA.toFixed(3) + ')');
+            if (fishLineH7p1 && fishLineH7p2 && fishLineH7) {
+                fishLineH7p1.setPosition(JXG.COORDS_BY_USER, [0, LA]);
+                fishLineH7p2.setPosition(JXG.COORDS_BY_USER, [15, LA]);
+                fishLineH7.setAttribute({visible: true});
+            }
+            board7.update();
+        }
+    } else {
+        if (fishPoint7) fishPoint7.setAttribute({visible: false});
+        if (fishLineH7) fishLineH7.setAttribute({visible: false});
+    }
+}
+
+function aplicarColoresEsc7(dim) {
+    var c = ESC7_COLORS[dim];
+    if (!c) return;
+    if (refLine7) refLine7.setAttribute({strokeColor: c.refLine});
+    if (segHoriz7) segHoriz7.setAttribute({strokeColor: c.segHoriz});
+    if (vert7) vert7.setAttribute({strokeColor: c.segVert});
+    if (labelDeltaVal) labelDeltaVal.setAttribute({strokeColor: c.labelDeltaVal});
+    if (labelDeltaCap) labelDeltaCap.setAttribute({strokeColor: c.labelDeltaCap});
+    if (fishPoint7) fishPoint7.setAttribute({strokeColor: c.fishPoint, fillColor: c.fishPoint});
+    if (fishLineH7) fishLineH7.setAttribute({strokeColor: c.fishLine});
+    [p1_7, p2_7, p4_7].forEach(function(p) {
+        if (p) p.setAttribute({strokeColor: '#352B3D', fillColor: '#352B3D', size: 1});
+    });
+    if (board7) board7.update();
+}
+
+function verificarEsc7(tipo, silent) {
+    let v1 = Number(esc7Val1.value);
+    let v2 = Number(esc7Val2.value);
+    let factor = getEsc7Factor(esc7DimActual);
+    let c1 = v1 * factor;
+    let c2 = v2 * factor;
+
+    let realDeltaVal = v2 - v1;
+    let realDeltaCap = c2 - c1;
+    let userDeltaVal = Number(esc7DeltaVal.value);
+    let userDeltaCap = Number(esc7DeltaCap.value);
+    let tolerance = 0.001;
+
+    let correctVal = !isNaN(userDeltaVal) && Math.abs(userDeltaVal - realDeltaVal) < tolerance;
+    let correctCap = !isNaN(userDeltaCap) && Math.abs(userDeltaCap - realDeltaCap) < tolerance;
+
+    esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+    esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+
+    if (tipo === 'val') {
+        if (correctVal) {
+            if (!silent) {
+                let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
+                esc7DeltaVal.classList.add('esc7-input--success');
+                esc7BtnVal.innerHTML = '✓ Validado';
+                esc7BtnVal.disabled = true;
+                esc7BtnVal.classList.replace('btn-success', 'btn-outline-success');
+                if (labelDeltaVal) {
+                    labelDeltaVal.setPosition(JXG.COORDS_BY_USER, [(v1 + v2) / 2, c1 - 0.8]);
+                    labelDeltaVal.setText('Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3));
+                    labelDeltaVal.setAttribute({visible: true});
+                }
+                document.getElementById('esc7CorrectoMsg').textContent = 'Δ ' + dimLabel + ' = ' + realDeltaVal.toFixed(3);
+                let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
+                modal.show();
+            }
+        } else if (!isNaN(userDeltaVal)) {
+            esc7DeltaVal.classList.add('esc7-input--error');
+        }
+    }
+    if (tipo === 'cap') {
+        if (correctCap) {
+            if (!silent) {
+                esc7DeltaCap.classList.add('esc7-input--success');
+                esc7BtnCap.innerHTML = '✓ Validado';
+                esc7BtnCap.disabled = true;
+                esc7BtnCap.classList.replace('btn-success', 'btn-outline-success');
+                if (labelDeltaCap) {
+                    labelDeltaCap.setPosition(JXG.COORDS_BY_USER, [v2 + 0.2, (c1 + c2) / 2]);
+                    labelDeltaCap.setText('Δ Capacidad = ' + realDeltaCap.toFixed(3));
+                    labelDeltaCap.setAttribute({visible: true});
+                }
+                document.getElementById('esc7CorrectoMsg').textContent = 'Δ Capacidad = ' + realDeltaCap.toFixed(3);
+                let modal = new bootstrap.Modal(document.getElementById('esc7CorrectoModal'));
+                modal.show();
+            }
+        } else if (!isNaN(userDeltaCap)) {
+            esc7DeltaCap.classList.add('esc7-input--error');
+        }
+    }
+}
+
+function validarEsc7Valores() {
+    let s1 = esc7Val1.value;
+    let s2 = esc7Val2.value;
+    if (s1 === '' || s2 === '') return;
+    let v1 = Number(s1);
+    let v2 = Number(s2);
+    if (isNaN(v1) || isNaN(v2)) return;
+    let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
+    if (v1 > v2) {
+        mostrarToast('Procura que ' + dimLabel + '₁ no sea más grande que ' + dimLabel + '₂', 'warning', 4000);
+    }
+}
+
+function initBoard5() {
+    if (board5) return;
+    let box5 = document.getElementById('box5');
+    board5 = JXG.JSXGraph.initBoard('box5', {
+        boundingbox: [-2, 15, 15, -2],
+        axis: false,
+        showCopyright: false,
+        showNavigation: true,
+        zoom: { wheel: true, min: 0.5, max: 5 },
+    });
+    board5.create('axis', [[-5, 0], [55, 0]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: {
+            majorHeight: 20,
+            drawLabels: true,
+            insertTicks: true,
+            ticksDistance: 2,
+            minorTicks: 0
+        }
+    });
+    board5.create('axis', [[0, -2], [0, 20]], {
+        strokeColor: '#333',
+        strokeWidth: 1,
+        ticks: {
+            majorHeight: 20,
+            drawLabels: true,
+            insertTicks: true,
+            ticksDistance: 2,
+            minorTicks: 0
+        }
+    });
+    board5.create('grid', [{
+        ticksDistance: 2,
+        drawLabels: false,
+        minorTicks: 0,
+        majorHeight: -1
+    }]);
+}
+
+function crearBanda(x1, x2, color, opacity) {
+    return board5.create('curve', [
+        [x1, x2, x2, x1],
+        [-20, -20, 20, 20]
+    ], {
+        fillColor: color, fillOpacity: opacity || 0.3,
+        strokeColor: color, strokeWidth: 1,
+        closedCurve: true, layer: 1
+    });
+}
+
+function toggleFranjas(show) {
+    if (!board5) return;
+    if (bandaAzul) { board5.removeObject(bandaAzul); bandaAzul = null; }
+    if (bandaVerde) { board5.removeObject(bandaVerde); bandaVerde = null; }
+    if (bandaAmarilla) { board5.removeObject(bandaAmarilla); bandaAmarilla = null; }
+    if (bandaVerdeFuerte) { board5.removeObject(bandaVerdeFuerte); bandaVerdeFuerte = null; }
+    if (bandaRoja) { board5.removeObject(bandaRoja); bandaRoja = null; }
+    if (show) {
+        bandaAzul = crearBanda(2, 4, '#3498DB');
+        bandaVerde = crearBanda(4, 6, '#2ECC71');
+        bandaAmarilla = crearBanda(6, 8, '#F1C40F');
+        bandaRoja = crearBanda(8, 10, '#E74C3C');
+        bandaVerdeFuerte = board5.create('curve', [
+            [-5, 55, 55, -5],
+            [1, 1, 2, 2]
+        ], {
+            fillColor: '#27AE60', fillOpacity: 0.35,
+            strokeColor: '#27AE60', strokeWidth: 1,
+            closedCurve: true, layer: 1
+        });
+    }
+    board5.update();
+}
+
+function recrearCurva5(m) {
+    if (!board5) return;
+    if (curve5) { board5.removeObject(curve5); curve5 = null; }
+    if (glider5) { board5.removeObject(glider5); glider5 = null; }
+    if (label5) { board5.removeObject(label5); label5 = null; }
+    curve5 = board5.create('functiongraph', [
+        function (x) { return m * x; }
+    ], { strokecolor: '#E74C3C', strokeWidth: 2 });
+    let V = Number(voltSlider.value);
+    glider5 = board5.create('glider', [V, m * V, curve5], {
+        name: '',
+        strokecolor: '#2ECC71',
+        fillColor: '#2ECC71',
+        size: 6
+    });
+    label5 = board5.create('text',
+        [
+            function () { return glider5.X() + 0.4; },
+            function () { return glider5.Y() + 0.8; },
+            function () { return 'U (' + glider5.X().toFixed(2) + ', ' + glider5.Y().toFixed(2) + ')'; }
+        ],
+        { visible: true, fontSize: 10, fixed: true }
+    );
+    glider5.on('drag', function () {
+        let V = parseFloat(glider5.X().toFixed(2));
+        voltSlider.value = V;
+        actualizarDisplayEsc2();
+    });
+    board5.update();
+}
+
+const ESCENARIOS = {
+    1: {
+        btn: { 'esc1-btn': 'primary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
+        mostrar: ['canvas', 'esc1-controls', 'box'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'litros',
+        alEntrar: function () {
+            esc3LaSection.style.display = 'none';
+            if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
+            boton3.disabled = false;
+            if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
+            grafica.puntos.forEach(function (p) { p.setAttribute({ visible: true }); });
+            ['esc1-npeces-col', 'esc1-tpeces-col'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            crearGrafica();
+        }
+    },
+    2: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'primary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
+        mostrar: ['canvas', 'esc2-controls'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        canvasClass: 'col-12 col-sm-6 offset-sm-0 col-lg-7 offset-lg-2',
+        graficaClass: 'd-none',
+        codigo: 'grafica',
+        alEntrar: function () {
+            esc3LaSection.style.display = 'none';
+            if (checkNivelAgua && checkNivelAgua.checked) checkNivelAgua.checked = false;
+            if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
+            boton3.disabled = false;
+            actualizarDisplayEsc2();
+            initPecesEstanque();
+        },
+        alSalir: function () {
+            particulasEsc2 = [];
+            sunWaveProgress = 0;
+            cometProgress = 0;
+            cometCooldown = 0;
+            bubbleFrameCounter = 0;
+            pumpBroken = false;
+        }
+    },
+    3: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'primary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
+        mostrar: ['canvas', 'esc1-controls', 'box'],
+        ocultar: ['esc2-controls', 'box4', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'capacidad',
+        alEntrar: function () {
+            esc3LaSection.style.display = '';
+            litrosDinamicos();
+            nivelAgua = 100;
+            arrastrandoNivel = false;
+            arrastrandoTemp = false;
+            esc3CanvasUI = true;
+            document.getElementById('esc1-temp-col').style.display = 'none';
+            document.getElementById('esc1-so-col').style.display = 'none';
+            ['esc1-npeces-col', 'esc1-tpeces-col'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = '';
+            });
+            initBoard3();
+            actualizarLineaNivel();
+            actualizarAdvertenciaLN();
+        },
+        alSalir: function () {
+            esc3CanvasUI = false;
+            detenerContadorMuerte();
+            muertePorAgua = false;
+            if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
+            grafica.puntos.forEach(function (p) { p.setAttribute({ visible: false }); });
+            document.getElementById('esc1-temp-col').style.display = '';
+            document.getElementById('esc1-so-col').style.display = '';
+            crearGrafica();
+        }
+    },
+    4: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'primary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
+        mostrar: ['canvas', 'esc2-controls', 'box4'],
+        ocultar: ['esc1-controls', 'box', 'box5', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'pendiente',
+        alEntrar: function () {
+            esc3LaSection.style.display = 'none';
+            boton3.disabled = false;
+            pumpBroken = false;
+            document.getElementById('esc5-m-section').style.display = 'none';
+            initBoard4();
+            let V = Number(voltSlider.value);
+            if (glider4) {
+                glider4.setPosition(JXG.COORDS_BY_USER, [V, 0.3 * V]);
+                board4.update();
+            }
+            actualizarDisplayEsc2();
+            initPecesEstanque();
+        },
+        alSalir: function () {
+            particulasEsc2 = [];
+            sunWaveProgress = 0;
+            cometProgress = 0;
+            cometCooldown = 0;
+            bubbleFrameCounter = 0;
+            pumpBroken = false;
+        }
+    },
+    5: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'primary', 'esc6-btn': 'secondary', 'esc7-btn': 'secondary' },
+        mostrar: ['canvas', 'esc2-controls', 'box5'],
+        ocultar: ['esc1-controls', 'box', 'box4', 'box7', 'esc7-controls', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'incremento',
+        alEntrar: function () {
+            esc3LaSection.style.display = 'none';
+            boton3.disabled = false;
+            pumpBroken = false;
+            document.getElementById('esc5-m-section').style.display = '';
+            initBoard5();
+            recrearCurva5(Number(mSlider.value));
+            let V = Number(voltSlider.value);
+            if (glider5) {
+                glider5.setPosition(JXG.COORDS_BY_USER, [V, Number(mSlider.value) * V]);
+                board5.update();
+            }
+            if (franjasUnlocked) {
+                document.getElementById('checkFranjas').disabled = false;
+            }
+            if (document.getElementById('checkFranjas').checked) {
+                toggleFranjas(true);
+            }
+            actualizarDisplayEsc2();
+            initPecesEstanque();
+        },
+        alSalir: function () {
+            particulasEsc2 = [];
+            sunWaveProgress = 0;
+            cometProgress = 0;
+            cometCooldown = 0;
+            bubbleFrameCounter = 0;
+            pumpBroken = false;
+        }
+    },
+    6: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'primary', 'esc7-btn': 'secondary' },
+        mostrar: ['esc6-overlay', 'three-container', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses'],
+        ocultar: ['esc1-controls', 'esc2-controls', 'canvas', 'box', 'box4', 'box5', 'box7', 'esc7-controls'],
+        canvasClass: 'col-12 col-sm-6 col-md-7',
+        graficaClass: 'd-none',
+        codigo: 'incremento',
+        alEntrar: function () {
+            esc3LaSection.style.display = 'none';
+            boton3.disabled = false;
+            if (!threeRenderer) initEscena3D();
+            threeContainer.style.height = Math.max(300, window.innerHeight * 0.55) + 'px';
+            redimensionarThree();
+            actualizarInfoEsc6();
+            iniciarPeces3D();
+            initTablaDimVar();
+            initTablaCapDina();
+            var primerChevron = document.querySelector('#esc6-tabla-section .collapse-chevron');
+            if (primerChevron) {
+                primerChevron.classList.add('collapse-chevron--pulse');
+                primerChevron.addEventListener('animationend', function () {
+                    primerChevron.classList.remove('collapse-chevron--pulse');
+                }, { once: true });
+            }
+        }
+    },
+    7: {
+        btn: { 'esc1-btn': 'secondary', 'esc3-btn': 'secondary', 'esc2-btn': 'secondary', 'esc4-btn': 'secondary', 'esc5-btn': 'secondary', 'esc6-btn': 'secondary', 'esc7-btn': 'primary' },
+        mostrar: ['esc7-controls', 'box7'],
+        ocultar: ['esc1-controls', 'esc2-controls', 'box', 'box4', 'box5', 'three-container', 'esc6-overlay', 'esc6-tabla-section', 'esc6-cap-dinamica-section', 'contenedorCollapses', 'canvas'],
+        canvasClass: 'col-12 col-sm-6',
+        graficaClass: 'col-12 col-sm-6 d-flex flex-column',
+        codigo: 'estanque',
+        alEntrar: function () {
+            esc3LaSection.style.display = 'none';
+            boton3.disabled = false;
+            initBoard7();
+            actualizarEsc7();
+            aplicarColoresEsc7(esc7DimActual);
+            document.getElementById('esc7-controls').className = 'dim-' + esc7DimActual;
+        }
+    }
+};
+
+function limpiarGrafica() {
+    if (!grafica || !grafica.board) return;
+    grafica.puntos.forEach(function (p) { grafica.board.removeObject(p); });
+    grafica.puntos = [];
+    if (nivelAguaLine) { grafica.board.removeObject(nivelAguaLine); nivelAguaLine = null; }
+    if (grafica.curvaSO) { grafica.board.removeObject(grafica.curvaSO); grafica.curvaSO = null; }
+    if (grafica.soCheckbox) { grafica.board.removeObject(grafica.soCheckbox); grafica.soCheckbox = null; }
+    if (board4) { JXG.JSXGraph.freeBoard(board4); board4 = null; }
+    if (board5) { JXG.JSXGraph.freeBoard(board5); board5 = null; }
+}
+
+function actualizarTabs(n) {
+    let tabs = ['esc1-btn', 'esc2-btn', 'esc3-btn', 'esc4-btn', 'esc5-btn', 'esc6-btn', 'esc7-btn'];
+    tabs.forEach(function (id) {
+        let el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('scenario-tab--active');
+    });
+    let active = document.getElementById('esc' + n + '-btn');
+    if (active) active.classList.add('scenario-tab--active');
+}
+
+/** @function desbloquearTab
+ *  Unlocks a scenario tab: removes --locked class, enables button, clears badge.
+ *  @param {number} n - Scenario number to unlock */
+function desbloquearTab(n) {
+    let el = document.getElementById('esc' + n + '-btn');
+    if (!el) return;
+    el.classList.remove('scenario-tab--locked');
+    el.disabled = false;
+    let badge = el.querySelector('.tab-badge');
+    if (badge) badge.textContent = '';
+}
+
+/** @function cambiarEscenario
+ *  Central switch function. Calls prev scenario's alSalir(), limpiarGrafica(),
+ *  toggles UI visibility, sets canvas/graph CSS classes, cleans Three.js,
+ *  resets zoom/pan, then calls new scenario's alEntrar().
+ *  @param {number} n - Target scenario number (1-7) */
+function cambiarEscenario(n) {
+    var prevCfg = ESCENARIOS[escenarioActual];
+    if (prevCfg && prevCfg.alSalir) prevCfg.alSalir();
+    limpiarGrafica();
+    escenarioActual = n;
+    let cfg = ESCENARIOS[n];
+    if (!cfg) return;
+
+    actualizarTabs(n);
+
+    let canvasEl = document.getElementById('canvas');
+    if (canvasEl) {
+        if (n === 2 || n === 4 || n === 5) {
+            canvasEl.classList.add('canvas--estanque');
+        } else {
+            canvasEl.classList.remove('canvas--estanque');
+        }
+    }
+    redimensionarCanvas();
+
+    cfg.mostrar.forEach(id => document.getElementById(id).style.display = '');
+    cfg.ocultar.forEach(id => document.getElementById(id).style.display = 'none');
+
+    contenedorCanvas.className = cfg.canvasClass;
+    contenedorGrafica.className = cfg.graficaClass;
+    if (!cfg.graficaClass.includes('d-none')) {
+        contenedorGrafica.style.display = 'flex';
+    }
+
+    // Cleanup esc6 Three.js
+    if (n !== 6 && threeRenderer) {
+        threeContainer.style.display = 'none';
+        limpiarPeces3D();
+    }
+
+    document.getElementById('btnAtras').disabled = n === getOrden()[0];
+
+    restablecerZoom();
+    cfg.alEntrar();
+}
+
+function actualizarDisplayEsc2() {
+    let V = Number(voltSlider.value);
+    let I = getCorriente(V);
+    voltVal.textContent = V.toFixed(2);
+    corrVal.textContent = I.toFixed(2);
+}
+
+/** @function makeEditable
+ *  Makes a <span> inline-editable by replacing it with an <input type="number">
+ *  on click/touch. Used for V and I values in escenarios 2, 4, 5.
+ *  On blur/Enter: calls computeValue(val), clamps to [min, max], updates slider.
+ *  Escape: discards changes.
+ *  @param {string} spanId - ID of the <span> to make editable
+ *  @param {function} computeValue - (val) => sliderValue
+ *  @param {HTMLElement} slider - Slider element to update
+ *  @param {number} min - Clamp minimum
+ *  @param {number} max - Clamp maximum */
+function makeEditable(spanId, computeValue, slider, min, max) {
+    let span = document.getElementById(spanId);
+    let input = null;
+
+    function startEdit(e) {
+        e.preventDefault();
+        if (input) return;
+        input = document.createElement('input');
+        input.type = 'number';
+        input.step = '0.01';
+        input.className = 'inline-edit-value';
+        input.value = span.textContent.trim();
+        span.style.display = 'none';
+        span.parentNode.insertBefore(input, span.nextSibling);
+        input.focus();
+        input.select();
+
+        function finishEdit() {
+            let raw = input.value.trim();
+            input.remove();
+            input = null;
+            span.style.display = '';
+            if (raw === '') return;
+            let val = parseFloat(raw);
+            if (isNaN(val)) return;
+            let newVal = computeValue(val);
+            if (newVal !== null) {
+                slider.value = Math.max(min, Math.min(max, newVal));
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+
+        input.addEventListener('blur', finishEdit);
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+            if (e.key === 'Escape') { input.remove(); input = null; span.style.display = ''; }
+        });
+    }
+
+    span.addEventListener('click', startEdit);
+    span.addEventListener('touchstart', startEdit);
+}
+
+function initPecesEstanque() {
+    pecesEstanque = [];
+    if (nightStars.length === 0) {
+        for (let i = 0; i < 40; i++) {
+            nightStars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height * 0.4,
+                r: 1.5 + Math.random() * 1.5,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+    let n = Math.floor(aleatorio(15, 25));
+    for (let i = 0; i < n; i++) {
+        let pez = new Pez(0, 'default');
+        pez.size = 4;
+        pez.dWidth = (canvas.width * pez.size) / 100;
+        pez.dHeight = pez.dWidth / 2;
+        pez.paddingIzq = canvas.width * 0.07 + 5;
+        pez.paddingDer = canvas.width * 0.60 - pez.dWidth - 5;
+        pez.paddingArr = canvas.height * 0.6 + 5;
+        pez.paddingAba = canvas.height - pez.dHeight - 5;
+        pez.posicion = new Vector(
+            aleatorio(pez.paddingIzq, pez.paddingDer + pez.dWidth),
+            aleatorio(pez.paddingArr, pez.paddingAba + pez.dHeight)
+        );
+        pecesEstanque.push(pez);
+    }
+}
+
+function dibujarCirculo(x, y, r, color) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+
+function dibujarIconoBurbuja(x, y, size) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(81, 209, 246, 0.5)';
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + size * 0.5, y - size * 1, size * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - size * 0.2, y - size * 1.5, size * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.beginPath();
+    ctx.arc(x - size * 0.15, y - size * 0.2, size * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+}
+
+function actualizarEscenario2() {
+    let w = canvas.width;
+    let h = canvas.height;
+    let V = Number(voltSlider.value);
+    let I = getCorriente(V);
+
+    // Pump state tracking
+    if (escenarioActual === 5) {
+        pumpBroken = (V > 10 || I >= 4);
+    } else {
+        pumpBroken = (V > 10);
+    }
+
+    // Sky - night → dawn → day based on V
+    function lerpC(a, b, t) {
+        return {
+            r: Math.floor(a.r + (b.r - a.r) * t),
+            g: Math.floor(a.g + (b.g - a.g) * t),
+            b: Math.floor(a.b + (b.b - a.b) * t)
+        };
+    }
+    let nightTop = {r: 40, g: 61, b: 70}, nightBot = {r: 55, g: 67, b: 74};
+    let dawnTop = {r: 180, g: 80, b: 100}, dawnBot = {r: 255, g: 180, b: 120};
+    let dayTop = {r: 135, g: 206, b: 235}, dayBot = {r: 184, g: 224, b: 247};
+    let topC, botC;
+    if (V < 2) {
+        let t = Math.max(0, V) / 2;
+        topC = lerpC(nightTop, dawnTop, t);
+        botC = lerpC(nightBot, dawnBot, t);
+    } else if (V < 3) {
+        let t = (V - 2) / 1;
+        topC = lerpC(dawnTop, dayTop, t);
+        botC = lerpC(dawnBot, dayBot, t);
+    } else {
+        topC = dayTop;
+        botC = dayBot;
+    }
+    let skyR = topC.r, skyG = topC.g, skyB = topC.b;
+    let skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.5);
+    skyGrad.addColorStop(0, `rgb(${topC.r}, ${topC.g}, ${topC.b})`);
+    skyGrad.addColorStop(1, `rgb(${botC.r}, ${botC.g}, ${botC.b})`);
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, h * 0.5);
+
+    // Sun - glow and size based on V
+    let sunX = w * 0.12, sunY = h * 0.15;
+    let sunR = w * 0.015 + (w * 0.02) * (V / 50);
+    if (V > 0) {
+        let glowR = sunR * (2.5 + 2.5 * (V / 50));
+        let alpha = 0.15 + 0.35 * (V / 50);
+        ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255, 243, 176, ${alpha * 0.7})`;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, glowR * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        // Stars
+        let time = Date.now() * 0.001;
+        for (let star of nightStars) {
+            let twinkle = 0.4 + 0.6 * Math.abs(Math.sin(star.phase + time));
+            ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // Crescent moon
+        let moonLight = Math.abs(Math.sin(time * 0.3)) * 0.3 + 0.7;
+        let moonGray = Math.floor(200 * moonLight);
+        ctx.fillStyle = `rgb(${moonGray}, ${moonGray - 20}, ${moonGray - 40})`;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+        ctx.fill();
+        let cutR = Math.floor(skyR * 0.9);
+        let cutG = Math.floor(skyG * 0.9);
+        let cutB = Math.floor(skyB * 0.9);
+        ctx.fillStyle = `rgb(${cutR}, ${cutG}, ${cutB})`;
+        ctx.beginPath();
+        ctx.arc(sunX + sunR * 0.35, sunY - sunR * 0.08, sunR * 0.85, 0, Math.PI * 2);
+        ctx.fill();
+        // Comet
+        if (cometProgress > 0) {
+            let cometX = w * 0.1 + (w * 0.8) * cometProgress;
+            let cometY = h * 0.05 + (h * 0.3) * cometProgress;
+            let tailLen = w * 0.12;
+            for (let j = 10; j >= 0; j--) {
+                let frac = j / 10;
+                let tx = cometX - tailLen * frac * 0.8;
+                let ty = cometY - tailLen * frac * 0.3;
+                let tr = 3 * (1 - frac * 0.7);
+                let ta = 0.8 * (1 - frac * 0.85);
+                ctx.fillStyle = `rgba(255, 255, 255, ${ta})`;
+                ctx.beginPath();
+                ctx.arc(tx, ty, tr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.arc(cometX, cometY, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Grass 
+    let waterGrad = ctx.createLinearGradient(0, h * 0.40, 0, h);
+    waterGrad.addColorStop(0, '#69d94a');
+    waterGrad.addColorStop(0.5, '#31b338');
+    waterGrad.addColorStop(1, '#358c1a');
+    ctx.fillStyle = waterGrad;
+    ctx.fillRect(0, h * 0.45, w, h * 0.5);
+
+
+    // Trapecio decorativo base
+    ctx.fillStyle = '#655139';
+    ctx.strokeStyle = 'rgba(184, 109, 97, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.10, h * 0.95);
+    ctx.lineTo(w * 0.57, h * 0.95);
+    ctx.lineTo(w * 0.60, h);
+    ctx.lineTo(w * 0.07, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Romboide pared izquierda
+    ctx.fillStyle = '#655139';
+    ctx.strokeStyle = '#655139';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.07, h * 0.58);
+    ctx.lineTo(w * 0.10, h * 0.53);
+    ctx.lineTo(w * 0.10, h*0.95);
+    ctx.lineTo(w * 0.07, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+     // Romboide pared derecha
+    ctx.fillStyle = '#655139';
+    ctx.strokeStyle = '#655139';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.6, h * 0.58);
+    ctx.lineTo(w * 0.57, h * 0.53);
+    ctx.lineTo(w * 0.57, h*0.95);
+    ctx.lineTo(w * 0.6, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+     // Pared trasera
+    ctx.fillStyle = '#8B7355';
+    ctx.strokeStyle = '#8B7355';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.10, h * 0.53);
+    ctx.lineTo(w * 0.57, h * 0.53);
+    ctx.lineTo(w * 0.57, h * 0.95);
+    ctx.lineTo(w * 0.10, h * 0.95);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+
+    // Agua frontal
+    ctx.fillStyle = 'rgba(67, 144, 207, 0.6)';
+    ctx.strokeStyle = 'rgba(160, 212, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.07, h * 0.6);
+    ctx.lineTo(w * 0.60, h * 0.6);
+    ctx.lineTo(w * 0.60, h);
+    ctx.lineTo(w * 0.07, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    //trapecio decorativo sobre el agua (reflejo)
+  ctx.fillStyle = 'rgba(67, 144, 207, 0.8)';
+    ctx.strokeStyle = 'rgba(160, 212, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.10, h * 0.55);
+    ctx.lineTo(w * 0.57, h * 0.55);
+    ctx.lineTo(w * 0.60, h* 0.6);
+    ctx.lineTo(w * 0.07, h* 0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Pump position (used by fish flee logic and pump drawing)
+    let pumpX = w * 0.50, pumpY = h * 0.8;
+
+    // Peces decorativos en el agua frontal
+    for (let pez of pecesEstanque) {
+        pez.velMax = 0.5;
+        let fleeing = false;
+        if (cursorX !== null) {
+            let dx = pez.posicion.x - cursorX;
+            let dy = pez.posicion.y - cursorY;
+            if (dx * dx + dy * dy < 40000) {
+                let away = new Vector(dx, dy);
+                away.norm();
+                away.mul(5);
+                pez.dir = away;
+                pez.velMax = 4;
+                fleeing = true;
+            }
+        }
+        if (!fleeing && (V > 6 || I > 2) && !pumpBroken) {
+            let pumpPos = new Vector(pumpX, pumpY);
+            let away = Vector.res(pez.posicion, pumpPos);
+            away.norm();
+            away.mul(3);
+            pez.dir = away;
+            fleeing = true;
+        }
+        if (!fleeing && Math.random() < 0.008) {
+            pez.dir = new Vector(signo() * Math.random() * 3, signo() * Math.random() * 2);
+            pez.dir.norm();
+        }
+        pez.nadar();
+        pez.aparecer();
+    }
+
+    // Ground / shore (left side)
+    ctx.fillStyle = '#8B7355';
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.58);
+    ctx.lineTo(w * 0.07, h * 0.58);
+    ctx.lineTo(w * 0.07, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ground / shore (right side)
+    ctx.fillStyle = '#8B7355';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.6, h * 0.58);
+    ctx.lineTo(w, h * 0.58);
+    ctx.lineTo(w, h);
+    ctx.lineTo(w * 0.6, h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Pump vars
+    let pumpW = w * 0.30, pumpH = pumpW * (311 / 803);
+
+    // Solar panel image
+    let px = w * 0.55, py = h * 0.30;
+    let pw = w * 0.50, ph = pw * (302 / 827);
+    if (imgPanel.complete && imgPanel.naturalWidth > 0) {
+        ctx.drawImage(imgPanel, px, py, pw, ph);
+    } else {
+        ctx.fillStyle = '#2C3E50';
+        ctx.fillRect(px, py, pw, ph);
+    }
+    // Animated sine wave from sun to panel (3 parallel lines)
+  /*   if (V > 0) {
+        let waveBright = 0.3 + 0.7 * (V / 12);
+        let r = Math.round(200 + 55 * waveBright);
+        let g = Math.round(100 + 115 * waveBright);
+        let swStartX = sunX + sunR, swStartY = sunY;
+        let swEndX = px + 150, swEndY = py + 55;
+        let swX = swStartX + (swEndX - swStartX) * sunWaveProgress;
+        let swY = swStartY + (swEndY - swStartY) * sunWaveProgress;
+        let angle = 24 * Math.PI / 180;
+        let cosA = Math.cos(angle), sinA = Math.sin(angle);
+        let waveLen = w * 0.08;
+        let amp = h * 0.015;
+        let freq = 0.08;
+        let perpOff = h * 0.025;
+        for (let i = -1; i <= 1; i++) {
+            let offX = -sinA * perpOff * i;
+            let offY = cosA * perpOff * i;
+            ctx.beginPath();
+            for (let t = 0; t < waveLen; t += 2) {
+                let baseX = swX + offX + cosA * t;
+                let baseY = swY + offY + sinA * t;
+                let osc = Math.sin(t * freq + Date.now() * 0.003) * amp;
+                let x = baseX - sinA * osc;
+                let y = baseY + cosA * osc;
+                if (t === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            ctx.strokeStyle = `rgb(${r}, ${g}, 0)`;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+    } */
+    // White info box below panel
+    let fontScale = w / canvas.clientWidth;
+    let isSmall = canvas.clientWidth < 600;
+    let fs1 = Math.max((isSmall ? 11 : 15) * fontScale, isSmall ? 11 : 15);
+    let fs3 = Math.max((isSmall ? 10 : 13) * fontScale, isSmall ? 10 : 13);
+    let lh1 = fs1 * 1;
+    let lh3 = fs3 * 1.2;
+    let padBox = fs1 * 1.5;
+    let boxX = px + w * 0.06;
+    let boxW = pw - w * 0.12;
+    let boxY = py + ph + h * 0.02;
+    let leftX = boxX + padBox;
+    let circleR = Math.round(fs1 * 0.4);
+    let bubbleSize = Math.round(fs3 * 0.45);
+    let iconGapV = Math.round(circleR * 2.5 + 6);
+    let iconGapB = Math.round(bubbleSize * 2.5 + 6);
+    let lineTitle = boxY + padBox + lh1;
+    let lineV = lineTitle + lh3 * 1.3;
+    let lineI = lineV + lh3 * 1.3;
+    let lineS = lineI + lh3 * 1.3;
+    let boxH = (lineS + lh3 * 0.5 + padBox - boxY) + fs1 * 1.5;
+
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+    ctx.fill();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#222';
+    ctx.font = `bold ${Math.round(fs1)}px Arial`;
+    ctx.fillText(`V = ${V} V  |  I = ${I.toFixed(2)} A`, px + pw / 2, lineTitle);
+
+    let vText, vColor, iText, iColor;
+    if (V > 6) { vText = 'V: Voltaje Alto'; vColor = '#E67E22'; }
+    else if (V >= 4) { vText = 'V: Voltaje Estable'; vColor = '#2ECC71'; }
+    else { vText = 'V: Voltaje Bajo'; vColor = '#E74C3C'; }
+    if (I > 2) { iText = 'I: Corriente Alta'; iColor = '#E67E22'; }
+    else if (I >= 1) { iText = 'I: Corriente Estable'; iColor = '#2ECC71'; }
+    else { iText = 'I: Corriente Baja'; iColor = '#E74C3C'; }
+    let statusText5, statusColor5;
+    if (pumpBroken) { statusText5 = 'Bomba descompuesta'; statusColor5 = '#E74C3C'; }
+    else if (V > 6 || I > 2) { statusText5 = 'Sobrecalentamiento'; statusColor5 = '#E67E22'; }
+    else if (V >= 4 && V <= 6 && I >= 1 && I <= 2) { statusText5 = 'Funcionando bien'; statusColor5 = '#2ECC71'; }
+    else { statusText5 = 'Baja oxigenacion'; statusColor5 = '#E74C3C'; }
+
+    ctx.textAlign = 'left';
+    ctx.font = `bold ${Math.round(fs1)}px Arial`;
+    dibujarCirculo(leftX, lineV - lh1 * 0.35, circleR, vColor);
+    ctx.fillStyle = vColor;
+    ctx.fillText(vText, leftX + iconGapV, lineV);
+
+    dibujarCirculo(leftX, lineI - lh1 * 0.35, circleR, iColor);
+    ctx.fillStyle = iColor;
+    ctx.fillText(iText, leftX + iconGapV, lineI);
+
+    ctx.font = `bold ${Math.round(fs3)}px Arial`;
+    dibujarIconoBurbuja(leftX, lineS - fs3 * 0.20, bubbleSize);
+    ctx.fillStyle = statusColor5;
+    ctx.fillText(statusText5, leftX + iconGapB, lineS);
+
+    // Wire from panel to pump
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 10;
+    ctx.setLineDash([40, 10]);
+    ctx.beginPath();
+    ctx.moveTo(px + pw * 0.5, py + ph * 0.9);
+    ctx.lineTo(pumpX+50, py + ph * 0.9);
+    ctx.lineTo(pumpX+50, pumpY + pumpH * 0.4);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Red glow when overheated
+    let overheat = (V > 6 || I > 2);
+    if (overheat && !pumpBroken) {
+        ctx.save();
+        let pulse = 0.45 + Math.sin(Date.now() * 0.004) * 0.2;
+        let grad = ctx.createRadialGradient(pumpX, pumpY + pumpH * 0.5, 0, pumpX, pumpY + pumpH * 0.5, pumpW * 0.35);
+        grad.addColorStop(0, `rgba(255, 0, 0, ${pulse})`);
+        grad.addColorStop(0.5, `rgba(255, 0, 0, ${pulse * 0.6})`);
+        grad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(pumpX, pumpY + pumpH * 0.5, pumpW * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Pump vibration (only when overheated and not broken)
+    let vibX = 0, vibY = 0;
+    if (overheat && !pumpBroken) {
+        let t = Date.now() * 0.02;
+        vibX = Math.sin(t * 1.3) * 3;
+        vibY = Math.cos(t * 1.7) * 3;
+    }
+
+    // Pump image
+    if (pumpBroken) {
+        if (imgBombaIssue.complete && imgBombaIssue.naturalWidth > 0) {
+            ctx.drawImage(imgBombaIssue, pumpX - pumpW / 2, pumpY, pumpW, pumpH);
+        } else {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(pumpX - pumpW / 2, pumpY, pumpW, pumpH);
+        }
+    } else if (imgBomba.complete && imgBomba.naturalWidth > 0) {
+        ctx.drawImage(imgBomba, pumpX - pumpW / 2 + vibX, pumpY + vibY, pumpW, pumpH);
+    } else {
+        ctx.fillStyle = '#95A5A6';
+        ctx.fillRect(pumpX - pumpW / 2 + vibX, pumpY + vibY, pumpW, pumpH);
+    }
+
+    // Bubbles (only if V > 0 and pump not broken)
+    if (V > 0 && !pumpBroken) {
+        let bubbleY = pumpY + pumpH * 0.3;
+        let oneBubble;
+        if (escenarioActual === 5) {
+            let isOptimal = (V >= 4 && V <= 6 && I >= 1 && I <= 2);
+            oneBubble = !overheat && !isOptimal;
+        } else {
+            oneBubble = (V < 4);
+        }
+        bubbleFrameCounter++;
+        if (oneBubble) {
+            if (bubbleFrameCounter % 50 === 0) {
+                particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+            }
+        } else if (overheat) {
+            particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+            particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+        } else {
+            if (bubbleFrameCounter % 4 === 0) {
+                particulasEsc2.push(new ParticulaAgua(pumpX, bubbleY, V));
+            }
+        }
+    }
+    for (let i = particulasEsc2.length - 1; i >= 0; i--) {
+        particulasEsc2[i].move();
+        particulasEsc2[i].draw();
+        if (!particulasEsc2[i].vivo) {
+            particulasEsc2.splice(i, 1);
+        }
+    }
+
+    // Advance sun wave
+    if (V > 0) {
+        let speed = 0.003 + 0.01 * (V / 12);
+        if (sunWaveProgress < 1) {
+            sunWaveProgress += speed;
+        } else {
+            sunWaveProgress = 0;
+        }
+    } else {
+        sunWaveProgress = 0;
+    }
+
+    // Comet logic (only at V=0)
+    if (V === 0) {
+        if (cometProgress > 0) {
+            cometProgress += 0.003;
+            if (cometProgress >= 1) {
+                cometProgress = 0;
+                cometCooldown = 300 + Math.floor(Math.random() * 400);
+            }
+        } else if (cometCooldown > 0) {
+            cometCooldown--;
+        } else {
+            cometProgress = 0.01;
+        }
+    } else {
+        cometProgress = 0;
+        cometCooldown = 0;
+    }
+
+}
+
+// Event listeners for escenario 2
+esc1Btn.addEventListener('click', function () { navegarA(1); });
+esc3Btn.addEventListener('click', function () { navegarA(3); });
+esc2Btn.addEventListener('click', function () { navegarA(2); });
+esc4Btn.addEventListener('click', function () { navegarA(4); });
+esc5Btn.addEventListener('click', function () { navegarA(5); });
+esc7Btn.addEventListener('click', function () { navegarA(7); });
+if (checkNivelAgua) {
+    checkNivelAgua.addEventListener('change', function () {
+        actualizarLineaNivel();
+        actualizarAdvertenciaLN();
+    });
+}
+
+voltSlider.addEventListener('input', function () {
+    actualizarDisplayEsc2();
+    if (escenarioActual === 4 && glider4) {
+        let V = Number(voltSlider.value);
+        glider4.setPosition(JXG.COORDS_BY_USER, [V, 0.3 * V]);
+        board4.update();
+    }
+    if (escenarioActual === 5 && glider5) {
+        let V = Number(voltSlider.value);
+        let m = Number(mSlider.value);
+        glider5.setPosition(JXG.COORDS_BY_USER, [V, m * V]);
+        board5.update();
+    }
+});
+
+btnResetEsc2.addEventListener('click', function () {
+    voltSlider.value = 5;
+    particulasEsc2 = [];
+    pumpBroken = false;
+    pecesEstanque = [];
+    initPecesEstanque();
+    actualizarDisplayEsc2();
+    if (escenarioActual === 4 && glider4) {
+        glider4.setPosition(JXG.COORDS_BY_USER, [5, 1.5]);
+        board4.update();
+    }
+    if (escenarioActual === 5 && glider5) {
+        mSlider.value = '0.3';
+        mVal.textContent = '0.3';
+        recrearCurva5(0.3);
+        glider5.setPosition(JXG.COORDS_BY_USER, [5, 1.5]);
+        board5.update();
+    }
+    restablecerZoom();
+});
+
+mSlider.addEventListener('input', function () {
+    let m = Number(mSlider.value);
+    mVal.textContent = m.toFixed(1);
+    if (escenarioActual === 5) {
+        actualizarDisplayEsc2();
+        recrearCurva5(m);
+        let V = Number(voltSlider.value);
+        if (glider5) {
+            glider5.setPosition(JXG.COORDS_BY_USER, [V, m * V]);
+            board5.update();
+        }
+    }
+});
+
+document.getElementById('confirmarFranjasCode').addEventListener('click', function () {
+    let code = document.getElementById('franjasModalInput').value.trim().toLowerCase();
+    if (normalizarCodigo(code) === normalizarCodigo('franjas')) {
+        franjasUnlocked = true;
+        document.getElementById('checkFranjas').disabled = false;
+        document.getElementById('checkFranjas').checked = true;
+        document.getElementById('franjasModalError').style.display = 'none';
+        document.getElementById('franjasModalInput').value = '';
+        bootstrap.Modal.getInstance(document.getElementById('franjasCodeModal')).hide();
+        toggleFranjas(true);
+    } else {
+        document.getElementById('franjasModalError').style.display = 'block';
+    }
+});
+document.getElementById('franjasModalInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('confirmarFranjasCode').click();
+});
+document.getElementById('checkFranjas').addEventListener('click', function (e) {
+    if (!franjasUnlocked) {
+        e.preventDefault();
+        document.getElementById('franjasModalError').style.display = 'none';
+        document.getElementById('franjasModalInput').value = '';
+        new bootstrap.Modal(document.getElementById('franjasCodeModal')).show();
+    }
+});
+
+document.getElementById('checkFranjas').addEventListener('change', function () {
+    toggleFranjas(this.checked);
+});
+
+/** @function getOrden
+ *  @returns {number[]} Canonical scenario navigation order */
+function getOrden() {
+    return [1, 3, 6, 7, 2, 4, 5];
+}
+
+/** @function getSiguiente
+ *  @param {number} n - Current scenario number
+ *  @returns {number} Next scenario in getOrden() order */
+function getSiguiente(n) {
+    let o = getOrden();
+    return o[(o.indexOf(n) + 1) % o.length];
+}
+
+/** @function getAnterior
+ *  @param {number} n - Current scenario number
+ *  @returns {number} Previous scenario in getOrden() order */
+function getAnterior(n) {
+    let o = getOrden();
+    return o[(o.indexOf(n) - 1 + o.length) % o.length];
+}
+
+/** @function normalizarCodigo
+ *  Normalizes a secret code string for case-insensitive,
+ *  accent-insensitive, punctuation-insensitive comparison.
+ *  Uses NFD decomposition to strip diacritical marks.
+ *  @param {string} str - Raw input string
+ *  @returns {string} Normalized string (e.g. "Dimensiónes!" → "dimensiones") */
+function normalizarCodigo(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+let escenariosDesbloqueados = new Set();
+
+/** @function navegar
+ *  Navigate forward (1) or backward (-1) in getOrden().
+ *  Shows code modal if destination scenario is locked.
+ *  @param {number} dir - Direction: 1 (forward) or -1 (backward) */
+function navegar(dir) {
+    let cfg = ESCENARIOS[escenarioActual];
+    if (!cfg) return;
+    if (dir === -1 && escenarioActual === getOrden()[0]) return;
+    let destino = dir === 1 ? getSiguiente(escenarioActual) : getAnterior(escenarioActual);
+
+    if (escenariosDesbloqueados.has(destino)) {
+        cambiarEscenario(destino);
+        return;
+    }
+
+    let ant = getAnterior(destino);
+    let cfgAnt = ESCENARIOS[ant];
+    if (!cfgAnt || !cfgAnt.codigo) {
+        cambiarEscenario(destino);
+        return;
+    }
+
+    pendingDestino = destino;
+    document.getElementById('codigoInput').value = '';
+    document.getElementById('codigoError').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('codigoModal')).show();
+}
+
+/** @function obtenerCodigos
+ *  Builds a map of "from→to" → "code" from ESCENARIOS config
+ *  for validating secret code entries against navigation transitions.
+ *  @returns {Promise<Object>} Map of "from→to" strings to code strings */
+async function obtenerCodigos() {
+    let map = {};
+    for (let [n, cfg] of Object.entries(ESCENARIOS)) {
+        if (cfg.codigo) map[n + 'a' + getSiguiente(Number(n))] = cfg.codigo;
+    }
+    return map;
+}
+
+let pendingDestino = null;
+
+/** @function navegarA
+ *  Navigate directly to a scenario number (tab click).
+ *  Shows code modal if destination is locked.
+ *  @param {number} destino - Scenario number to navigate to */
+function navegarA(destino) {
+    if (escenariosDesbloqueados.has(destino)) {
+        cambiarEscenario(destino);
+        return;
+    }
+
+    let ant = getAnterior(destino);
+    let cfgAnt = ESCENARIOS[ant];
+    if (!cfgAnt || !cfgAnt.codigo) {
+        cambiarEscenario(destino);
+        return;
+    }
+
+    pendingDestino = destino;
+    document.getElementById('codigoInput').value = '';
+    document.getElementById('codigoError').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('codigoModal')).show();
+}
+
+document.getElementById('btnContinuar').addEventListener('click', function () { navegar(1); });
+document.getElementById('btnAtras').addEventListener('click', function () { navegar(-1); });
+
+document.getElementById('confirmarCodigo').addEventListener('click', async function () {
+    let codigo = document.getElementById('codigoInput').value.trim();
+    let codigos = await obtenerCodigos();
+    let destino = pendingDestino !== null ? pendingDestino : getSiguiente(escenarioActual);
+    let ant = getAnterior(destino);
+    let dir = ant + 'a' + destino;
+    if (normalizarCodigo(codigo) === normalizarCodigo(codigos[dir])) {
+        escenariosDesbloqueados.add(destino);
+        desbloquearTab(destino);
+        bootstrap.Modal.getInstance(document.getElementById('codigoModal')).hide();
+        cambiarEscenario(destino);
+        pendingDestino = null;
+    } else {
+        document.getElementById('codigoError').style.display = 'block';
+    }
+});
+
+document.getElementById('codigoInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('confirmarCodigo').click();
+});
+
+let zoomScale = 1, panX = 0, panY = 0;
+const ZOOM_MIN = 0.3, ZOOM_MAX = 5;
+
+/** @function screenToBuffer
+ *  Converts screen coordinates to canvas buffer coordinates
+ *  accounting for current zoomScale and panX/panY.
+ *  Used so fish flee correctly from cursor/touch at any zoom level.
+ *  @param {number} clientX - Screen X coordinate
+ *  @param {number} clientY - Screen Y coordinate
+ *  @returns {{x: number, y: number}} Buffer coordinates */
+function screenToBuffer(clientX, clientY) {
+    let rect = canvas.getBoundingClientRect();
+    let rawX = (clientX - rect.left) * (canvas.width / rect.width);
+    let rawY = (clientY - rect.top) * (canvas.height / rect.height);
+    return { x: (rawX - panX) / zoomScale, y: (rawY - panY) / zoomScale };
+}
+
+canvas.addEventListener('wheel', function (e) {
+    if (escenarioActual === 3) return;
+    e.preventDefault();
+    let rect = canvas.getBoundingClientRect();
+    let mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    let my = (e.clientY - rect.top) * (canvas.height / rect.height);
+    let delta = -e.deltaY * 0.001;
+    let newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomScale * (1 + delta)));
+    panX = mx - (mx - panX) * (newScale / zoomScale);
+    panY = my - (my - panY) * (newScale / zoomScale);
+    zoomScale = newScale;
+});
+
+/** @function restablecerZoom
+ *  Resets zoomScale to 1, panX/panY to 0, and clears all
+ *  mouse/touch tracking state. Called on scenario change and Reiniciar. */
+function restablecerZoom() {
+    zoomScale = 1;
+    panX = 0;
+    panY = 0;
+    lastTouchDist = null;
+    lastTouchMidX = lastTouchMidY = null;
+    lastMouseX = lastMouseY = null;
+    isMouseDown = false;
+}
+
+let lastTouchDist = null, lastTouchMidX = null, lastTouchMidY = null;
+let isMouseDown = false, lastMouseX = null, lastMouseY = null;
+
+canvas.addEventListener('mousedown', function (e) {
+    if (escenarioActual === 3) return;
+    if (e.button === 0) {
+        isMouseDown = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    }
+});
+canvas.addEventListener('mouseup', function () {
+    isMouseDown = false;
+    lastMouseX = lastMouseY = null;
+});
+canvas.addEventListener('mousemove', function (e) {
+    if (escenarioActual === 3) return;
+    if (isMouseDown) {
+        let rect = canvas.getBoundingClientRect();
+        let scale = canvas.width / rect.width;
+        let dx = (e.clientX - lastMouseX) * scale / zoomScale;
+        let dy = (e.clientY - lastMouseY) * scale / zoomScale;
+        panX += dx;
+        panY += dy;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        cursorX = cursorY = null;
+        return;
+    }
+    let p = screenToBuffer(e.clientX, e.clientY);
+    cursorX = p.x; cursorY = p.y;
+});
+canvas.addEventListener('mouseenter', function (e) {
+    if (escenarioActual === 3) return;
+    let p = screenToBuffer(e.clientX, e.clientY);
+    cursorX = p.x; cursorY = p.y;
+});
+canvas.addEventListener('mouseleave', function () {
+    if (escenarioActual === 3) return;
+    isMouseDown = false;
+    lastMouseX = lastMouseY = null;
+    cursorX = cursorY = null;
+});
+canvas.addEventListener('touchmove', function (e) {
+    if (escenarioActual === 3) return;
+    e.preventDefault();
+    if (e.touches.length === 2) {
+        let dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        let rect = canvas.getBoundingClientRect();
+        let midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        let midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        let scale = canvas.width / rect.width;
+        if (lastTouchMidX !== null && lastTouchMidY !== null) {
+            panX += (midX - lastTouchMidX) * scale / zoomScale;
+            panY += (midY - lastTouchMidY) * scale / zoomScale;
+        }
+        lastTouchMidX = midX;
+        lastTouchMidY = midY;
+        if (lastTouchDist !== null) {
+            let newScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomScale * (dist / lastTouchDist)));
+            let cx = (midX - rect.left) * scale;
+            let cy = (midY - rect.top) * scale;
+            panX = cx - (cx - panX) * (newScale / zoomScale);
+            panY = cy - (cy - panY) * (newScale / zoomScale);
+            zoomScale = newScale;
+        }
+        lastTouchDist = dist;
+        return;
+    }
+    let p = screenToBuffer(e.touches[0].clientX, e.touches[0].clientY);
+    cursorX = p.x; cursorY = p.y;
+}, { passive: false });
+canvas.addEventListener('touchstart', function (e) {
+    if (escenarioActual === 3) return;
+    if (e.touches.length === 2) {
+        lastTouchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        lastTouchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        lastTouchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        return;
+    }
+    let p = screenToBuffer(e.touches[0].clientX, e.touches[0].clientY);
+    cursorX = p.x; cursorY = p.y;
+}, { passive: true });
+canvas.addEventListener('touchend', function () {
+    if (escenarioActual === 3) return;
+    lastTouchDist = null;
+    lastTouchMidX = lastTouchMidY = null;
+    cursorX = cursorY = null;
+});
+
+// ============================================
+// Escenario 3 canvas UI helpers
+// ============================================
+
+function esc3getCanvasCoords(e) {
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+
+function esc3hitTestTempSlider(cx, cy) {
+    var w = canvas.width, h = canvas.height;
+    var left = w * 0.12, top = h * 0.18, right = w * 0.75;
+    var sliderH = 16;
+    if (cy >= top - 80 && cy <= top + sliderH + 80) {
+        var t = (cx - left) / (right - left);
+        if (t >= -0.2 && t <= 1.2) {
+            return Math.max(10, Math.min(45, Math.round(10 + t * 35)));
+        }
+    }
+    return -1;
+}
+
+function esc3hitTestWaterSlider(cx, cy) {
+    var w = canvas.width, h = canvas.height;
+    var sx = w * 0.93, top = h * 0.15, bottom = h * 0.85;
+    var sliderW = 26;
+    if (cx >= sx - sliderW / 2 - 80 && cx <= sx + sliderW / 2 + 80 && cy >= top - 80 && cy <= bottom + 80) {
+        var t = 1 - (cy - top) / (bottom - top);
+        return Math.max(0, Math.min(100, Math.round(t * 100)));
+    }
+    return -1;
+}
+
+canvas.addEventListener('mousedown', function (e) {
+    if (escenarioActual !== 3) return;
+    var c = esc3getCanvasCoords(e);
+    var temp = esc3hitTestTempSlider(c.x, c.y);
+    if (temp >= 0) {
+        arrastrandoTemp = true;
+        cajaTemperatura.value = temp;
+        tempValSpan.textContent = temp;
+        pecera.temperatura = temp;
+        pecera.calSaturacion(temp);
+        return;
+    }
+    var nivel = esc3hitTestWaterSlider(c.x, c.y);
+    if (nivel >= 0) {
+        arrastrandoNivel = true;
+        nivelAgua = nivel;
+        actualizarLineaNivel();
+        actualizarAdvertenciaLN();
+        return;
+    }
+});
+
+canvas.addEventListener('mousemove', function (e) {
+    if (escenarioActual !== 3) return;
+    if (arrastrandoTemp) {
+        var c = esc3getCanvasCoords(e);
+        var temp = esc3hitTestTempSlider(c.x, c.y);
+        if (temp >= 0) {
+            cajaTemperatura.value = temp;
+            tempValSpan.textContent = temp;
+            pecera.temperatura = temp;
+            pecera.calSaturacion(temp);
+        }
+        return;
+    }
+    if (arrastrandoNivel) {
+        var c = esc3getCanvasCoords(e);
+        var nivel = esc3hitTestWaterSlider(c.x, c.y);
+        if (nivel >= 0) {
+            nivelAgua = nivel;
+            actualizarLineaNivel();
+            actualizarAdvertenciaLN();
+        }
+        return;
+    }
+});
+
+canvas.addEventListener('mouseup', function () {
+    arrastrandoTemp = false;
+    arrastrandoNivel = false;
+});
+
+canvas.addEventListener('touchstart', function (e) {
+    if (escenarioActual !== 3 || e.touches.length > 1) return;
+    var c = esc3getCanvasCoords(e);
+    var temp = esc3hitTestTempSlider(c.x, c.y);
+    if (temp >= 0) {
+        arrastrandoTemp = true;
+        cajaTemperatura.value = temp;
+        tempValSpan.textContent = temp;
+        pecera.temperatura = temp;
+        pecera.calSaturacion(temp);
+        e.preventDefault();
+        return;
+    }
+    var nivel = esc3hitTestWaterSlider(c.x, c.y);
+    if (nivel >= 0) {
+        arrastrandoNivel = true;
+        nivelAgua = nivel;
+        actualizarLineaNivel();
+        actualizarAdvertenciaLN();
+        e.preventDefault();
+        return;
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', function (e) {
+    if (escenarioActual !== 3) return;
+    if (arrastrandoTemp && e.touches.length === 1) {
+        var c = esc3getCanvasCoords(e);
+        var temp = esc3hitTestTempSlider(c.x, c.y);
+        if (temp >= 0) {
+            cajaTemperatura.value = temp;
+            tempValSpan.textContent = temp;
+            pecera.temperatura = temp;
+            pecera.calSaturacion(temp);
+        }
+        e.preventDefault();
+        return;
+    }
+    if (arrastrandoNivel && e.touches.length === 1) {
+        var c = esc3getCanvasCoords(e);
+        var nivel = esc3hitTestWaterSlider(c.x, c.y);
+        if (nivel >= 0) {
+            nivelAgua = nivel;
+            actualizarLineaNivel();
+            actualizarAdvertenciaLN();
+        }
+        e.preventDefault();
+        return;
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchend', function () {
+    arrastrandoTemp = false;
+    arrastrandoNivel = false;
+});
+
+// ============================================
+// ESCENARIO 6: Dimensiones 3D (Three.js)
+// ============================================
+
+let largoSlider = document.getElementById('largo');
+let anchoSlider = document.getElementById('ancho');
+let altoSlider = document.getElementById('alto');
+let largoVal = document.getElementById('largoVal');
+let anchoVal = document.getElementById('anchoVal');
+let altoVal = document.getElementById('altoVal');
+let capValInfo = document.getElementById('capValInfo');
+let btnResetEsc6 = document.getElementById('reset-esc6');
+let esc6Btn = document.getElementById('esc6-btn');
+
+// Escenario 7 variables
+const FIXED_LARGO = 19;
+const FIXED_ANCHO = 18;
+const FIXED_ALTO = 21;
+let esc7DimActual = 'ancho';
+let esc7Val1 = document.getElementById('esc7Val1');
+let esc7Val2 = document.getElementById('esc7Val2');
+let esc7Cap1 = document.getElementById('esc7Cap1');
+let esc7Cap2 = document.getElementById('esc7Cap2');
+let esc7DeltaVal = document.getElementById('esc7DeltaVal');
+let esc7DeltaCap = document.getElementById('esc7DeltaCap');
+let esc7BtnVal = document.getElementById('esc7BtnVal');
+let esc7BtnCap = document.getElementById('esc7BtnCap');
+let esc7BtnReset = document.getElementById('esc7BtnReset');
+let esc7IncluirPeces = document.getElementById('esc7IncluirPeces');
+let esc7FishCount = document.getElementById('esc7FishCount');
+let esc7FishSize = document.getElementById('esc7FishSize');
+let esc7FishLA = document.getElementById('esc7FishLA');
+let board7 = null;
+let p1_7 = null, p2_7 = null, p4_7 = null;
+let ref7Pt1 = null, ref7Pt2 = null;
+let segHoriz7 = null, vert7 = null, refLine7 = null;
+let labelDeltaVal = null, labelDeltaCap = null;
+let fishPoint7 = null, fishLineH7 = null, fishLineH7p1 = null, fishLineH7p2 = null;
+
+function actualizarInfoEsc6() {
+    let L = Number(largoSlider.value);
+    let W = Number(anchoSlider.value);
+    let H = Number(altoSlider.value);
+    capValInfo.textContent = (L * W * H / 1000).toFixed(3) + ' L';
+}
+
+// Dimensión variable table
+let dimTabActual = 'ancho';
+let dimTabInputs = [];
+let dimTabSpans = [];
+let dimTabChecks = [];
+let highlightGroups = [];
+
+function initTablaDimVar() {
+    let tbody = document.getElementById('tbodyDim');
+    if (!tbody || dimTabInputs.length > 0) return;
+    for (let i = 0; i < 2; i++) {
+        agregarFilaDimVar();
+    }
+}
+
+function agregarFilaDimVar() {
+    let tbody = document.getElementById('tbodyDim');
+    let tr = document.createElement('tr');
+    let td0 = document.createElement('td');
+    td0.className = 'text-center';
+    let chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'form-check-input m-0';
+    td0.appendChild(chk);
+    let td1 = document.createElement('td');
+    let inp = document.createElement('input');
+    inp.type = 'number';
+    inp.className = 'form-control form-control-sm';
+    inp.placeholder = '';
+    td1.appendChild(inp);
+    let td2 = document.createElement('td');
+    let span = document.createElement('span');
+    span.className = 'cap-val';
+    span.textContent = '—';
+    td2.appendChild(span);
+    let td3 = document.createElement('td');
+    let btnDel = document.createElement('button');
+    btnDel.className = 'btn btn-sm btn-outline-danger py-0 px-1';
+    btnDel.textContent = '✕';
+    btnDel.addEventListener('click', function () {
+        let idx = dimTabInputs.indexOf(inp);
+        if (idx > -1) { dimTabInputs.splice(idx, 1); dimTabSpans.splice(idx, 1); dimTabChecks.splice(idx, 1); }
+        tr.remove();
+        actualizarHighlights();
+    });
+    td3.appendChild(btnDel);
+    tr.appendChild(td0);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tr.appendChild(td3);
+    tbody.appendChild(tr);
+    dimTabInputs.push(inp);
+    dimTabSpans.push(span);
+    dimTabChecks.push(chk);
+    inp.addEventListener('input', function () {
+        let val = Number(this.value);
+        if (isNaN(val) || val <= 0) return;
+
+        let slider, spanEl;
+        if (dimTabActual === 'ancho') { slider = anchoSlider; spanEl = anchoVal; }
+        else if (dimTabActual === 'alto') { slider = altoSlider; spanEl = altoVal; }
+        else { slider = largoSlider; spanEl = largoVal; }
+
+        let min = Number(slider.min), max = Number(slider.max);
+        val = Math.max(min, Math.min(max, val));
+        this.value = val;
+
+        slider.value = val;
+        spanEl.textContent = val;
+        actualizarInfoEsc6();
+        if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+        actualizarTablaDimVar();
+        actualizarHighlights();
+    });
+    chk.addEventListener('change', function () {
+        actualizarHighlights();
+    });
+}
+
+document.getElementById('btnAddFila').addEventListener('click', function () {
+    agregarFilaDimVar();
+    actualizarTablaDimVar();
+});
+
+document.getElementById('btnAddFilaCapDina').addEventListener('click', function () {
+    agregarFilaCapDina();
+    actualizarTablaCapDina();
+    actualizarHighlightsCapDina();
+});
+
+let capDinaTabs = document.querySelectorAll('#capDinaTabs .nav-link');
+capDinaTabs.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        capDinaTabs.forEach(function (b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        capDinaActual = this.getAttribute('data-tab');
+        var name = capDinaActual.charAt(0).toUpperCase() + capDinaActual.slice(1);
+        document.getElementById('thCDVal1').textContent = name + '\u2081';
+        document.getElementById('thCDVal2').textContent = name + '\u2082';
+        bloquearSlidersPorTab(capDinaActual);
+        actualizarTablaCapDina();
+        actualizarHighlightsCapDina();
+    });
+});
+
+function actualizarTablaDimVar() {
+    let L = Number(largoSlider.value);
+    let W = Number(anchoSlider.value);
+    let H = Number(altoSlider.value);
+    let fixed = { ancho: L * H, alto: L * W, largo: W * H };
+    let mult = fixed[dimTabActual] || 0;
+    for (let i = 0; i < dimTabInputs.length; i++) {
+        let val = Number(dimTabInputs[i].value);
+        dimTabSpans[i].textContent = isNaN(val) || val <= 0 ? '—' : (val * mult / 1000).toFixed(3) + ' L';
+    }
+}
+
+function bloquearSlidersPorTab(tab) {
+    tab = tab || dimTabActual;
+    if (tab !== 'largo') { largoSlider.value = Number(largoSlider.max); largoVal.textContent = largoSlider.max; largoSlider.disabled = true; }
+    if (tab !== 'ancho') { anchoSlider.value = Number(anchoSlider.max); anchoVal.textContent = anchoSlider.max; anchoSlider.disabled = true; }
+    if (tab !== 'alto') { altoSlider.value = Number(altoSlider.max); altoVal.textContent = altoSlider.max; altoSlider.disabled = true; }
+    if (tab === 'largo') { largoSlider.disabled = false; }
+    if (tab === 'ancho') { anchoSlider.disabled = false; }
+    if (tab === 'alto') { altoSlider.disabled = false; }
+    actualizarInfoEsc6();
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    let tabs = document.querySelectorAll('#dimTabs .nav-link');
+    tabs.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            tabs.forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            dimTabActual = this.getAttribute('data-tab');
+            document.getElementById('thCabecera').textContent = dimTabActual.charAt(0).toUpperCase() + dimTabActual.slice(1);
+            bloquearSlidersPorTab();
+            actualizarTablaDimVar();
+            actualizarHighlights();
+        });
+    });
+
+    let collapseEl = document.getElementById('esc6-tabla-collapse');
+    collapseEl.addEventListener('shown.bs.collapse', function () {
+        bloquearSlidersPorTab();
+    });
+    collapseEl.addEventListener('hidden.bs.collapse', function () {
+        largoSlider.disabled = false;
+        anchoSlider.disabled = false;
+        altoSlider.disabled = false;
+    });
+
+    let collapseCapDinaEl = document.getElementById('esc6-cap-dinamica-collapse');
+    collapseCapDinaEl.addEventListener('shown.bs.collapse', function () {
+        bloquearSlidersPorTab(capDinaActual);
+    });
+    collapseCapDinaEl.addEventListener('hidden.bs.collapse', function () {
+        largoSlider.disabled = false;
+        anchoSlider.disabled = false;
+        altoSlider.disabled = false;
+    });
+});
+
+var HIGHLIGHT_COLORS = [0xffdd44, 0x44ddff, 0x44ff88, 0xff66aa, 0xcc88ff, 0xff8844];
+
+function actualizarHighlights() {
+    highlightGroups.forEach(function (g) { threeScene.remove(g); });
+    highlightGroups = [];
+
+    let L = getDimL(), W = getDimW(), H = getDimH();
+    if (!L || !W || !H) return;
+
+    for (let i = 0; i < dimTabChecks.length; i++) {
+        if (!dimTabChecks[i].checked) continue;
+        let val = Number(dimTabInputs[i].value);
+        if (isNaN(val) || val <= 0) continue;
+
+        let boxGeo, pos;
+        if (dimTabActual === 'largo') {
+            let w = Math.min(val, L);
+            boxGeo = new THREE.BoxGeometry(w, H, W);
+            pos = new THREE.Vector3(-L / 2 + w / 2, H / 2, 0);
+        } else if (dimTabActual === 'ancho') {
+            let w = Math.min(val, W);
+            boxGeo = new THREE.BoxGeometry(L, H, w);
+            pos = new THREE.Vector3(0, H / 2, -W / 2 + w / 2);
+        } else {
+            let h = Math.min(val, H);
+            boxGeo = new THREE.BoxGeometry(L, h, W);
+            pos = new THREE.Vector3(0, h / 2, 0);
+        }
+
+        let color = HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length];
+
+        let mat = new THREE.MeshPhongMaterial({ color: color, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false });
+        let mesh = new THREE.Mesh(boxGeo, mat);
+        mesh.position.copy(pos);
+        let edges = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeo), new THREE.LineDashedMaterial({ color: color, dashSize: 0.3, gapSize: 0.2 }));
+        edges.computeLineDistances();
+        edges.position.copy(pos);
+
+        let g = new THREE.Group();
+        g.add(mesh);
+        g.add(edges);
+        threeScene.add(g);
+        highlightGroups.push(g);
+    }
+}
+
+var CAPDINA_COLORS = [[0x44aaff, 0xff6644], [0x66dd88, 0xcc44ff], [0xffcc44, 0x44ffcc], [0xff66aa, 0x66aaff]];
+var capDinaHighlightGroups = [];
+
+function actualizarHighlightsCapDina() {
+    capDinaHighlightGroups.forEach(function (g) { threeScene.remove(g); });
+    capDinaHighlightGroups = [];
+
+    let L = getDimL(), W = getDimW(), H = getDimH();
+    if (!L || !W || !H) return;
+
+    for (let i = 0; i < capDinaVal1.length; i++) {
+        if (!capDinaChecks[i].checked) continue;
+        let v1 = Number(capDinaVal1[i].value);
+        let v2 = Number(capDinaVal2[i].value);
+        if (isNaN(v1) || v1 <= 0 || isNaN(v2) || v2 <= 0) continue;
+
+        var cols = CAPDINA_COLORS[i % CAPDINA_COLORS.length];
+
+        function makeHighlight(val, color) {
+            var clamped = Math.min(val, (capDinaActual === 'largo') ? L : (capDinaActual === 'ancho') ? W : H);
+            var boxGeo, pos;
+            if (capDinaActual === 'largo') {
+                boxGeo = new THREE.BoxGeometry(clamped, H, W);
+                pos = new THREE.Vector3(-L / 2 + clamped / 2, H / 2, 0);
+            } else if (capDinaActual === 'ancho') {
+                boxGeo = new THREE.BoxGeometry(L, H, clamped);
+                pos = new THREE.Vector3(0, H / 2, -W / 2 + clamped / 2);
+            } else {
+                boxGeo = new THREE.BoxGeometry(L, clamped, W);
+                pos = new THREE.Vector3(0, clamped / 2, 0);
+            }
+            var mat = new THREE.MeshPhongMaterial({ color: color, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false });
+            var mesh = new THREE.Mesh(boxGeo, mat);
+            mesh.position.copy(pos);
+            var edges = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeo), new THREE.LineDashedMaterial({ color: color, dashSize: 0.3, gapSize: 0.2 }));
+            edges.computeLineDistances();
+            edges.position.copy(pos);
+            var g = new THREE.Group();
+            g.add(mesh);
+            g.add(edges);
+            threeScene.add(g);
+            capDinaHighlightGroups.push(g);
+        }
+
+        makeHighlight(v1, cols[0]);
+        makeHighlight(v2, cols[1]);
+    }
+}
+
+// Capacidad Dinámica table
+let capDinaActual = 'ancho';
+let capDinaVal1 = [];
+let capDinaVal2 = [];
+let capDinaCap1 = [];
+let capDinaCap2 = [];
+let capDinaDiff = [];
+let capDinaChecks = [];
+
+function initTablaCapDina() {
+    let tbody = document.getElementById('tbodyCapDina');
+    if (!tbody || capDinaVal1.length > 0) return;
+    for (let i = 0; i < 2; i++) {
+        agregarFilaCapDina();
+    }
+}
+
+function agregarFilaCapDina() {
+    let tbody = document.getElementById('tbodyCapDina');
+    let tr = document.createElement('tr');
+
+    let td0 = document.createElement('td');
+    td0.className = 'text-center';
+    let chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'form-check-input m-0';
+    td0.appendChild(chk);
+
+    let tdVal1 = document.createElement('td');
+    let inp1 = document.createElement('input');
+    inp1.type = 'number';
+    inp1.className = 'form-control form-control-sm';
+    inp1.placeholder = '';
+    tdVal1.appendChild(inp1);
+
+    let tdVal2 = document.createElement('td');
+    let inp2 = document.createElement('input');
+    inp2.type = 'number';
+    inp2.className = 'form-control form-control-sm';
+    inp2.placeholder = '';
+    tdVal2.appendChild(inp2);
+
+    let tdCap1 = document.createElement('td');
+    let span1 = document.createElement('span');
+    span1.textContent = '—';
+    tdCap1.appendChild(span1);
+
+    let tdCap2 = document.createElement('td');
+    let span2 = document.createElement('span');
+    span2.textContent = '—';
+    tdCap2.appendChild(span2);
+
+    let tdDiff = document.createElement('td');
+    let spanDiff = document.createElement('span');
+    spanDiff.textContent = '—';
+    tdDiff.appendChild(spanDiff);
+
+    let tdDel = document.createElement('td');
+    let btnDel = document.createElement('button');
+    btnDel.className = 'btn btn-sm btn-outline-danger py-0 px-1';
+    btnDel.textContent = '✕';
+    btnDel.addEventListener('click', function () {
+        let idx = capDinaVal1.indexOf(inp1);
+        if (idx > -1) {
+            capDinaVal1.splice(idx, 1);
+            capDinaVal2.splice(idx, 1);
+            capDinaCap1.splice(idx, 1);
+            capDinaCap2.splice(idx, 1);
+            capDinaDiff.splice(idx, 1);
+            capDinaChecks.splice(idx, 1);
+        }
+        tr.remove();
+        actualizarHighlightsCapDina();
+    });
+    tdDel.appendChild(btnDel);
+
+    tr.appendChild(td0);
+    tr.appendChild(tdVal1);
+    tr.appendChild(tdVal2);
+    tr.appendChild(tdCap1);
+    tr.appendChild(tdCap2);
+    tr.appendChild(tdDiff);
+    tr.appendChild(tdDel);
+    tbody.appendChild(tr);
+
+    capDinaVal1.push(inp1);
+    capDinaVal2.push(inp2);
+    capDinaCap1.push(span1);
+    capDinaCap2.push(span2);
+    capDinaDiff.push(spanDiff);
+    capDinaChecks.push(chk);
+
+    function onInput() {
+        let maxVal = 0;
+        for (let j = 0; j < capDinaVal1.length; j++) {
+            let a = Number(capDinaVal1[j].value);
+            let b = Number(capDinaVal2[j].value);
+            if (!isNaN(a) && a > maxVal) maxVal = a;
+            if (!isNaN(b) && b > maxVal) maxVal = b;
+        }
+        if (maxVal > 0) {
+            let slider, spanEl;
+            if (capDinaActual === 'ancho') { slider = anchoSlider; spanEl = anchoVal; }
+            else if (capDinaActual === 'alto') { slider = altoSlider; spanEl = altoVal; }
+            else { slider = largoSlider; spanEl = largoVal; }
+            let min = Number(slider.min), max = Number(slider.max);
+            maxVal = Math.max(min, Math.min(max, maxVal));
+            slider.value = maxVal;
+            spanEl.textContent = maxVal;
+            actualizarInfoEsc6();
+            if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+        }
+        actualizarTablaCapDina();
+        actualizarHighlightsCapDina();
+    }
+    inp1.addEventListener('input', onInput);
+    inp2.addEventListener('input', onInput);
+    chk.addEventListener('change', function () {
+        actualizarHighlightsCapDina();
+    });
+}
+
+function actualizarTablaCapDina() {
+    let L = Number(largoSlider.value);
+    let W = Number(anchoSlider.value);
+    let H = Number(altoSlider.value);
+    let fixed = { ancho: L * H, alto: L * W, largo: W * H };
+    let mult = fixed[capDinaActual] || 0;
+
+    for (let i = 0; i < capDinaVal1.length; i++) {
+        let v1 = Number(capDinaVal1[i].value);
+        let v2 = Number(capDinaVal2[i].value);
+
+        if (isNaN(v1) || v1 <= 0 || isNaN(v2) || v2 <= 0) {
+            capDinaCap1[i].textContent = '—';
+            capDinaCap2[i].textContent = '—';
+            capDinaDiff[i].textContent = '—';
+            continue;
+        }
+
+        let c1 = v1 * mult / 1000;
+        let c2 = v2 * mult / 1000;
+        capDinaCap1[i].textContent = c1.toFixed(3) + ' L';
+        capDinaCap2[i].textContent = c2.toFixed(3) + ' L';
+
+        let diff = c2 - c1;
+        if (diff > 0.001) {
+            capDinaDiff[i].textContent = 'Δ Cap₂ - Cap₁ = ' + diff.toFixed(3) + ' L';
+        } else if (diff < -0.001) {
+            capDinaDiff[i].textContent = '▼ Cap₁ - Cap₂ = ' + (-diff).toFixed(3) + ' L';
+        } else {
+            capDinaDiff[i].textContent = '—';
+        }
+    }
+}
+
+let threeRenderer = null;
+let threeContainer = null;
+let threeScene = null;
+let threeCamera = null;
+let threeControls = null;
+let tankGroup = null;
+let waterSurface = null;
+let waterSurfaceGeo = null;
+let peces3D = [];
+let clock = new THREE.Clock();
+
+function getDimL() { return Number(largoSlider.value) || 1; }
+function getDimW() { return Number(anchoSlider.value) || 1; }
+function getDimH() { return Number(altoSlider.value) || 1; }
+
+function initEscena3D() {
+    threeContainer = document.getElementById('three-container');
+    if (!threeContainer) return;
+
+    threeScene = new THREE.Scene();
+    threeScene.background = new THREE.Color(0x87CEEB);
+
+    let w = threeContainer.clientWidth || 600;
+    let h = threeContainer.clientHeight || 400;
+    threeCamera = new THREE.PerspectiveCamera(40, w / h, 0.1, 500);
+    threeCamera.position.set(Math.max(getDimL(), getDimW(), getDimH()) * 1.8, getDimH() * 1.2, Math.max(getDimL(), getDimW(), getDimH()) * 1.8);
+
+    threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+    threeRenderer.setSize(w, h);
+    threeRenderer.setPixelRatio(window.devicePixelRatio);
+    threeContainer.appendChild(threeRenderer.domElement);
+
+    threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+    threeControls.enableDamping = true;
+    threeControls.dampingFactor = 0.08;
+    threeControls.target.set(0, getDimH() / 2, 0);
+
+    let ambient = new THREE.AmbientLight(0x404060, 0.6);
+    threeScene.add(ambient);
+    let dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight.position.set(20, 40, 20);
+    threeScene.add(dirLight);
+    let fillLight = new THREE.DirectionalLight(0x88aaff, 0.3);
+    fillLight.position.set(-20, 10, -20);
+    threeScene.add(fillLight);
+
+    let groundGeo = new THREE.PlaneGeometry(80, 80);
+    let groundMat = new THREE.MeshStandardMaterial({ color: 0xd4e8f0, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+    let ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.1;
+    threeScene.add(ground);
+
+    construirTanque3D();
+}
+
+function crearTextSprite(text, color) {
+    let canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 128;
+    let ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 52px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 256, 68);
+    let tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    let mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    let sprite = new THREE.Sprite(mat);
+    sprite.scale.set(5, 1.25, 1);
+    return sprite;
+}
+
+function crearLineaCota(p1, p2, tickDir, color, texto) {
+    let g = new THREE.Group();
+    let mat = new THREE.LineBasicMaterial({ color });
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([p1, p2]), mat));
+    let t = tickDir.clone().multiplyScalar(0.2);
+    for (let p of [p1, p2]) {
+        g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([p.clone().add(t), p.clone().sub(t)]), mat));
+    }
+    let mid = new THREE.Vector3().copy(p1).add(p2).multiplyScalar(0.5);
+    let sprite = crearTextSprite(texto, color);
+    sprite.position.copy(mid);
+    sprite.position.y += 1.0;
+    g.add(sprite);
+    return g;
+}
+
+function construirTanque3D() {
+    if (tankGroup) { threeScene.remove(tankGroup); tankGroup = null; }
+    let L = Math.max(1, getDimL());
+    let W = Math.max(1, getDimW());
+    let H = Math.max(1, getDimH());
+    tankGroup = new THREE.Group();
+
+    let wallMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false });
+    let wallGeo = new THREE.BoxGeometry(L, H, W);
+    let walls = new THREE.Mesh(wallGeo, wallMat);
+    walls.position.y = H / 2;
+    tankGroup.add(walls);
+
+    let edgeMat = new THREE.LineBasicMaterial({ color: 0x4a90d9 });
+    let edgeGeo = new THREE.EdgesGeometry(wallGeo);
+    let edges = new THREE.LineSegments(edgeGeo, edgeMat);
+    edges.position.y = H / 2;
+    tankGroup.add(edges);
+
+    let waterMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
+    let waterVol = new THREE.Mesh(new THREE.BoxGeometry(L * 0.96, H * 0.96, W * 0.96), waterMat);
+    waterVol.position.y = H / 2;
+    tankGroup.add(waterVol);
+
+    let surfMat = new THREE.MeshPhongMaterial({ color: 0x3399ff, transparent: true, opacity: 0.85, side: THREE.DoubleSide, shininess: 30, specular: 0x4488cc });
+    waterSurfaceGeo = new THREE.PlaneGeometry(L * 0.96, W * 0.96, 40, 40);
+    waterSurfaceGeo.rotateX(-Math.PI / 2);
+    waterSurface = new THREE.Mesh(waterSurfaceGeo, surfMat);
+    waterSurface.position.y = H * 0.98;
+    tankGroup.add(waterSurface);
+
+    // Cotas
+    let off = 0.6;
+    tankGroup.add(crearLineaCota(
+        new THREE.Vector3(-L / 2, 0, W / 2 + off),
+        new THREE.Vector3(L / 2, 0, W / 2 + off),
+        new THREE.Vector3(0, 0, 1), 0xff6666, 'Largo: ' + L
+    ));
+    tankGroup.add(crearLineaCota(
+        new THREE.Vector3(L / 2 + off, 0, W / 2),
+        new THREE.Vector3(L / 2 + off, 0, -W / 2),
+        new THREE.Vector3(1, 0, 0), 0x66ff66, 'Ancho: ' + W
+    ));
+    tankGroup.add(crearLineaCota(
+        new THREE.Vector3(L / 2 + off, 0, W / 2 + off),
+        new THREE.Vector3(L / 2 + off, H, W / 2 + off),
+        new THREE.Vector3(1, 0, 0), 0xffdd66, 'Alto: ' + H
+    ));
+
+    actualizarHighlights();
+    actualizarHighlightsCapDina();
+
+    threeScene.add(tankGroup);
+    threeControls.target.set(0, H / 2, 0);
+}
+
+function iniciarPeces3D() {
+    limpiarPeces3D();
+    let L = Math.max(1, getDimL());
+    let W = Math.max(1, getDimW());
+    let H = Math.max(1, getDimH());
+    let numPeces = Math.min(10, Math.max(3, Math.floor((L * W * H) / 50)));
+    for (let i = 0; i < numPeces; i++) {
+        peces3D.push(crearPez3D(L, W, H));
+    }
+}
+
+function crearPez3D(L, W, H) {
+    let group = new THREE.Group();
+
+    // Body with vertex colors for two-tone neon pattern
+    let bodyGeo = new THREE.SphereGeometry(0.5, 14, 10);
+    bodyGeo.scale(1.8, 0.6, 0.7);
+
+    let pos = bodyGeo.attributes.position;
+    let cArr = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+        let y = pos.getY(i);
+        let zAbs = Math.abs(pos.getZ(i));
+        if (y > 0.05 && y < 0.2 && zAbs > 0.08) {
+            // Cyan stripe on upper flanks
+            cArr[i * 3] = 0; cArr[i * 3 + 1] = 0.83; cArr[i * 3 + 2] = 1;
+        } else if (y < -0.05 && zAbs > 0.08) {
+            // Red belly
+            cArr[i * 3] = 1; cArr[i * 3 + 1] = 0.27; cArr[i * 3 + 2] = 0.27;
+        } else {
+            // Dark body base
+            cArr[i * 3] = 0.17; cArr[i * 3 + 1] = 0.24; cArr[i * 3 + 2] = 0.31;
+        }
+    }
+    bodyGeo.setAttribute('color', new THREE.BufferAttribute(cArr, 3));
+
+    let body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 25 }));
+    body.position.x = 0.3;
+    group.add(body);
+
+    // Tail (dark translucent)
+    let tailShape = new THREE.Shape();
+    tailShape.moveTo(0, 0); tailShape.lineTo(-0.5, -0.3); tailShape.lineTo(-0.5, 0.3); tailShape.closePath();
+    let tail = new THREE.Mesh(new THREE.ShapeGeometry(tailShape), new THREE.MeshPhongMaterial({ color: 0x2C3E50, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
+    tail.position.x = -0.7;
+    group.add(tail);
+
+    // Eyes (black)
+    let eyeMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
+    let eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), eyeMat);
+    eye.position.set(0.9, 0.1, 0.3);
+    group.add(eye);
+    let eye2 = eye.clone();
+    eye2.position.z = -0.3;
+    group.add(eye2);
+
+    let margin = 1;
+    group.position.set(
+        (Math.random() - 0.5) * (L - margin * 2),
+        Math.random() * (H - margin * 2) + margin,
+        (Math.random() - 0.5) * (W - margin * 2)
+    );
+    group.rotation.y = Math.random() * Math.PI * 2;
+
+    threeScene.add(group);
+    return {
+        mesh: group,
+        speed: 0.5 + Math.random() * 0.8,
+        target: new THREE.Vector3(
+            (Math.random() - 0.5) * (L - margin * 2),
+            Math.random() * (H - margin * 2) + margin,
+            (Math.random() - 0.5) * (W - margin * 2)
+        ),
+        phase: Math.random() * Math.PI * 2
+    };
+}
+
+function animarPeces3D() {
+    let L = Math.max(1, getDimL());
+    let W = Math.max(1, getDimW());
+    let H = Math.max(1, getDimH());
+    let margin = 1;
+    let time = clock.getElapsedTime();
+    for (let p of peces3D) {
+        let pos = p.mesh.position;
+        let dir = new THREE.Vector3().copy(p.target).sub(pos);
+        let dist = dir.length();
+        if (dist < 0.5) {
+            p.target.set(
+                (Math.random() - 0.5) * (L - margin * 2),
+                Math.random() * (H - margin * 2) + margin,
+                (Math.random() - 0.5) * (W - margin * 2)
+            );
+        }
+        dir.normalize();
+        pos.x += dir.x * p.speed * 0.05;
+        pos.y += dir.y * p.speed * 0.04;
+        pos.z += dir.z * p.speed * 0.05;
+        pos.x = Math.max(-L / 2 + margin, Math.min(L / 2 - margin, pos.x));
+        pos.y = Math.max(margin, Math.min(H - margin, pos.y));
+        pos.z = Math.max(-W / 2 + margin, Math.min(W / 2 - margin, pos.z));
+        if (dist > 0.1) p.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+        let tail = p.mesh.children[1];
+        if (tail) tail.rotation.y = Math.sin(time * 3 + p.phase) * 0.3;
+    }
+}
+
+function animarOlas() {
+    if (!waterSurfaceGeo) return;
+    let pos = waterSurfaceGeo.attributes.position;
+    let time = clock.getElapsedTime();
+    for (let i = 0; i < pos.count; i++) {
+        let x = pos.getX(i), z = pos.getZ(i);
+        pos.setY(i, Math.sin(x * 0.5 + time * 1.2) * 0.25 + Math.cos(z * 0.4 + time * 0.9) * 0.20 + Math.sin((x + z) * 0.3 + time * 0.7) * 0.12);
+    }
+    pos.needsUpdate = true;
+}
+
+function limpiarPeces3D() {
+    for (let p of peces3D) { threeScene.remove(p.mesh); }
+    peces3D = [];
+}
+
+function redimensionarThree() {
+    if (!threeRenderer || !threeContainer) return;
+    let w = threeContainer.clientWidth, h = threeContainer.clientHeight;
+    if (w === 0 || h === 0) return;
+    threeCamera.aspect = w / h;
+    threeCamera.updateProjectionMatrix();
+    threeRenderer.setSize(w, h);
+}
+
+// Event listeners
+esc6Btn.addEventListener('click', function () { navegarA(6); });
+largoSlider.addEventListener('input', function () {
+    largoVal.textContent = this.value;
+    actualizarInfoEsc6();
+    actualizarTablaDimVar();
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+});
+anchoSlider.addEventListener('input', function () {
+    anchoVal.textContent = this.value;
+    actualizarInfoEsc6();
+    actualizarTablaDimVar();
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+});
+altoSlider.addEventListener('input', function () {
+    altoVal.textContent = this.value;
+    actualizarInfoEsc6();
+    actualizarTablaDimVar();
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+});
+btnResetEsc6.addEventListener('click', function () {
+    largoSlider.value = 19; anchoSlider.value = 18; altoSlider.value = 21;
+    largoVal.textContent = 19; anchoVal.textContent = 18; altoVal.textContent = 21;
+    // Limpiar tabla Dimensiones variables
+    highlightGroups.forEach(function (g) { threeScene.remove(g); });
+    highlightGroups = [];
+    dimTabInputs = []; dimTabSpans = []; dimTabChecks = [];
+    document.getElementById('tbodyDim').innerHTML = '';
+    for (let i = 0; i < 2; i++) { agregarFilaDimVar(); }
+    // Limpiar tabla Capacidad Dinámica
+    capDinaHighlightGroups.forEach(function (g) { threeScene.remove(g); });
+    capDinaHighlightGroups = [];
+    capDinaVal1 = []; capDinaVal2 = []; capDinaCap1 = []; capDinaCap2 = []; capDinaDiff = []; capDinaChecks = [];
+    document.getElementById('tbodyCapDina').innerHTML = '';
+    for (let i = 0; i < 2; i++) { agregarFilaCapDina(); }
+    actualizarInfoEsc6();
+    actualizarTablaDimVar();
+    if (escenarioActual === 6) { construirTanque3D(); iniciarPeces3D(); }
+});
+window.addEventListener('resize', redimensionarThree);
+
+// Escenario 7 event listeners
+esc7Val1.addEventListener('input', actualizarEsc7);
+esc7Val2.addEventListener('input', actualizarEsc7);
+esc7Val1.addEventListener('blur', function () {
+    let v = Number(esc7Val1.value);
+    if (esc7Val1.value !== '' && (isNaN(v) || v < 0)) {
+        esc7Val1.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    validarEsc7Valores();
+});
+esc7Val2.addEventListener('blur', function () {
+    let v = Number(esc7Val2.value);
+    if (esc7Val2.value !== '' && (isNaN(v) || v < 0)) {
+        esc7Val2.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    validarEsc7Valores();
+});
+esc7BtnVal.addEventListener('click', function() { verificarEsc7('val'); });
+esc7BtnCap.addEventListener('click', function() { verificarEsc7('cap'); });
+esc7DeltaVal.addEventListener('blur', function () {
+    let v = Number(esc7DeltaVal.value);
+    if (esc7DeltaVal.value !== '' && (isNaN(v) || v < 0)) {
+        esc7DeltaVal.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    verificarEsc7('val', true);
+});
+esc7DeltaCap.addEventListener('blur', function () {
+    let v = Number(esc7DeltaCap.value);
+    if (esc7DeltaCap.value !== '' && (isNaN(v) || v < 0)) {
+        esc7DeltaCap.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    verificarEsc7('cap', true);
+});
+esc7DeltaVal.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') verificarEsc7('val');
+});
+esc7DeltaCap.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') verificarEsc7('cap');
+});
+esc7DeltaVal.addEventListener('input', function () {
+    esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+    if (esc7BtnVal.disabled) {
+        esc7BtnVal.innerHTML = 'Validar';
+        esc7BtnVal.disabled = false;
+        esc7BtnVal.classList.replace('btn-outline-success', 'btn-success');
+        if (labelDeltaVal) labelDeltaVal.setAttribute({visible: false});
+    }
+});
+esc7DeltaCap.addEventListener('input', function () {
+    esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+    if (esc7BtnCap.disabled) {
+        esc7BtnCap.innerHTML = 'Validar';
+        esc7BtnCap.disabled = false;
+        esc7BtnCap.classList.replace('btn-outline-success', 'btn-success');
+        if (labelDeltaCap) labelDeltaCap.setAttribute({visible: false});
+    }
+});
+esc7BtnReset.addEventListener('click', function () {
+    esc7Val1.value = '';
+    esc7Val2.value = '';
+    esc7DeltaVal.value = '';
+    esc7DeltaCap.value = '';
+    esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+    esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+    esc7BtnVal.innerHTML = 'Validar';
+    esc7BtnVal.disabled = false;
+    esc7BtnVal.classList.replace('btn-outline-success', 'btn-success');
+    esc7BtnCap.innerHTML = 'Validar';
+    esc7BtnCap.disabled = false;
+    esc7BtnCap.classList.replace('btn-outline-success', 'btn-success');
+    if (labelDeltaVal) labelDeltaVal.setAttribute({visible: false});
+    if (labelDeltaCap) labelDeltaCap.setAttribute({visible: false});
+    esc7IncluirPeces.checked = false;
+    esc7FishCount.value = '';
+    esc7FishSize.value = '';
+    document.getElementById('esc7FishSection').style.display = 'none';
+    if (fishPoint7) fishPoint7.setAttribute({visible: false});
+    if (fishLineH7) fishLineH7.setAttribute({visible: false});
+    actualizarEsc7();
+    aplicarColoresEsc7(esc7DimActual);
+    document.getElementById('esc7-controls').className = 'dim-' + esc7DimActual;
+});
+esc7IncluirPeces.addEventListener('change', verificarFish7);
+esc7FishCount.addEventListener('input', verificarFish7);
+esc7FishSize.addEventListener('input', verificarFish7);
+esc7FishCount.addEventListener('blur', function () {
+    let v = Number(esc7FishCount.value);
+    if (esc7FishCount.value !== '' && (isNaN(v) || v < 0)) {
+        esc7FishCount.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    verificarFish7();
+});
+esc7FishSize.addEventListener('blur', function () {
+    let v = Number(esc7FishSize.value);
+    if (esc7FishSize.value !== '' && (isNaN(v) || v < 0)) {
+        esc7FishSize.value = '';
+        mostrarToast('El valor mínimo es 0', 'warning', 3000);
+    }
+    verificarFish7();
+});
+
+document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+        document.querySelectorAll('#esc7Tabs .nav-link').forEach(function (t) { t.classList.remove('active'); });
+        this.classList.add('active');
+        esc7DimActual = this.getAttribute('data-dim');
+
+        let dimLabel = esc7DimActual.charAt(0).toUpperCase() + esc7DimActual.slice(1);
+        document.getElementById('esc7Th1').textContent = dimLabel + '₁';
+        document.getElementById('esc7Th2').textContent = dimLabel + '₂';
+        document.getElementById('esc7ThDelta').textContent = 'Δ ' + dimLabel;
+
+        esc7DeltaVal.value = '';
+        esc7DeltaCap.value = '';
+        esc7DeltaVal.classList.remove('esc7-input--success', 'esc7-input--error');
+        esc7DeltaCap.classList.remove('esc7-input--success', 'esc7-input--error');
+        esc7BtnVal.innerHTML = 'Validar';
+        esc7BtnVal.disabled = false;
+        esc7BtnVal.classList.replace('btn-outline-success', 'btn-success');
+        esc7BtnCap.innerHTML = 'Validar';
+        esc7BtnCap.disabled = false;
+        esc7BtnCap.classList.replace('btn-outline-success', 'btn-success');
+        esc7IncluirPeces.checked = false;
+        esc7FishCount.value = '';
+        esc7FishSize.value = '';
+        document.getElementById('esc7FishSection').style.display = 'none';
+        if (fishPoint7) fishPoint7.setAttribute({visible: false});
+        if (fishLineH7) fishLineH7.setAttribute({visible: false});
+        actualizarEsc7();
+        aplicarColoresEsc7(esc7DimActual);
+        document.getElementById('esc7-controls').className = 'dim-' + esc7DimActual;
+    });
+});
+
+escenariosDesbloqueados.add(1);
+desbloquearTab(1);
+cambiarEscenario(1);
+
+// Inline editable V/I/m values for escenarios 2, 4, 5
+makeEditable('voltVal', function (val) { return val; }, voltSlider, 0, 12);
+makeEditable('corrVal', function (val) {
+    if (escenarioActual === 5) {
+        let m = Number(mSlider.value);
+        return m !== 0 ? val / m : 0;
+    }
+    return val / 0.3;
+}, voltSlider, 0, 12);
+makeEditable('mVal', function (val) { return val; }, mSlider, 0, 5);
+
+// Ripple effect for buttons and tabs
+document.addEventListener('click', function (e) {
+    let el = e.target.closest('.scenario-tab, .btn:not(.no-ripple), .nav-link');
+    if (!el) return;
+    let rect = el.getBoundingClientRect();
+    let r = document.createElement('span');
+    r.className = 'ripple';
+    let size = Math.max(rect.width, rect.height);
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    r.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    el.appendChild(r);
+    r.addEventListener('animationend', function () { r.remove(); });
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+        var b = window.PECERA_BASE || window.location.pathname.replace(/\/[^/]*$/, '');
+        navigator.serviceWorker.register(b + '/sw.js', { scope: b + '/' });
+    });
+}
